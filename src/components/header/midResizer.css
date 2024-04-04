@@ -1,0 +1,86 @@
+.mid_resizer {
+  position: absolute;
+  top: 2%;
+  left: 155%;
+  width: 150px;
+  background-color: #fff;
+}
+
+.sel_opt {
+  position: relative;
+  padding: 5px 10px;
+  transition: all ease 0.3s;
+  box-shadow: 0 0 3px grey;
+  border-radius: 5px;
+  text-transform: capitalize;
+  letter-spacing: 0.1rem;
+  cursor: pointer;
+}
+
+.sel_opt.drop {
+  box-shadow: none;
+  border: 1.5px solid grey;
+  border-radius: 5px 5px 0 0;
+}
+
+.opt_icon {
+  margin-right: 10px;
+}
+
+.opt_icon svg {
+  width: 0.8rem;
+  height: 0.8rem;
+}
+
+.drop_icon {
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.drop_icon svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.drop_container {
+  transition: all ease 0.3s;
+  height: 0;
+  overflow: hidden;
+}
+
+.drop_opts {
+  border: 1.5px solid grey;
+  border-top: none;
+  border-radius: 0 0 5px 5px;
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+}
+
+.drop_opt {
+  padding: 5px 10px;
+  text-transform: capitalize;
+  letter-spacing: 0.1rem;
+  border-bottom: 1px dashed grey;
+  display: block;
+  width: 100%;
+  cursor: pointer;
+  transition: all ease 0.3s;
+}
+
+.drop_opt.sel {
+  pointer-events: none;
+  opacity: 0.7;
+  background-color: #8080802c;
+}
+
+.drop_opt:last-of-type {
+  border-bottom: none;
+}
+
+.drop_opt:hover {
+  background-color: #e3eeff;
+}
