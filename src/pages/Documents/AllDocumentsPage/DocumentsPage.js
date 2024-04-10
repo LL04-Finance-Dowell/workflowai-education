@@ -1,11 +1,12 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useEffect, useState } from "react";
+import CreateDocument from "../../../components/manageFiles/files/documents/createDocument/CreateDocument";
+
 import { useDispatch, useSelector } from "react-redux";
 import { useLocation, useNavigate } from "react-router-dom";
 import { v4 as uuidv4 } from "uuid";
 import DocumentCard from "../../../components/hoverCard/documentCard/DocumentCard";
 import ManageFiles from "../../../components/manageFiles/ManageFiles";
-import CreateDocument from "../../../components/manageFiles/files/documents/createDocument/CreateDocument";
 import SectionBox from "../../../components/manageFiles/sectionBox/SectionBox";
 import { WorkflowReport } from "../../../components/newSidebar/reports/WorkflowReport";
 import { useAppContext } from "../../../contexts/AppContext";
@@ -26,13 +27,12 @@ const DocumentsPage = ({
   const { allDocuments: allDocumentsArray, allDocumentsStatus } = useSelector(
     (state) => state.document
   );
-  // (allDocumentsArray)
-
-  // const finilized = allDocumentsArray.filter((document) => document.document_state === "finalized")
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const location = useLocation();
-  const [setCurrentUserPortfolioDataType] = useState("");
+  // eslint-disable-next-line no-unused-vars
+  const [_currentUserPortfolioDataType, setCurrentUserPortfolioDataType] =
+    useState("");
   const {
     customDocName,
     demoDocuments,
@@ -268,12 +268,3 @@ export const createDocumentsByMe = [
   { id: uuidv4() },
   { id: uuidv4() },
 ];
-
-/* export const drafts = [
-  { id: uuidv4() },
-  { id: uuidv4() },
-  { id: uuidv4() },
-  { id: uuidv4() },
-  { id: uuidv4() },
-];
- */
