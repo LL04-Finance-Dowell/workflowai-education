@@ -28,11 +28,11 @@ const locationAxiosInstance = axios.create({
 const dowellLoginUrl =
   "https://100014.pythonanywhere.com/?redirect_url=" +
   window.location.origin +
-  "/100018-dowellWorkflowAi-testing/%23";
+  "";
 const dowellLogoutUrl =
   "https://100014.pythonanywhere.com/sign-out?redirect_url=" +
   window.location.origin +
-  "/100018-dowellWorkflowAi-testing/%23";
+  "";
 
 export {
   authAxiosInstance,

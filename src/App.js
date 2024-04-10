@@ -106,11 +106,6 @@ function App() {
             api_key: response?.data?.data?.api_key,
           })
         );
-        // // (response?.data?.data?.is_active)
-        // // (response?.data?.data?.total_credits)
-        // // (response?.data?.data?.api_key)
-
-        // dispatch(setcreditResponse(response))
       })
       .catch((error) => {
         // (error)

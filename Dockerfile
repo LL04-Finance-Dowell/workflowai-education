@@ -1,13 +1,16 @@
+
 FROM node:18-alpine
 
-WORKDIR /app/frontend/
+WORKDIR /app/frontend
 
-COPY package*.json /app/frontend/
+COPY package*.json ./
 
 RUN npm install \
     && ls -al node_modules/react-scripts \
     && npm cache clean --force
 
-COPY . /app/frontend/
+COPY . .
 
-CMD ["npm", "start"]
+RUN npm run build && npm install -g serve
+
+CMD ["serve", "-s", "build"]
