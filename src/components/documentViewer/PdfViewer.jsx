@@ -3,7 +3,6 @@ import React, { useEffect, useRef } from 'react';
 import { BsArrowBarLeft } from 'react-icons/bs';
 
 const PdfViewer = ({ onClose, open, pdfUrl, onSave }) => {
-  (pdfUrl, "pdfUrl",open, onSave);
   const containerRef = useRef(null);
   const screenHeight = window.screen.height;
 
