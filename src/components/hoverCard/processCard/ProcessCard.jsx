@@ -44,9 +44,8 @@ const ProcessCard = ({ cardItem, title }) => {
     // }
     // ("process_id", item._id, item.process_title, item.processing_state)
     getProcessDetail(item._id, item.process_title);
-    (item._id);
-    (item);
-    // dispatch(setshowsProcessDetailPopup(true));
+
+
     setProcessDetailLoading(true);
   };
 
@@ -122,30 +121,6 @@ const ProcessCard = ({ cardItem, title }) => {
   //   }
   // }, [Process_id]); // Added Process_id as dependency
 
-  function createProcessLinks(process_id, created_by) {
-    const requestBody = {
-      user_name: created_by,
-    };
-    fetch(`${api_url}processes/${process_id}/user-link/`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(requestBody),
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        // ("the response for fetching process is ", data);
-        dispatch(SetArrayofLinks(data));
-        dispatch(setLinksFetched(true));
-        setProcessLinkLoading(false);
-      })
-      .catch((err) => {
-        // (err);
-        setProcessLinkLoading(false);
-        toast.info("Link fetching for process failed");
-      });
-  }
   async function getProcessLinks(process_id) {
     // ("the process id is ", process_id);
     try {
@@ -252,7 +227,6 @@ const ProcessCard = ({ cardItem, title }) => {
 
   const BackSide = () => {
     const [showModal, setShowModal] = useState(false);
-    const [cardItemToDelete, setCardItemToDelete] = useState(null);
 
     const handleCloseModal = () => {
       setShowModal(false);
@@ -401,12 +375,6 @@ const ProcessCard = ({ cardItem, title }) => {
     boxShadow: "0 2px 10px rgba(0, 0, 0, 0.2)",
     zIndex: "1000",
     display: isPopupVisible ? "block" : "none",
-  };
-  const parentContainerStyle = {
-    position: "relative", // Set the parent container to relative
-    width: "100vw", // Cover the entire viewport width
-    height: "100vh", // Cover the entire viewport height
-    border: "red 5px solid"
   };
 
   return (

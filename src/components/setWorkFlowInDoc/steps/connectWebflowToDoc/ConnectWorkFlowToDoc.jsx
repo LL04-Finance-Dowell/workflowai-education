@@ -1,24 +1,25 @@
-import styles from './connectWorkFlowToDoc.module.css';
-import { BsChevronDown } from 'react-icons/bs';
-import { BsChevronUp } from 'react-icons/bs';
-import AssignDocumentMap from './assignForms/forms/assignDocumentMap/AssignDocumentMap';
-import AsignTask from './assignForms/forms/assignTask/AssignTask';
-import AssignLocation from './assignForms/forms/assignLocation/AssignLocation';
-import AssignTime from './assignForms/forms/assignTime/AssignTimes';
-import Contents from '../../contents/Contents';
 import { useEffect, useState } from 'react';
+import { BsChevronDown, BsChevronUp } from 'react-icons/bs';
 import { useDispatch, useSelector } from 'react-redux';
+import Contents from '../../contents/Contents';
+import AssignDocumentMap from './assignForms/forms/assignDocumentMap/AssignDocumentMap';
+import AssignLocation from './assignForms/forms/assignLocation/AssignLocation';
+import AsignTask from './assignForms/forms/assignTask/AssignTask';
+import AssignTime from './assignForms/forms/assignTime/AssignTimes';
+import styles from './connectWorkFlowToDoc.module.css';
 
-import Dropdown from './dropdown/Dropdown';
+import {
+  setProcessSteps,
+  updateSingleProcessStep,
+} from '../../../../features/processes/processesSlice';
 import BookSpinner from '../../../bookSpinner/BookSpinner';
-import {   setProcessSteps,
-updateSingleProcessStep, } from '../../../../features/processes/processesSlice';
+import Dropdown from './dropdown/Dropdown';
 
 const ConnectWorkFlowToDoc = () => {
   const dispatch = useDispatch();
 
   const { contentOfDocument } = useSelector((state) => state.document);
-  const { wfToDocument, docCurrentWorkflow } = useSelector(
+  const { docCurrentWorkflow } = useSelector(
     (state) => state.processes
   );
 

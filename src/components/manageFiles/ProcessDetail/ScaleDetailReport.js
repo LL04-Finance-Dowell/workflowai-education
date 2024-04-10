@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import axios from "axios";
 import {
   ArcElement,
@@ -12,7 +13,6 @@ import {
 import React, { useEffect, useState } from "react";
 import Spinner from "react-bootstrap/Spinner";
 import { Bar, Pie } from "react-chartjs-2";
-import { useSelector } from "react-redux";
 import { ScaleDetailReportData } from "../../../utils/helpers";
 import styles from "./ProcessDetail.module.css";
 
@@ -27,7 +27,6 @@ ChartJS.register(
 );
 
 export default function ScaleDetailReport() {
-  const { userDetail } = useSelector((state) => state.auth);
   const [scaleReportData, setScaleReportData] = useState(ScaleDetailReportData);
 
   // ("ProcessDetail", ProcessDetail)

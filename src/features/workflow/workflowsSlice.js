@@ -24,10 +24,6 @@ const initialState = {
   errorMessage: null,
 };
 
-const setStatus = (state, action, statusKey) => {
-  state[statusKey] = action.payload ? 'succeeded' : 'failed';
-  state.errorMessage = action.payload;
-};
 
 export const workflowSlice = createSlice({
   name: 'workflow',

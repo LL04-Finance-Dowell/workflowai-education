@@ -5,13 +5,13 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { useAppContext } from '../../../contexts/AppContext';
 import {
-    SetShowDocumentReport,
-    SetSingleDocument, setEditorLink
+  SetShowDocumentReport,
+  SetSingleDocument, setEditorLink
 } from '../../../features/app/appSlice';
 import { detailDocument, documentReport } from '../../../features/document/asyncThunks';
 import {
-    getVerifiedProcessLink,
-    verifyProcessForUser,
+  getVerifiedProcessLink,
+  verifyProcessForUser,
 } from '../../../services/processServices';
 import { LoadingSpinner } from '../../LoadingSpinner/LoadingSpinner';
 import HoverCard from '../HoverCard';
@@ -27,13 +27,13 @@ import { setAllDocuments } from '../../../features/document/documentSlice';
 import { moveItemToArchive } from '../../../services/archiveServices';
 import { DocumentServices } from '../../../services/documentServices';
 import {
-    addNewFavoriteForUser,
-    deleteFavoriteForUser,
+  addNewFavoriteForUser,
+  deleteFavoriteForUser,
 } from '../../../services/favoritesServices';
 import {
-    extractTokenFromVerificationURL,
-    productName,
-    updateVerificationDataWithTimezone,
+  extractTokenFromVerificationURL,
+  productName,
+  updateVerificationDataWithTimezone,
 } from '../../../utils/helpers';
 
 import PdfViewer from '../../documentViewer/PdfViewer';
@@ -53,8 +53,7 @@ const DocumentCard = ({
   const dispatch = useDispatch();
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const [showPdfViewer, setShowPdfViewer] = useState(false);
-  const [pdfUrl, setPdfUrl] = useState('');
+  const [pdfUrl] = useState('');
 
 
   const [dataLoading, setDataLoading] = useState(false);
@@ -73,7 +72,6 @@ const DocumentCard = ({
   const [errorMessage, setErrorMessage] = useState('');
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [pdfUrlLink, setPdfUrlLink] = useState('');
-  const [contentHTML, setContentHTML] = useState([]);
 
 
 
@@ -181,11 +179,6 @@ const DocumentCard = ({
         const response = await (
           await getVerifiedProcessLink(item.process_id, dataToPost)
         ).data;
-
-        /*  dispatch(setEditorLink(response)); */
-
-        // setDataLoading(false);
-        ("response", response, item)
         handleGoToEditor(response, item);
       } catch (error) {
         setDataLoading(false);
@@ -221,7 +214,6 @@ const DocumentCard = ({
       return
     }
 
-    ("data", data)
     dispatch(detailDocument(data));
   };
 
@@ -230,23 +222,12 @@ const DocumentCard = ({
     setErrorMessage('');
   };
 
-  const viewAsPDF = async (item) => {
-    ("view as Preview")
-    setPdfUrl('https://dowellfileuploader.uxlivinglab.online/view-pdf/Morvin%20Nov%20Inv<br>.pdf');
-    // setPdfUrl(pdfUrl);
-    setOpenPdfDrawer(!openPdfDrawer);
-  };
 
   const viewAsPdfLink = async (url) => {
-    ("view as Preview", url)
-    // setPdfUrl('https://dowellfileuploader.uxlivinglab.online/view-pdf/Morvin%20Nov%20Inv<br>.pdf');
-    // setPdfUrl(url);
     setOpenPdfDrawer(!openPdfDrawer);
-    ("pdfUrl, openpdfDrawer", openPdfDrawer, pdfUrl)
   };
 
   const handleShowDocument = async (item) => {
-    ("itemhandleMubeen", item)
     dispatch(SetSingleDocument(item));
     getDocumentDetail(item.collection_id)
     // navigate("/documents/document-detail");
@@ -254,12 +235,9 @@ const DocumentCard = ({
 
   function getDocumentDetail(document_id) {
     axios
-      // .get(`https://100094.pythonanywhere.com/v2/documents/${document_id}/reports/`)
       .get(`https://100094.pythonanywhere.com/v2/documents/${document_id}/reports/`)
       .then((response) => {
         dispatch(SetShowDocumentReport(response.data));
-        // setProcessDetailLoading(false);
-        // dispatch(setDetailFetched(true));
         navigate("/documents/document-detail");
       })
       .catch((error) => {
@@ -381,7 +359,6 @@ const DocumentCard = ({
   };
 
   const generatePdfLink = async (item) => {
-    ("cardItem", item);
     const apiUrl = 'https://100058.pythonanywhere.com/api/generate-pdf-link/';
     const collectionId = item?.collection_id || "653b5ba638ec7dcbdb556a38";
 
@@ -389,7 +366,6 @@ const DocumentCard = ({
     const storedData = localStorage.getItem(collectionId);
     if (storedData) {
       const storedJson = JSON.parse(storedData);
-      ('Using cached PDF link:', storedJson.download_url);
       setPdfUrlLink(storedJson.download_url);
       viewAsPdfLink(storedJson.download_url);
       toast.info('PDF loaded from cache successfully');
@@ -398,15 +374,13 @@ const DocumentCard = ({
     
     const payload = {
       item_type: "document",
-      item_id: item?.collection_id || "653b5ba638ec7dcbdb556a38",
-      // item_id: "653b5ba638ec7dcbdb556a38",
+      item_id: item?.collection_id ,
+
     };
 
-    ("generate pdf link", apiUrl, payload)
+
     await axios.post(apiUrl, payload)
       .then((response) => {
-        // Handle the API response here
-        ('Pdf generated successfully', response);
         setPdfUrlLink(response.data.download_url);
         localStorage.setItem(item?.collection_id, JSON.stringify({ download_url: response.data.download_url }));
         // Assuming response.data contains the PDF link

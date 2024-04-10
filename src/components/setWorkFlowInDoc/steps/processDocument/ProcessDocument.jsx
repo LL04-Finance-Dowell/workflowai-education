@@ -1,24 +1,24 @@
 // ? Ln 237 and 245 <span> used instead of <button> (style conflicts) and <a> (ESLints prompts)
-import styles from './processDocument.module.css';
-import { v4 as uuidv4 } from 'uuid';
-import { useState, useEffect } from 'react';
-import FormLayout from '../../formLayout/FormLayout';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import Select from '../../select/Select';
-import AssignButton from '../../assignButton/AssignButton';
 import { useDispatch, useSelector } from 'react-redux';
-import { removeFromSelectedWorkflowsToDoc,setPopupIsOpen } from '../../../../features/app/appSlice';
 import { toast } from 'react-toastify';
+import { v4 as uuidv4 } from 'uuid';
+import { removeFromSelectedWorkflowsToDoc } from '../../../../features/app/appSlice';
 import {
   processActionOptions,
   startNewProcess,
 } from '../../../../services/processServices';
 import { LoadingSpinner } from '../../../LoadingSpinner/LoadingSpinner';
+import AssignButton from '../../assignButton/AssignButton';
+import FormLayout from '../../formLayout/FormLayout';
+import Select from '../../select/Select';
+import styles from './processDocument.module.css';
 
-import { AiOutlineClose } from 'react-icons/ai';
 import React from 'react';
-import ProgressBar from '../../../progressBar/ProgressBar';
+import { AiOutlineClose } from 'react-icons/ai';
 import { productName } from '../../../../utils/helpers';
+import ProgressBar from '../../../progressBar/ProgressBar';
 
 const ProcessDocument = () => {
   const [currentProcess, setCurrentProcess] = useState();
@@ -147,7 +147,6 @@ const ProcessDocument = () => {
     setSaveWorkflowsLoading(true);
 
     try {
-      const response = await (await startNewProcess(newProcessObj)).data;
       toast.success('Successfully saved workflows to document!');
       setSaveWorkflowsLoading(false);
       setNewWorkflowSavedToDoc({ saveSuccess: true });

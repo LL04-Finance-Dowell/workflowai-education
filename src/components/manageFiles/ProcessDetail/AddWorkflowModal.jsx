@@ -1,14 +1,12 @@
 import Button from 'react-bootstrap/Button';
 import Modal from 'react-bootstrap/Modal';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { SetDocumentId } from '../../../features/app/appSlice';
 
 
 
 export default function AddWorkflowModal(props) {
-	const { userDetail } = useSelector((state) => state.auth);
-	const { ProcessDetail } = useSelector((state) => state.processes);
 	const navigate = useNavigate()
 	const dispatch = useDispatch()
 	// ("ProcessDetail", ProcessDetail, userDetail)

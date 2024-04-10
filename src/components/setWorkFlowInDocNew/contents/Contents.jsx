@@ -19,7 +19,7 @@ const Contents = ({
   stepsPopulated,
 }) => {
   const contentRef = useRef(null);
-  const [currentTableItem, setCurrentTableItem] = useState(null);
+  const [currentTableItem] = useState(null);
   const dispatch = useDispatch();
   const { docCurrentWorkflow, tableOfContentForStep } = useSelector(
     (state) => state.processes

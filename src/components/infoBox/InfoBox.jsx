@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 // ? Ln 188, used <span> instead of <button> (style conflicts) and <a> (ESLints prompts)
 import React, { useEffect, useState } from 'react';
 /* import Collapse from "../../layouts/collapse/Collapse"; */

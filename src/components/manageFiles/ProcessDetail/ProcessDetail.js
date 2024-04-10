@@ -44,9 +44,7 @@ const ProcessDetail = () => {
   const handleNavigateDocument = () => {
     navigate("/processes/document-report");
   };
-  const handleNavigateScale = () => {
-    navigate("/processes/scale-report");
-  };
+
   const handleNavigate = () => {
     navigate("/processes/evaluation-report");
   };
@@ -72,7 +70,7 @@ const ProcessDetail = () => {
       <div className={styles.body_div}>
         <div className={styles.steps}>
           <div className={styles.processName}>
-            <img src={greenImage} alt={"Green Image"} />
+            <img src={greenImage} alt={"Green "} />
             {/* <div class={styles.textOverlay}> */}
             <div className={styles.processHeading}>
               <h3>{ProcessDetail.process_title}</h3>
@@ -121,7 +119,7 @@ const ProcessDetail = () => {
                   {/* <Button onClick={handleNavigateDocument} variant="success">
                     Assign Portfolios
                   </Button> */}
-                  <img src={processImage} alt={"Process Image"} />
+                  <img src={processImage} alt={"Process"} />
                 </div>
               </div>
             </div>
@@ -413,7 +411,6 @@ const CircularProgressBar = ({ percentage }) => {
   const radius = 60; // Increase the radius as needed
   const circumference = 2 * Math.PI * radius;
   const strokeWidth = 15; // Adjust the stroke width as needed
-  const progress = ((100 - percentage) / 100) * circumference;
   // const progress = percentage
   const progressOffset = circumference - (percentage / 100) * circumference;
 

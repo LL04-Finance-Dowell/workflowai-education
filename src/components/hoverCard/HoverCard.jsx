@@ -1,8 +1,7 @@
 import React from 'react';
-import { Box } from './styledComponents';
-import styles from './hoverCard.module.css';
 import { useAppContext } from '../../contexts/AppContext';
-import { v4 } from 'uuid';
+import styles from './hoverCard.module.css';
+import { Box } from './styledComponents';
 
 const HoverCard = ({ Front, Back, loading, isFolder, id }) => {
   const { isNoPointerEvents } = useAppContext();

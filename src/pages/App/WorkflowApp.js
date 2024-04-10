@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import { v4 as uuidv4 } from "uuid";
 import FlipMenu from "../../components/flipMenu/FlipMenu";
 import CustomerSupport from "../../components/landingPage/customerSupport/CustomerSupport";

@@ -29,12 +29,12 @@ const CreateDocument = ({ handleToggleOverlay }) => {
     (state) => state.template
   );
   const [currentOption, setCurrentOption] = useState(null);
-  const [toggleDropdown, setToggleDropdown] = useState(false);
-  const [currentItem, setCurrentItem] = useState("");
+  const [ setToggleDropdown] = useState(false);
+  const [ setCurrentItem] = useState("");
 
   const ref = useRef(null);
 
-  const { register, handleSubmit, setValue } = useForm();
+  const {  handleSubmit, setValue } = useForm();
 
   // ("userDetaiDocument", userDetail.userinfo.email)
   const handleNewItemClick = async (e, content) => {
@@ -139,10 +139,7 @@ const CreateDocument = ({ handleToggleOverlay }) => {
     }
   };
 
-  const handleDropdown = () => {
-    setToggleDropdown((prev) => !prev);
-    ref.current?.blur();
-  };
+
 
   const handleOptionClick = (item) => {
     // ("handleOptionClick", item)
@@ -154,10 +151,6 @@ const CreateDocument = ({ handleToggleOverlay }) => {
     // ("handleOptionClick", currentOption)
 
     // handleSubmit(onSubmit)();
-  };
-
-  const handleClickLabel = () => {
-    ref.current?.focus();
   };
 
   useEffect(() => {
@@ -184,7 +177,7 @@ const CreateDocument = ({ handleToggleOverlay }) => {
         <>
 
           <div className={styles.create__button__template1} onClick={(e) => handleNewItemClick(e, "template")}>
-            <img src={addImage} alt="Descriptive text about the image"></img>
+            <img src={addImage} alt="Descriptive text about the" ></img>
             <div
               to="/templates/#newTemplate"
               key={uuidv4()}

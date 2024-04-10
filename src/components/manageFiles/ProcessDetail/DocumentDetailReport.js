@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import axios from "axios";
 import {
   ArcElement,
@@ -13,7 +14,6 @@ import React, { useEffect, useState } from "react";
 import Spinner from "react-bootstrap/Spinner";
 import { Bar, Pie } from "react-chartjs-2";
 import { useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom";
 import { DocumentProcessDetailReport } from "../../../utils/helpers";
 import styles from "./ProcessDetail.module.css";
 
@@ -29,15 +29,10 @@ ChartJS.register(
 
 export default function DocumentDetailReport() {
   const { ProcessDetail } = useSelector((state) => state.processes);
-  const { userDetail } = useSelector((state) => state.auth);
   const [documentReportData, setDocumentReportData] = useState(
     DocumentProcessDetailReport
   );
 
-  const navigate = useNavigate();
-
-  // ("ProcessDetail", ProcessDetail)
-  // ("userDetail", userDetail)
   const apiUrl =
     "https://100035.pythonanywhere.com/evaluation/evaluation-api/?report_type=document";
   const payload = {

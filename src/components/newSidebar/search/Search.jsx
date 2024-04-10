@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { FaSearch } from 'react-icons/fa';
@@ -27,12 +28,12 @@ const Search = () => {
   const [searchLoading, setSearchLoading] = useState(false);
   const [searchResults, setSearchResults] = useState([]);
   const [searchResultItems, setSearchResultItems] = useState([]);
-  const [searchResultLoaded, setSearchResultLoaded] = useState(false);
+  const [ setSearchResultLoaded] = useState(false);
 
   const navigate = useNavigate();
 
   const { t } = useTranslation();
-  const { searchItems,demoTemplates, setRerender } = useAppContext();
+  const { searchItems, setRerender } = useAppContext();
   const { allWorkflowsStatus } = useSelector((state) => state.workflow);
   const { allTemplatesStatus } = useSelector((state) => state.template);
   const { allDocumentsStatus } = useSelector((state) => state.document);

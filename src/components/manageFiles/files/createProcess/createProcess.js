@@ -1,21 +1,20 @@
 import React, { useState } from "react";
-import { HashLink } from "react-router-hash-link";
-import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
+import { useNavigate } from "react-router-dom";
 import { setWhichApproval } from "../../../../features/processCopyReducer";
 import "./createProcess.css";
 
 const CreateProcess = () => {
   const navigate = useNavigate();
-  const dispatch = useDispatch()
+  const dispatch = useDispatch();
 
   const [selectedOption, setSelectedOption] = useState("Document");
   const handleOptionChange = () => {
     setSelectedOption(selectedOption === "Document" ? "Template" : "Document");
   };
   const handleClick = async () => {
-    await dispatch(setWhichApproval(selectedOption))
-    navigate('/workflows/new-set-workflow')
+    await dispatch(setWhichApproval(selectedOption));
+    navigate("/workflows/new-set-workflow");
   };
 
   return (
@@ -53,7 +52,9 @@ const CreateProcess = () => {
           </p>
         </div>
         <div className="buttonWrapper">
-          <button className="createProcessBtn" onClick={handleClick}>Create Process</button>
+          <button className="createProcessBtn" onClick={handleClick}>
+            Create Process
+          </button>
         </div>
       </div>
     </div>

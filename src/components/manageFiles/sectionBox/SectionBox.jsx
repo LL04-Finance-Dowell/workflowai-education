@@ -9,9 +9,9 @@ import { useDispatch, useSelector } from 'react-redux';
 import { toast } from 'react-toastify';
 import { useAppContext } from '../../../contexts/AppContext';
 import {
-    SetKnowledgeFolders,
-    setAllProcesses,
-    setNotificationsForUser
+  SetKnowledgeFolders,
+  setAllProcesses,
+  setNotificationsForUser
 } from '../../../features/app/appSlice';
 import { setAllDocuments } from '../../../features/document/documentSlice';
 import { setAllTemplates } from '../../../features/template/templateSlice';
@@ -56,7 +56,6 @@ const SectionBox = ({
   const [isDemoLoading, setIsDemoLoading] = useState(false);
   const [cardItemsVar, setCardItemsVar] = useState(cardItems);
   const [count, setCount] = useState(1);
-  const [remainingCards, setRemainingCards] = useState(0);
   const {
     fetchDemoTemplates,
     fetchDemoDocuments,

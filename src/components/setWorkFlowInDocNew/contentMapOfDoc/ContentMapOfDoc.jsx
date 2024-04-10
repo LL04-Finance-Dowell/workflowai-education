@@ -19,7 +19,7 @@ const ContentMapOfDoc = () => {
   const { currentDocToWfs } = useSelector((state) => state.processes);
 
   const [toggleContent, setToggleContent] = useState(false);
-  const [isFixed, setIsFixed] = useState(false);
+  const [isFixed] = useState(false);
   const ref = useRef(null);
   /*  const scroll = useScrollPosition(); */
   const { t } = useTranslation();

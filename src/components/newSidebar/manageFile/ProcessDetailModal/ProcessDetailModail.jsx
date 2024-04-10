@@ -8,11 +8,7 @@ export const ProcessDetailModail = () => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
     const { ProcessDetail } = useSelector((state) => state.processes);
-    
 
-    function handleCloseDetailBtnClick() {
-        dispatch(setshowsProcessDetailPopup(false));
-    }
     return (
         <div style={{
             background: 'rgba(0, 0, 0, 0.12)',

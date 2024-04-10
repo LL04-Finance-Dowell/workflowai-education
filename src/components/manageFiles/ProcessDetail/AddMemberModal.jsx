@@ -14,16 +14,12 @@ export default function AddMemberModal(props) {
   const [showAllPublicMembers, setShowAllPublicMember] = useState(false);
   const [showAllUserMembers, setShowAllUserMember] = useState(false);
 
-  const [allTeamMembers, setAllTeamMembers] = useState(userDetail?.members?.team_member);
-  const [allPublicMembers, setAllPublicMembers] = useState(userDetail?.public_members);
-  const [allUserMembers, setAllUserMembers] = useState(userDetail?.members?.user_member);
-  const [assignPortfolio, setAssignPortfolio] = useState(null);
-  const [assignPublicPortfolio, setAssignPublicPortfolio] = useState(null);
-  const [assignUserPortfolio, setAssignUserPortfolio] = useState(null);
-
-
-
-  // ("userDetail", userDetail, ProcessDetail, props.step)
+  const [allTeamMembers] = useState(userDetail?.members?.team_member);
+  const [allPublicMembers] = useState(userDetail?.public_members);
+  const [allUserMembers] = useState(userDetail?.members?.user_member);
+  const [ setAssignPortfolio] = useState(null);
+  const [ setAssignPublicPortfolio] = useState(null);
+  const [ setAssignUserPortfolio] = useState(null);
 
   // Step 3: Handle Selection
   const handleSelectRow = (email) => {
@@ -39,7 +35,6 @@ export default function AddMemberModal(props) {
     e.preventDefault();
 
     const apiUrl = `https://100094.pythonanywhere.com/v2/processes/${ProcessDetail._id}/portfolio/`;
-    // const apiUrl = `https://100094.pythonanywhere.com/v2/processes/657c60838fc5bccaf9f1f476/portfolio/`;
 
     const payload = [{
       step: props.step.stepNumber || 1,

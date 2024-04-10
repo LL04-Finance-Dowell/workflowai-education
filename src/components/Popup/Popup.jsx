@@ -1,17 +1,12 @@
 import React from "react";
-import styles from "./Popup.module.css";
 import { AiOutlineClose } from "react-icons/ai";
-import { PrimaryButton } from "../styledComponents/styledComponents";
-import { setPopupIsOpen, setCurrentMessage } from "../../features/app/appSlice";
 import { useDispatch, useSelector } from "react-redux";
+import { setPopupIsOpen } from "../../features/app/appSlice";
+import styles from "./Popup.module.css";
 
 const Popup = ({ isOpen, message }) => {
   const dispatch = useDispatch();
-  const { popupIsOpen, currentMessage } = useSelector((state) => state.app);
-
-  const onClose = () => {
-    dispatch(setPopupIsOpen(false));
-  };
+  const { currentMessage } = useSelector((state) => state.app);
 
   return currentMessage ? (
     <div className={styles.outer_div}>

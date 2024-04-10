@@ -2,12 +2,10 @@ import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { setEditorLink } from '../../features/app/appSlice';
 
-import { AiOutlineClose } from 'react-icons/ai';
-import styles from './editor.module.css';
-import Spinner from '../spinner/Spinner';
-import { TiTick } from 'react-icons/ti';
-import { MdClose } from 'react-icons/md';
 import { useTranslation } from 'react-i18next';
+import { AiOutlineClose } from 'react-icons/ai';
+import Spinner from '../spinner/Spinner';
+import styles from './editor.module.css';
 
 const Editor = () => {
   const dispatch = useDispatch();

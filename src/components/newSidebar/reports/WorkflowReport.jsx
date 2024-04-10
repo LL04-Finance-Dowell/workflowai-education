@@ -1,6 +1,6 @@
 import * as React from "react";
 import { useSelector } from 'react-redux';
-import { useLocation, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import fluent from '../../../assets/fluent_text-abc-underline-double-32-filled.jpg';
 import green from '../../../assets/ic_round-person.jpg';
 import backOutline from '../../../assets/ion_chevron-back-outline.jpg';
@@ -13,10 +13,6 @@ import styles from './workflowreport.module.css';
 export const WorkflowReport = () => {
 	const navigate = useNavigate()
 	const { ShowDocumentReport, SingleDocument } = useSelector((state) => state.app);
-	// Inside your component
-	const location = useLocation();
-	const passedData = location.state;
-	// ("ShowDocumentReport", passedData)
 
 	const handleBack = () => {
 		navigate('/documents/draft-reports');
@@ -28,7 +24,7 @@ export const WorkflowReport = () => {
 					loading="lazy"
 					src={backOutline}
 					className={styles.img}
-					alt="back image"
+					alt="back"
 				/>
 				<div className={styles.div_3}>{SingleDocument?.document_name || "Untitled Document"}</div>
 			</div>
@@ -36,6 +32,7 @@ export const WorkflowReport = () => {
 				loading="lazy"
 				src="https://cdn.builder.io/api/v1/image/assets/TEMP/57fa37204e567f20d28ad43c31dfb32139623794ee09b9563f567304ab1ce777?apiKey=0f3485998dff4988b054d7523e6c5b82&"
 				className={styles.img_2}
+				alt="Workflow Report"
 			/>
 			<div className={styles.div_4}>
 				{/* <div className={styles.div_5}>
@@ -66,7 +63,7 @@ export const WorkflowReport = () => {
 							loading="lazy"
 							src={handHold}
 							className={styles.img_5}
-							alt="Hnadhold Image"
+							alt="Hnadhold "
 
 						/>
 						{/* <img
@@ -114,7 +111,7 @@ export const WorkflowReport = () => {
 							loading="lazy"
 							src={fluent}
 							className={styles.img_9}
-							alt="Fluent Image"
+							alt="Fluent "
 
 						/>
 						{/* <img
@@ -147,7 +144,7 @@ export const WorkflowReport = () => {
 							loading="lazy"
 							src={green}
 							className={styles.img_11}
-							alt="green Image"
+							alt="green"
 
 						/>
 						{/* <img
@@ -179,7 +176,7 @@ export const WorkflowReport = () => {
 						<img
 							loading="lazy"
 							src={errorImage}
-							alt="Error Image"
+							alt="Error "
 							className={styles.img_13}
 						/>
 						{/* <img
@@ -215,11 +212,13 @@ export const WorkflowReport = () => {
 					loading="lazy"
 					src="https://cdn.builder.io/api/v1/image/assets/TEMP/cef3ddce8d038c78219a7207dc68e10e550b660e238d8e9c1663f486cc6fc304?apiKey=0f3485998dff4988b054d7523e6c5b82&"
 					className={styles.img_15}
+					alt="Workflow Report"
 				/>
 				<img
 					loading="lazy"
 					src="https://cdn.builder.io/api/v1/image/assets/TEMP/3d7ae2c38c6f8b0e5baeed1714c26e7551212440465883007951f594dacc6c84?apiKey=0f3485998dff4988b054d7523e6c5b82&"
 					className={styles.img_16}
+					alt="Workflow Report"
 				/>
 				{/* <img
 					loading="lazy"

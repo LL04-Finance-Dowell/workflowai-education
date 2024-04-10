@@ -54,7 +54,7 @@ function ListItem({ item, toggleSidebar, isMobile }) {
       }
       return;
     }
-    if(isMobile == true){
+    if(isMobile === true){
       toggleSidebar()
     }
     navigate(item.href);
