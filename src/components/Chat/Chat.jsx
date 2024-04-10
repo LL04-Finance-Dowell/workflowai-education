@@ -1,14 +1,11 @@
-import React, { useContext, useState } from "react";
-import { useEffect } from "react";
-import { useSelector, useDispatch } from "react-redux";
-import styles from "./Chat.module.css";
-import { BiSend } from "react-icons/bi";
 import axios from "axios";
+import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { productName } from "../../utils/helpers";
+import { BiSend } from "react-icons/bi";
+import { useDispatch, useSelector } from "react-redux";
 import { useLocation } from 'react-router-dom';
+import styles from "./Chat.module.css";
 
-import ChatIcon from "../../assets/chatting.png";
 import { toggleHighlight } from "../../features/processCopyReducer";
 
 
@@ -16,7 +13,7 @@ const Chat = () => {
   const location = useLocation();
   const dispatch = useDispatch();
   const { session_id, userDetail } = useSelector((state) => state.auth);
-  const showHighlight = useSelector((state) => state.copyProcess.showHighlight);
+
 
   const { t } = useTranslation();
   const [apiMessages, setapiMessages] = useState([]);
@@ -26,12 +23,12 @@ const Chat = () => {
   const [messages, setMessages] = useState([]);
   const [modals, setModal] = useState([]);
   const [hasChatStarted, setHasChatStarted] = useState(false);
-  const [ispopupOpen, SetIsPopupOpen] = useState(false);
+
 
   ///for the chat icon
   const [showImage, setShowImage] = useState(true);
 
-  let popupTimeout;
+
 
   ///for the chat
   useEffect(() => {
@@ -57,7 +54,7 @@ const Chat = () => {
     };
   }, []); 
 
-  // // console.log("the user details are ", userDetail)
+  // // ("the user details are ", userDetail)
 
   // useEffect(() => {
   //   IntilizingRoom(session_id);
@@ -74,7 +71,7 @@ const Chat = () => {
       portfolio_name: userDetail?.portfolio_info[0]?.portfolio_name,
       product_name: "WORKFLOWAI",
     };
-    // // console.log("the req data is ", data)
+    // // ("the req data is ", data)
     const options = {
       method: "POST",
       headers: {
@@ -90,7 +87,7 @@ const Chat = () => {
       
       if (response.ok) {
         const data = await response.json();
-        // // console.log("the room initialization res is ",data)
+        // // ("the room initialization res is ",data)
         setModal(data);
       } else {
         throw new Error("Network response was not OK");
@@ -99,7 +96,7 @@ const Chat = () => {
       // Perform any necessary error handling logic without logging the error
       // For example, you can show a user-friendly error message
       // or perform an alternative action.
-      // // console.log('Initialising room failed: ', error);
+      // // ('Initialising room failed: ', error);
     }
   };
 
@@ -125,7 +122,7 @@ const Chat = () => {
         // Clear the input field
         setMessage("");
       })
-      .catch((err) => console.log(err));
+      .catch((err) => (err));
 
     setHasChatStarted(true);
   };
@@ -140,7 +137,7 @@ const Chat = () => {
     if (!modals.inserted_id) return;
     const interval = setInterval(() => {
       fetchMessages(modals.inserted_id);
-      // // console.log("refresh the page")
+      // // ("refresh the page")
     }, 5000); // Repeat every 2 seconds
 
     return () => clearInterval(interval); // This is important, it clears the interval on unmount
@@ -158,7 +155,7 @@ const Chat = () => {
     }
 
     const data = await response.json();
-    // // console.log('get all messages ',data)
+    // // ('get all messages ',data)
     setapiMessages(data?.response.data);
   }
 
@@ -183,11 +180,11 @@ const Chat = () => {
 
   function handleMinimizePopup() {
     // const storemessages = [...messages];
-    // // console.log(storemessages)
+    // // (storemessages)
     // localStorage.setItem('messages', JSON.stringify(storemessages));
     setIsPopupOpen(false);
     setIsNestedPopupOpen(false);
-    // console.log("minimize btn clicked");
+    // ("minimize btn clicked");
   }
 
   async function handleNestedPopupClose() {
@@ -196,8 +193,8 @@ const Chat = () => {
       room_id: modals.inserted_id,
       is_active: false,
     };
-    // // console.log("modal id is ",modals?.org_id)
-    // console.log("data is ", data);
+    // // ("modal id is ",modals?.org_id)
+    // ("data is ", data);
     const response = await fetch(
       `https://100096.pythonanywhere.com/api/v2/room-service/`,
       {
@@ -209,14 +206,14 @@ const Chat = () => {
       }
     );
     const a = await response.json();
-    if (a?.success == true) {
+    if (a?.success === true) {
       setModal([]);
       setapiMessages([]); // Clear the apiMessages state
       setIsPopupOpen(false);
       setHasChatStarted(false);
       setIsNestedPopupOpen(false);
     }
-    // console.log("the response for close is ", a);
+    // ("the response for close is ", a);
     // if (hasChatStarted) {
     //   setIsPopupOpen(false);
     //   setIsNestedPopupOpen(false);
@@ -226,7 +223,7 @@ const Chat = () => {
     //   setapiMessages([]); // Clear the apiMessages state
     // }
   }
-  // // console.log("modal data are ", showHighlight)
+  // // ("modal data are ", showHighlight)
   return (
     <div className={styles.Main_div}>
       <div>
@@ -237,7 +234,7 @@ const Chat = () => {
               {shouldRenderButton  ? <button onClick={()=>{dispatch(toggleHighlight()); }}  className={styles.Chat_img_textProcess}>{t('Do you want help on process!')}</button> : ""}
               <div className={styles.Chat_img_text}>{t("Samanta is here to help you!")}</div>
             </div>
-            <img src={'https://www.socialmediaautomation.uxlivinglab.online/static/photos/Lady-Pixel.png'} width="80" className={styles.Chat_icon_img} />
+            <img src={'https://www.socialmediaautomation.uxlivinglab.online/static/photos/Lady-Pixel.png'} width="80" className={styles.Chat_icon_img} alt='' />
           </div>}
         </div>
         <button onClick={handleButtonClick} className={styles.Chat_button}>
@@ -342,7 +339,7 @@ const Chat = () => {
             {/* <h2 className={styles.Text_Class}>{t("Portfolio No")} : {modals.portfolio}</h2> */}
             <div className={styles.chat_messages}>
               {apiMessages.map((msg, idx) => {
-                // // console.log("apiMessage in map:", msg); // Add this line
+                // // ("apiMessage in map:", msg); // Add this line
                 return (
                   <div key={idx}>
                     <p

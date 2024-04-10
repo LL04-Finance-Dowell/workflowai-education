@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import parentStyles from '../assignCollapse.module.css';
-import { v4 as uuidv4 } from 'uuid';
 import { useForm } from 'react-hook-form';
+import { useDispatch, useSelector } from 'react-redux';
+import { v4 as uuidv4 } from 'uuid';
+import { getRegionsInCountry } from '../../../../../../../services/locationServices';
+import { continentsData } from '../../../../../../../utils/continentsData';
+import ProgressBar from '../../../../../../progressBar/ProgressBar';
 import Radio from '../../../../../radio/Radio';
 import Select from '../../../../../select/Select';
-import { useDispatch, useSelector } from 'react-redux';
-import { continentsData } from '../../../../../../../utils/continentsData';
-import { getRegionsInCountry } from '../../../../../../../services/locationServices';
-import ProgressBar from '../../../../../../progressBar/ProgressBar';
+import parentStyles from '../assignCollapse.module.css';
 
 import { useTranslation } from 'react-i18next';
 import { updateSingleProcessStep } from '../../../../../../../features/processes/processesSlice';
@@ -96,7 +96,7 @@ const Location = ({ currentStepIndex, stepsPopulated }) => {
         setRegionsLoading(false);
       })
       .catch((err) => {
-        // console.log('Failed to fetch regions in ', country);
+        // ('Failed to fetch regions in ', country);
         setRegionsLoading(false);
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps

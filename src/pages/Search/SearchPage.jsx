@@ -11,24 +11,24 @@ import { detailDocument } from '../../features/document/asyncThunks';
 import { detailTemplate } from '../../features/template/asyncThunks';
 import { detailWorkflow } from '../../features/workflow/asyncTHunks';
 // import { searchForItem } from "../../services/searchServices";
-import WorkflowLayout from '../../layouts/WorkflowLayout/WorkflowLayout';
-import ManageFiles from '../../components/manageFiles/ManageFiles';
-import styles from './style.module.css';
-import { searchItemByKeyAndGroupResults } from './util';
-import { useAppContext } from '../../contexts/AppContext';
 import { IoIosRefresh } from 'react-icons/io';
-import { DocumentServices } from '../../services/documentServices';
-import { TemplateServices } from '../../services/templateServices';
-import { WorkflowServices } from '../../services/workflowServices';
+import { useMediaQuery } from 'react-responsive';
+import ManageFiles from '../../components/manageFiles/ManageFiles';
+import { useAppContext } from '../../contexts/AppContext';
 import { setAllDocuments } from '../../features/document/documentSlice';
 import { setAllTemplates } from '../../features/template/templateSlice';
 import { setAllWorkflows } from '../../features/workflow/workflowsSlice';
-import { useMediaQuery } from 'react-responsive';
+import WorkflowLayout from '../../layouts/WorkflowLayout/WorkflowLayout';
+import { DocumentServices } from '../../services/documentServices';
+import { TemplateServices } from '../../services/templateServices';
+import { WorkflowServices } from '../../services/workflowServices';
+import styles from './style.module.css';
+import { searchItemByKeyAndGroupResults } from './util';
 
 import { MdFilterList } from 'react-icons/md';
-import DisplaySearch from './DisplaySearch';
-import { productName } from '../../utils/helpers';
 import { useNavigate } from 'react-router-dom';
+import { productName } from '../../utils/helpers';
+import DisplaySearch from './DisplaySearch';
 
 const searchCategories = {
   documents: 'documents',
@@ -75,24 +75,15 @@ const SearchPage = () => {
 
   const handleSearchItemClick = (item) => {
     if (item.document_name) {
-      const data = {
-        document_name: item.document_name,
-        document_id: item._id,
-      };
+
       dispatch(detailDocument(item));
     }
     if (item.template_name) {
-      const data = {
-        template_id: item._id,
-        template_name: item.template_name,
-      };
+  
       dispatch(detailTemplate(item.collection_id));
     }
     if (item.workflows) {
       dispatch(setToggleManageFileForm(true));
-      const data = {
-        workflow_id: item._id,
-      };
       navigate('/workflows/saved#saved-workflows')
       dispatch(detailWorkflow(item._id));
     }
@@ -130,7 +121,7 @@ const SearchPage = () => {
       setSearchLoading(false);
       setSearchResults(results);
     } catch (error) {
-      // console.log(error);
+      // (error);
       setSearchLoading(false);
     }
 
@@ -154,10 +145,10 @@ const SearchPage = () => {
     refreshLoading,
   ]);
 
-  // console.log("searchItemsoutside",searchItems)
+  // ("searchItemsoutside",searchItems)
   useEffect(() => {
     const currentSearchResults = searchResults.slice();
-    // console.log("searchItems",searchItems)
+    // ("searchItems",searchItems)
 
     switch (currentSearchOption) {
       case searchCategories.all:
@@ -265,7 +256,7 @@ const SearchPage = () => {
         )
       );
     } catch (error) {
-      // console.log(error.response ? error.response.data : error.message);
+      // (error.response ? error.response.data : error.message);
     }
     setRefreshLoading(false);
   };
@@ -696,7 +687,7 @@ export default SearchPage;
 // 			setSearchResults(res.data.search_result);
 // 		})
 // 		.catch((error) => {
-// 			// console.log(error.response ? error.response.data : error.message);
+// 			// (error.response ? error.response.data : error.message);
 // 			setSearchLoading(false);
 // 			toast.error(error.response ? error.response.data : error.message);
 // 		});

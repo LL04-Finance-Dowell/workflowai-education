@@ -1,15 +1,15 @@
-import React, { useState, useEffect, useRef } from "react";
-import styles from "./folders_modal.module.css";
-import { FaTimes, FaCaretUp, FaCaretDown } from "react-icons/fa";
+/* eslint-disable react-hooks/exhaustive-deps */
+import React, { useEffect, useRef, useState } from "react";
+import { FaCaretDown, FaCaretUp, FaTimes } from "react-icons/fa";
 import { GiCheckMark } from "react-icons/gi";
+import { useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
+import { LoadingSpinner } from "../../../components/LoadingSpinner/LoadingSpinner";
 import { useAppContext } from "../../../contexts/AppContext";
 import { FolderServices } from "../../../services/folderServices";
-import { useSelector } from "react-redux";
 import { productName } from "../../../utils/helpers";
-import { LoadingSpinner } from "../../../components/LoadingSpinner/LoadingSpinner";
-import { toast } from "react-toastify";
-import { useNavigate } from "react-router-dom";
-import { v4 } from "uuid";
+import styles from "./folders_modal.module.css";
 
 const FoldersModal = () => {
   const {
@@ -56,7 +56,7 @@ const FoldersModal = () => {
   const { allTemplates } = useSelector((state) => state.template);
 
   const handleCreateFolder = async () => {
-    // console.log("foldernameedd", folderName);
+    // ("foldernameedd", folderName);
     const data = {
       company_id: userCompanyId,
       created_by: userDetail?.userinfo.username,
@@ -77,7 +77,7 @@ const FoldersModal = () => {
       setIsCreating(false);
       setShowFoldersActionModal(false);
     } catch (err) {
-      // // console.log(err);
+      // // (err);
       toast.error("Folder creating failed!");
       setIsCreating(false);
     }
@@ -114,7 +114,7 @@ const FoldersModal = () => {
           );
           toast.success("Added successfully");
         } catch (err) {
-          // // console.log(err);
+          // // (err);
           toast.error("Failed to add!");
         } finally {
           setShowFoldersActionModal(false);
@@ -123,7 +123,7 @@ const FoldersModal = () => {
         }
       } else toast.warn("Select a folder");
     } else if (action === "edit") {
-      // console.log("selectedDocs(", selectedDocs);
+      // ("selectedDocs(", selectedDocs);
       if (folderName) {
         const items = [
           ...selectedDocs.map((doc) => ({ [`${doc.category}_id`]: doc.id })),
@@ -156,7 +156,7 @@ const FoldersModal = () => {
           );
           toast.success("Folder edited");
         } catch (err) {
-          // // console.log(err);
+          // // (err);
           toast.error("Editing failed!");
         } finally {
           setIsEditing(false);
@@ -171,7 +171,7 @@ const FoldersModal = () => {
         setFolders((prev) => prev.filter((fld) => fld._id !== folder._id));
         toast.success("Folder deleted");
       } catch (err) {
-        // // console.log(err);
+        // // (err);
         toast.error("Deleting failed!");
       } finally {
         setIsDeleting(false);
@@ -189,14 +189,7 @@ const FoldersModal = () => {
       setIsRemoving(true);
       try {
         await folderServices.removeFolderItem(data, folderActionId, item._id);
-        const modFolder = {
-          ...folder,
-          data: folder.data.filter(
-            (itm) =>
-              (itm.document_id && itm.document_id !== item._id) ||
-              (itm.template_id && itm.template_id !== item._id)
-          ),
-        };
+
 
         setFolders((prev) =>
           prev.map((folderArr) =>
@@ -224,7 +217,7 @@ const FoldersModal = () => {
         );
         setShowFoldersActionModal(false);
       } catch (err) {
-        // // console.log(err);
+        // // (err);
         toast.error(
           `Failed to remove ${
             item.document_name
@@ -260,12 +253,14 @@ const FoldersModal = () => {
     setUserCompanyId(companyId);
     setUserDataType(dataType);
     fetchFolders();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userDetail]);
 
   useEffect(() => {
     if (folderActionId)
       setFolder(folders.find((folder) => folder._id === folderActionId));
     else setFolder({});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [folderActionId]);
 
   useEffect(() => {
@@ -288,7 +283,7 @@ const FoldersModal = () => {
 
   useEffect(() => {
     if (allDocuments)
-    // // console.log("allDocuments", allDocuments
+    // // ("allDocuments", allDocuments
     // .filter((doc) => doc.document_type === 'original')
     // .map((doc) => ({
     //   name: doc.document_name,
@@ -345,6 +340,7 @@ const FoldersModal = () => {
         ...prev,
         temps: Math.ceil(tempsList.length / itemsPerPage),
       }));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [docsList, tempsList]);
 
   useEffect(() => {
@@ -376,11 +372,6 @@ const FoldersModal = () => {
       setSelectedTemps([]);
     }
   }, [state]);
-
-  const handleFolderChange = (e) => {
-    setFolderName(e.target.value);
-    // console.log("foldername", folderName);
-  };
 
   ///////////////////////////// Checking whether the input is empty
   const [isFolderNameEmpty, setIsFolderNameEmpty] = useState(true);
@@ -753,7 +744,7 @@ const SelectInput = ({
             ? setIsDocDrop(!isDocDrop)
             : type === "temps"
             ? setIsTempDrop(!isTempDrop)
-            : console.log("Error at drop button")
+            : ("Error at drop button")
         }
       >
         Select{" "}
@@ -798,7 +789,7 @@ const SelectInput = ({
                         : type === "temps"
                         ? handleTempsChange
                         : () => {
-                            // // console.log('Change not handled');
+                            // // ('Change not handled');
                           }
                     }
                     disabled={

@@ -3,8 +3,6 @@ import { httpApiUrlV2 } from '../httpCommon/httpCommon';
 export class WorkflowSettingServices {
   createWorkflowSettings = (data) => {
     return httpApiUrlV2.post('settings/', data);
-    // return httpApiUrlV2.post('settings/', data);
-    // return httpApiUrlV2.post('workflow_ai_setting/', data);
   };
 
   getWorkflowSettings = (settingId) => {
@@ -29,9 +27,7 @@ export class WorkflowSettingServices {
   // };
 
   updateWorkflowAISettings = (settingId, data) => {
-    // return httpApiUrlV2.put(`settings/${settingId}/`, data);
-    return httpApiUrlV2.put(`settings/64f7b5bcc72975ac5f765d33/`, data);
-    // settings/<str:setting_id> 
+    return httpApiUrlV2.put(`settings/${settingId}/`, data);
   };
 
   getAllTeams = (companyId, dataType) => {
@@ -44,8 +40,5 @@ export class WorkflowSettingServices {
 
   fetchWorkflowSettingsData = (companyId, member) => {
     return httpApiUrlV2.get(`/settings/${companyId}/organisations/?member=${member}/`);
-    // return httpApiUrlV2.get(`settings/${companyId}/organisations/?member=${member}`);
-    // settings/<str:company_id>/organisations/?member="member"
-    // {{base_url}}/settings/:company_id/?created_by
   };
 }

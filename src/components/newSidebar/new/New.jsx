@@ -1,26 +1,24 @@
-import React, { useState } from "react";
-import Collapse from "../../../layouts/collapse/Collapse";
-import styles from "./new.module.css";
-import { v4 as uuidv4 } from "uuid";
-import { FaPlus } from "react-icons/fa";
-import { HashLink } from "react-router-hash-link";
-import { useDispatch, useSelector } from "react-redux";
-import { createTemplate } from "../../../features/template/asyncThunks";
-import {
-  setToggleManageFileForm,
-  settemLoading,
-  settemLoaded,
-} from "../../../features/app/appSlice";
-import { useTranslation } from "react-i18next";
-import { productName } from "../../../utils/helpers";
-import { useAppContext } from "../../../contexts/AppContext";
 import axios from "axios";
+import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
+import { FaPlus } from "react-icons/fa";
+import { useDispatch, useSelector } from "react-redux";
+import { HashLink } from "react-router-hash-link";
 import { toast } from "react-toastify";
+import { v4 as uuidv4 } from "uuid";
+import { useAppContext } from "../../../contexts/AppContext";
+import {
+    setToggleManageFileForm
+} from "../../../features/app/appSlice";
+import { createTemplate } from "../../../features/template/asyncThunks";
+import Collapse from "../../../layouts/collapse/Collapse";
+import { productName } from "../../../utils/helpers";
+import styles from "./new.module.css";
 
 const New = ({ toggleSidebar, isMobile }) => {
   const { userDetail } = useSelector((state) => state.auth);
   const { themeColor, creditResponse } = useSelector((state) => state.app);
-  // // console.log(creditResponse.data.data.api_key)
+  // // (creditResponse.data.data.api_key)
   const dispatch = useDispatch();
   const { t } = useTranslation();
 
@@ -69,13 +67,13 @@ const New = ({ toggleSidebar, isMobile }) => {
         )
         // dispatch(settemLoading(true))
         .then((response) => {
-          if (response.data.success == true) {
+          if (response.data.success === true) {
             dispatch(createTemplate(data));
           }
         })
         // dispatch(settemLoading(false))
         .catch((error) => {
-          // console.log(error.response?.data?.message);
+          // (error.response?.data?.message);
           toast.info(error.response?.data?.message);
         });
     } else {
@@ -119,7 +117,7 @@ const New = ({ toggleSidebar, isMobile }) => {
             <button
               onClick={() => {
                 setShowFoldersActionModal({ state: true, action: "create" });
-                if (isMobile == true) {
+                if (isMobile === true) {
                   toggleSidebar();
                 }
               }}

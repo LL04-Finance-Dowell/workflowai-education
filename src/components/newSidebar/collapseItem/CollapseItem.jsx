@@ -1,18 +1,16 @@
-import { useState } from 'react';
-import styles from './collapseItem.module.css';
-import Collapse from '../../../layouts/collapse/Collapse';
-import { HashLink } from 'react-router-hash-link';
-import { IoMdArrowDropright, IoMdArrowDropdown } from 'react-icons/io';
-import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { detailTemplate } from '../../../features/template/asyncThunks';
-import { detailDocument } from '../../../features/document/asyncThunks';
-import { setToggleManageFileForm } from '../../../features/app/appSlice';
-import { detailWorkflow } from '../../../features/workflow/asyncTHunks';
-import { useDispatch } from 'react-redux';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { IoMdArrowDropdown, IoMdArrowDropright } from 'react-icons/io';
+import { useDispatch } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
+import { HashLink } from 'react-router-hash-link';
 import { useAppContext } from '../../../contexts/AppContext';
+import { setToggleManageFileForm } from '../../../features/app/appSlice';
+import { detailDocument } from '../../../features/document/asyncThunks';
+import { detailTemplate } from '../../../features/template/asyncThunks';
+import { detailWorkflow } from '../../../features/workflow/asyncTHunks';
+import Collapse from '../../../layouts/collapse/Collapse';
+import styles from './collapseItem.module.css';
 
 function ListItem({ item, toggleSidebar, isMobile }) {
   let children = null;
@@ -31,16 +29,16 @@ function ListItem({ item, toggleSidebar, isMobile }) {
   }
 
   const handleLinkItemClick = (e, item) => {
-    // console.log(e, item, "item collapse")
+    // (e, item, "item collapse")
     e.preventDefault();
-    // // console.log("the handle link item click ", item)
+    // // ("the handle link item click ", item)
     if (!item.href) return;
 
     if (item.searchItem && item.itemObj) {
       const searchItemObj = item.itemObj;
-      // // console.log(searchItemObj)
+      // // (searchItemObj)
       if (searchItemObj.document_name) {
-        // // console.log('doc hit')
+        // // ('doc hit')
         dispatch(detailDocument(searchItemObj));
         return;
       }

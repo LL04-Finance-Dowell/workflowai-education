@@ -1,26 +1,22 @@
-import { AiOutlineClose } from "react-icons/ai";
-import styles from "./style.module.css";
-import { toast } from "react-toastify";
-import { useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
-
-
-import React from "react";
-import {
-  FaShareAlt,
-  FaRegCopy,
-} from "react-icons/fa";
+import React, { useState } from "react";
 import { Modal } from 'react-bootstrap';
-import facebook from './../../../../../../assets/facebook.jpg'
-import instagram from './../../../../../../assets/3225191_app_instagram_logo_media_popular_icon.jpg'
-import snapchat from './../../../../../../assets/3225185_app_logo_media_popular_snapchat_icon.jpg'
-import gmail from './../../../../../../assets/7115264_new_logo_gmail_icon.jpg'
-import pinterest from './../../../../../../assets/3225188_app_logo_media_pinterest_popular_icon.jpg'
-import whatsapp from './../../../../../../assets/3225179_app_logo_media_popular_social_icon.jpg'
-import twitter from './../../../../../../assets/3225183_app_logo_media_popular_social_icon.jpg'
-import discord from './../../../../../../assets/resize-17053994161792650344discord.png'
+import { AiOutlineClose } from "react-icons/ai";
+import {
+  FaRegCopy,
+  FaShareAlt,
+} from "react-icons/fa";
+import { useDispatch, useSelector } from "react-redux";
+import { toast } from "react-toastify";
 import { SetArrayofLinks, setLinksFetched, setShowGeneratedLinksPopup } from "../../../../../../features/app/appSlice";
-import { setshowsProcessDetailPopup } from "../../../../../../features/processes/processesSlice";
+import whatsapp from './../../../../../../assets/3225179_app_logo_media_popular_social_icon.jpg';
+import twitter from './../../../../../../assets/3225183_app_logo_media_popular_social_icon.jpg';
+import snapchat from './../../../../../../assets/3225185_app_logo_media_popular_snapchat_icon.jpg';
+import pinterest from './../../../../../../assets/3225188_app_logo_media_pinterest_popular_icon.jpg';
+import instagram from './../../../../../../assets/3225191_app_instagram_logo_media_popular_icon.jpg';
+import gmail from './../../../../../../assets/7115264_new_logo_gmail_icon.jpg';
+import facebook from './../../../../../../assets/facebook.jpg';
+import discord from './../../../../../../assets/resize-17053994161792650344discord.png';
+import styles from "./style.module.css";
 
 
 const GeneratedLinksModal = ({
@@ -31,10 +27,8 @@ const GeneratedLinksModal = ({
   updateCopiedLinks,
   handleCloseBtnClick,
 }) => {
-  const {  ProcessDetail } = useSelector((state) => state.processes);
   const { ArrayofLinks } = useSelector((state) => state.app);
   const dispatch = useDispatch();
-  const { process_title, process_steps } = ProcessDetail;
   const [showModal, setShowModal] = useState(false);
 
   const [copiedStatus, setCopiedStatus] = useState(
@@ -64,9 +58,7 @@ const GeneratedLinksModal = ({
       setCopiedStatus(newerCopiedStatus);
     }, 1000);
   }
-  function handleCloseDetailBtnClick() {
-    dispatch(setshowsProcessDetailPopup(false));
-  }
+
 
   const handleCloseModal = () => {
     setShowModal(false);
@@ -277,7 +269,6 @@ const GeneratedLinksModal = ({
               {ArrayofLinks.map((link, index) => {
                 const linkName = Object.keys(link)[0];
                 const linkUrl = Object.values(link)[0];
-                const isCopied = copiedStatus[index];
                 return (
                   <tr key={index}>
                     <td>{index + 1}</td>

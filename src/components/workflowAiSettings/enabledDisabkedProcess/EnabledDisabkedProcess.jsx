@@ -1,23 +1,23 @@
-import React, { useState, useEffect } from 'react';
-import workflowAiSettingsStyles from '../workflowAiSettings.module.css';
+/* eslint-disable react-hooks/exhaustive-deps */
+import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import SubmitButton from '../../submitButton/SubmitButton';
-import InfoBox from '../../infoBox/InfoBox';
 import { useDispatch, useSelector } from 'react-redux';
+import InfoBox from '../../infoBox/InfoBox';
+import SubmitButton from '../../submitButton/SubmitButton';
+import workflowAiSettingsStyles from '../workflowAiSettings.module.css';
 
-import { v4 as uuidv4 } from 'uuid';
-import { productName, setIsSelected } from '../../../utils/helpers';
-import { WorkflowSettingServices } from '../../../services/workflowSettingServices';
-import { toast } from 'react-toastify';
 import { useTranslation } from 'react-i18next';
+import { toast } from 'react-toastify';
+import { v4 as uuidv4 } from 'uuid';
 import { useAppContext } from '../../../contexts/AppContext';
 import { setPermissionArray, setThemeColor } from '../../../features/app/appSlice';
 import { setColumn, setSettingProccess } from '../../../features/processes/processesSlice';
+import { WorkflowSettingServices } from '../../../services/workflowSettingServices';
+import { productName, setIsSelected } from '../../../utils/helpers';
 
 const EnabledDisabkedProcess = () => {
   const dispatch = useDispatch();
   const { t } = useTranslation();
-  const [fetchedItems, setFetchedItems] = useState([]);
 
   const { column, permissionArray, themeColor } = useSelector(
     (state) => state.app
@@ -53,9 +53,6 @@ const EnabledDisabkedProcess = () => {
   };
 
   const onSubmit = async () => {
- 
-    console.log("userDetail", userDetail)
- 
     const Process = sortData(
       permissionArray[0].children[0]._id,
       permissionArray[0].children[0].column[0]._id,
@@ -169,13 +166,13 @@ const EnabledDisabkedProcess = () => {
     };
 
     try {
-      // console.log(data)
+      // (data)
       setIsUpdating(true);
       await workflowSettingServices.updateWorkflowAISettings(data);
       setThemeColor(data.theme_color);
       toast.success('Updated successfully');
     } catch (e) {
-      // console.log(e);
+      // (e);
       toast.error('Update failed');
     } finally {
       setIsUpdating(false);
@@ -364,7 +361,7 @@ const EnabledDisabkedProcess = () => {
 
 
   // useEffect(() => {
-  //   // console.log('perm Arr: ', permissionArray);
+  //   // ('perm Arr: ', permissionArray);
   // }, [permissionArray]);
 
   return (

@@ -1,4 +1,4 @@
-import { httpApiUrl, httpApiUrlV2 } from "../httpCommon/httpCommon";
+import { httpApiUrlV2 } from "../httpCommon/httpCommon";
 
 export class AppServices {
   getItemsCounts = (data) => {

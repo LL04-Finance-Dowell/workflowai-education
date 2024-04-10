@@ -1,30 +1,28 @@
-import styles from './sectionBox.module.css';
-import maneFilesStyles from '../manageFiles.module.css';
-import BookSpinner from '../../bookSpinner/BookSpinner';
 import { useEffect, useState } from 'react';
+import maneFilesStyles from '../manageFiles.module.css';
+import styles from './sectionBox.module.css';
 
-import { PrimaryButton } from '../../styledComponents/styledComponents';
+import axios from 'axios';
+import { useTranslation } from 'react-i18next';
 import { IoIosRefresh } from 'react-icons/io';
-import { LoadingSpinner } from '../../LoadingSpinner/LoadingSpinner';
 import { useDispatch, useSelector } from 'react-redux';
-import { DocumentServices } from '../../../services/documentServices';
 import { toast } from 'react-toastify';
-import { TemplateServices } from '../../../services/templateServices';
-import { WorkflowServices } from '../../../services/workflowServices';
-import { getAllProcessesV2 } from '../../../services/processServices'; 
+import { useAppContext } from '../../../contexts/AppContext';
+import {
+    SetKnowledgeFolders,
+    setAllProcesses,
+    setNotificationsForUser
+} from '../../../features/app/appSlice';
 import { setAllDocuments } from '../../../features/document/documentSlice';
 import { setAllTemplates } from '../../../features/template/templateSlice';
 import { setAllWorkflows } from '../../../features/workflow/workflowsSlice';
-import { useTranslation } from 'react-i18next';
+import { DocumentServices } from '../../../services/documentServices';
+import { getAllProcessesV2 } from '../../../services/processServices';
+import { TemplateServices } from '../../../services/templateServices';
+import { WorkflowServices } from '../../../services/workflowServices';
 import { productName } from '../../../utils/helpers';
-import { useAppContext } from '../../../contexts/AppContext';
-import {
-  SetKnowledgeFolders
-} from '../../../features/app/appSlice';
-import axios from 'axios';
-import { setAllProcesses } from '../../../features/app/appSlice';
-import { setNotificationsForUser } from '../../../features/app/appSlice';
-import LoadingScreen from "../../LoadingScreen/loadingScreen"
+import LoadingScreen from "../../LoadingScreen/loadingScreen";
+import { LoadingSpinner } from '../../LoadingSpinner/LoadingSpinner';
 
  
 const SectionBox = ({
@@ -93,7 +91,7 @@ const SectionBox = ({
         );
         setCount(count + 1);
       } catch (err) {
-        // console.log(err);
+        // (err);
       } finally {
         setIsDemoLoading(false);
       }
@@ -111,7 +109,7 @@ const SectionBox = ({
   // }, [sliceCount]);
 
   // useEffect(() => {
-  //   // console.log('cardItemsVar: ', cardItemsVar);
+  //   // ('cardItemsVar: ', cardItemsVar);
   // }, [cardItemsVar]);
 
   const handleRefresh = () => {
@@ -174,7 +172,7 @@ const SectionBox = ({
             setRefreshLoading(false);
           })
           .catch((err) => {
-            // // console.log(err, 'Refresh for documents failed');
+            // // (err, 'Refresh for documents failed');
             toast.info('Refresh for documents failed');
             setRefreshLoading(false);
           });
@@ -213,7 +211,7 @@ const SectionBox = ({
             setRefreshLoading(false);
           })
           .catch((err) => {
-            // // console.log(err, 'Refresh for templates failed');
+            // // (err, 'Refresh for templates failed');
             toast.info('Refresh for templates failed');
             setRefreshLoading(false);
           });
@@ -249,7 +247,7 @@ const SectionBox = ({
           setRefreshLoading(false);
         })
         .catch((err) => {
-          // // console.log(err, 'Refresh for workflows failed');
+          // // (err, 'Refresh for workflows failed');
           toast.info('Refresh for workflows failed');
           setRefreshLoading(false);
         });
@@ -268,7 +266,7 @@ const SectionBox = ({
           const savedProcessesInLocalStorage = JSON.parse(
             localStorage.getItem('user-saved-processes')
           );
-          // console.log('the res.data is ', res.data)
+          // ('the res.data is ', res.data)
           if (savedProcessesInLocalStorage) {
             const processes = [
               ...savedProcessesInLocalStorage,
@@ -286,7 +284,7 @@ const SectionBox = ({
           setRefreshLoading(false);
         })
         .catch((err) => {
-          // // console.log(err, 'Refresh for processes failed');
+          // // (err, 'Refresh for processes failed');
           toast.info('Refresh for processes failed');
           setRefreshLoading(false);
         });
@@ -304,7 +302,7 @@ const SectionBox = ({
         axios.get(url)
           .then(response => {
             dispatch(SetKnowledgeFolders(response.data));
-            // console.log('Data:', response.data);
+            // ('Data:', response.data);
             toast.info("page refreshed successfully")
             // Handle the response data
           })
@@ -371,13 +369,13 @@ const SectionBox = ({
               return notification;
             }
           );
-          // // console.log(updatedNotifications);
+          // // (updatedNotifications);
           dispatch(setNotificationsForUser(updatedNotifications));
           toast.success('Successfully refreshed notifications');
           setRefreshLoading(false);
         })
         .catch((err) => {
-          // // console.log(err, 'Refresh for notifications failed');
+          // // (err, 'Refresh for notifications failed');
           toast.info('Refresh for notifications failed');
           setRefreshLoading(false);
         });
@@ -386,9 +384,9 @@ const SectionBox = ({
 
   useEffect(() => {
     setCardItemsVar(cardItems);
-    // console.log("1 mubeen")
+    // ("1 mubeen")
   }, [cardItems]);
-  // console.log('the card items are ', cardItems)
+  // ('the card items are ', cardItems)
 
   const handleFilterChange = (event) => {
     setFilterName(event.target.value);
@@ -417,7 +415,7 @@ const SectionBox = ({
 
   };
 
-  // console.log("cardItemsVar", cardItems)
+  // ("cardItemsVar", cardItems)
 
   return (
     <div className={styles.container}>

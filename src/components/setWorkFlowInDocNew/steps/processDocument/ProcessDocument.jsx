@@ -1,49 +1,38 @@
-import styles from "./processDocument.module.css";
-import { v4 as uuidv4 } from "uuid";
-import { useState, useEffect } from "react";
-import Popup from "../../../Popup/Popup";
-import { useForm } from "react-hook-form";
-import Select from "../../select/Select";
-import { AiOutlineClose } from "react-icons/ai";
-import { useDispatch, useSelector } from "react-redux";
 import axios from "axios";
+import React, { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import { useTranslation } from "react-i18next";
+import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import { v4 as uuidv4 } from "uuid";
 import {
   newProcessActionOptions,
   processActionOptionsWithLinkReturned,
   startNewProcess,
 } from "../../../../services/processServices";
+import { productName } from "../../../../utils/helpers";
+import Popup from "../../../Popup/Popup";
 import ProgressBar from "../../../progressBar/ProgressBar";
-import SelectDoc from "../selectDoc/SelectDoc";
-import React from "react";
-import { useNavigate } from "react-router-dom";
+import Select from "../../select/Select";
 import GeneratedLinksModal from "./components/GeneratedLinksModal/GeneratedLinksModal";
 import SaveConfimationModal from "./components/SaveConfirmationModal/SaveConfirmationModal";
-import { useTranslation } from "react-i18next";
+import styles from "./processDocument.module.css";
 import { extractProcessObj } from "./utils/utils";
-import { productName } from "../../../../utils/helpers";
 
 //import reset copy data 
-import { resetCopyData } from "../../../../features/processCopyReducer";
+import { setPopupIsOpen } from "../../../../features/app/appSlice";
 import { selectedGroupMembers } from "../../../../features/groups/groupsSlice";
+import { resetCopyData } from "../../../../features/processCopyReducer";
 import { setAllProcesses, setAllowErrorChecksStatusUpdateForNewProcess, setNewProcessErrorMessage } from "../../../../features/processes/processesSlice";
-import {  setPopupIsOpen } from "../../../../features/app/appSlice";
 
 const ProcessDocument = ({ savedProcess, Process_title, setProcess_title, addWorkflowStep }) => {
-  // const [ScrollView , SetScrollView] = useState();
-
-  // useEffect(() => {
-  //   setCurrentProcess(processDocument[0]);
-  // }, []);
-
-  ///import which doc or template approval
-  // const whichApproval = useSelector((state)=> state.copyProcess.whichApproval)
   const currentURL = window.location.href;
   const parts = currentURL.split('/');
   const whichApproval = parts[parts.length - 1];
-  const whichApprovalType = whichApproval == 'new-set-workflow-document' ? 'document' : 'template'
+  const whichApprovalType = whichApproval === 'new-set-workflow-document' ? 'document' : 'template'
 
-  // console.log("addWorkflowStepProcess", addWorkflowStep)
+  // ("addWorkflowStepProcess", addWorkflowStep)
 
   useEffect(() => {
     if (!savedProcess) return;
@@ -51,9 +40,6 @@ const ProcessDocument = ({ savedProcess, Process_title, setProcess_title, addWor
     setProcessObjectToSaveTitle(savedProcess.process_title);
   }, [savedProcess]);
 
-  // const handleCurrentProcess = (item) => {
-  //   setCurrentProcess(item);
-  // };
 
   const { register, watch } = useForm();
   const { processOptionSelection } = watch();
@@ -96,7 +82,6 @@ const ProcessDocument = ({ savedProcess, Process_title, setProcess_title, addWor
   const [isLoading, setIsLoading] = useState(false);
 
   const handleProcessBtnClick = async () => {
-    // console.log("processSteps", processSteps[0].steps, docCurrentWorkflow.workflows.workflow_title, ProcessDetail)
     if (!processOptionSelection || processOptionSelection === "Select") return;
     dispatch(resetCopyData())
     if (!userDetail) return;
@@ -154,7 +139,6 @@ const ProcessDocument = ({ savedProcess, Process_title, setProcess_title, addWor
         true,
 
       );
-      console.log("processObjToSave",processObjToSave);
       setProcessObjectToSave(processObjToSave);
       dispatch(setAllowErrorChecksStatusUpdateForNewProcess(true));
       return setShowConfirmationModalForSaveLater(true);
@@ -217,7 +201,7 @@ const ProcessDocument = ({ savedProcess, Process_title, setProcess_title, addWor
     
       })
       .catch((error) => {
-        // console.log(error);
+        // (error);
         toast.info(error.response?.data?.message);
       });
         ///*****************product_service after
@@ -252,7 +236,7 @@ const ProcessDocument = ({ savedProcess, Process_title, setProcess_title, addWor
             })
             .then((data) => {
 
-              // // console.log('Response from the POST request to add to public is :', data);
+              // // ('Response from the POST request to add to public is :', data);
             })
             .catch((error) => {
 
@@ -260,7 +244,7 @@ const ProcessDocument = ({ savedProcess, Process_title, setProcess_title, addWor
             });
         }
         catch (err) {
-          // console.log(err.response)
+          // (err.response)
         }
       }
       if (
@@ -349,7 +333,7 @@ const ProcessDocument = ({ savedProcess, Process_title, setProcess_title, addWor
     }
     else 
     {
-      // console.log("processSteps", processSteps[0].steps, docCurrentWorkflow.workflows.workflow_title, ProcessDetail)
+      // ("processSteps", processSteps[0].steps, docCurrentWorkflow.workflows.workflow_title, ProcessDetail)
 
       const apiUrl = `https://100094.pythonanywhere.com/v2/processes/${ProcessDetail._id}/`;
       // const apiUrl = `https://100094.pythonanywhere.com/v2/processes/64bb6c7c1da82ab75d3c75b8/`;
@@ -431,13 +415,13 @@ const ProcessDocument = ({ savedProcess, Process_title, setProcess_title, addWor
         ]
       };
 
-      // console.log('payload', payload)
+      // ('payload', payload)
 
       // Making a POST request with Axios
       axios.put(apiUrl, payload)
         .then((response) => {
           // Handle the API response here
-          // console.log('API Response:', response.data);
+          // ('API Response:', response.data);
           toast.success("Process Update Successfully")
         })
         .catch((error) => {
@@ -686,7 +670,7 @@ export default ProcessDocument;
 export const proccesses = [
   { id: uuidv4(), option: "Select", actionKey: "Select" },
   {
-    id: crypto.randomUUID(),
+    id: uuidv4(),
     option: "Save and continue later",
     actionKey: "saveAndContinueLater",
   },

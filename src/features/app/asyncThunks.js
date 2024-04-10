@@ -8,10 +8,7 @@ export const getItemsCounts = createAsyncThunk(
   async (data) => {
     try {
       const res = await appServices.getItemsCounts(data);
-
       return res.data;
-    } catch (error) {
-      console.log(error);
-    }
+    } catch (_error) {}
   }
 );

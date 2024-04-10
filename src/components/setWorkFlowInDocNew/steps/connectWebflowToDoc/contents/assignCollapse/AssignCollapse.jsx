@@ -1,17 +1,16 @@
-import React, { useState, useCallback, memo } from 'react';
+import React, { memo, useCallback, useState } from 'react';
 
-import styles from './assignCollapse.module.css';
 import { v4 as uuidv4 } from 'uuid';
-import { useForm } from 'react-hook-form';
+import styles from './assignCollapse.module.css';
 
-import Display from './display/Display';
-import Location from './location/Location';
-import Time from './time/Time';
-import Reminder from './reminder/Reminder';
 import { Collapse } from 'react-bootstrap';
+import { useTranslation } from 'react-i18next';
 import { ImMinus, ImPlus } from 'react-icons/im';
 import { useSelector } from 'react-redux';
-import { useTranslation } from 'react-i18next';
+import Display from './display/Display';
+import Location from './location/Location';
+import Reminder from './reminder/Reminder';
+import Time from './time/Time';
 
 const AssignCollapse = ({ currentStepIndex, stepsPopulated }) => {
   const [asignCollapses, setAssignCollapses] = useState(collapses);

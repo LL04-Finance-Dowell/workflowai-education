@@ -6,14 +6,14 @@ import { productName, setIsSelected } from '../../../utils/helpers';
 import InfoBox from '../../infoBox/InfoBox';
 
 // import { teamsInWorkflowAI } from '../veriables';
-import workflowAiSettingsStyles from '../workflowAiSettings.module.css';
-import { v4 } from 'uuid';
-import { WorkflowSettingServices } from '../../../services/workflowSettingServices';
-import { toast } from 'react-toastify';
-import { useAppContext } from '../../../contexts/AppContext';
-import Spinner from '../../spinner/Spinner';
 import { useTranslation } from 'react-i18next';
+import { toast } from 'react-toastify';
+import { v4 } from 'uuid';
+import { useAppContext } from '../../../contexts/AppContext';
 import { setPortfoliosInWorkflowAITeams, setTeamsInWorkflowAI, setUpdateInWorkflowAITeams } from '../../../features/processes/processesSlice';
+import { WorkflowSettingServices } from '../../../services/workflowSettingServices';
+import Spinner from '../../spinner/Spinner';
+import workflowAiSettingsStyles from '../workflowAiSettings.module.css';
 
 // TODO FIX ADDITION OF NEW TEAM TO 'workflowTeams' 132.
 const TeamsInWorkflowAi = () => {
@@ -145,7 +145,7 @@ const TeamsInWorkflowAi = () => {
           ];
         });
       } catch (err) {
-        // console.log(err);
+        // (err);
         toast.error('Team not created');
         setIsCreatingTeam(false);
       }
@@ -298,7 +298,7 @@ const TeamsInWorkflowAi = () => {
     } catch (error) {
       setIsUpdatingTeam(false);
       toast.error('Updating failed!');
-      // console.log(error);
+      // (error);
     }
   };
 

@@ -1,21 +1,22 @@
-import ConnectWorkFlowToDoc from './steps/connectWebflowToDoc/ConnectWorkFlowToDoc';
-import SelectDoc from './steps/selectDoc/SelectDoc';
-import SelectWorkflow from './steps/selectWorkflow/SelectWorkflow';
-import styles from './setWorkflowInDoc.module.css';
-import CheckErrors from './steps/checkErrors/CheckErrors';
-import ProcessDocument from './steps/processDocument/ProcessDocument';
 import ProcessName from '../setWorkFlowInDocNew/steps/setProcessName/ProcessName';
 import ContentMapOfDoc from './contentMapOfDoc/ContentMapOfDoc';
+import styles from './setWorkflowInDoc.module.css';
+import CheckErrors from './steps/checkErrors/CheckErrors';
+import ConnectWorkFlowToDoc from './steps/connectWebflowToDoc/ConnectWorkFlowToDoc';
+import ProcessDocument from './steps/processDocument/ProcessDocument';
+import SelectDoc from './steps/selectDoc/SelectDoc';
+import SelectWorkflow from './steps/selectWorkflow/SelectWorkflow';
 
-import WorkflowLayout from '../../layouts/WorkflowLayout/WorkflowLayout';
 import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { setContentOfDocument } from '../../features/document/documentSlice';
-import { getContinents } from '../../services/locationServices';
-import { 
+import {
     resetSetWorkflows,
     setContinents,
-    setContinentsLoaded, } from '../../features/processes/processesSlice';
+    setContinentsLoaded,
+} from '../../features/processes/processesSlice';
+import WorkflowLayout from '../../layouts/WorkflowLayout/WorkflowLayout';
+import { getContinents } from '../../services/locationServices';
 
 
 const SetWorkflowInDoc = () => {
@@ -41,7 +42,7 @@ const SetWorkflowInDoc = () => {
         dispatch(setContinentsLoaded(true));
       })
       .catch((err) => {
-        // console.log(err, 'Failed to fetch continents');
+        // (err, 'Failed to fetch continents');
         dispatch(setContinentsLoaded(true));
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps

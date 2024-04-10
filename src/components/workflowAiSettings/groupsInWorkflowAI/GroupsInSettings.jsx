@@ -1,46 +1,24 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import React, { useEffect, useMemo, useState } from "react";
-import InfoBox from "../../infoBox/InfoBox";
-import { v4 as uuidv4 } from "uuid";
 import { useForm } from "react-hook-form";
-import workflowAiSettingsStyles from "../workflowAiSettings.module.css";
 import { useTranslation } from "react-i18next";
+import { useDispatch, useSelector } from "react-redux";
+import { v4 as uuidv4 } from "uuid";
 import { useAppContext } from "../../../contexts/AppContext";
+import { getGroups } from "../../../features/groups/groupThunk";
 import {
   createGroupInsertId,
   selectAllGroups,
-  updateGroupFlag,
-  updateGroupsStatus,
+  updateGroupFlag
 } from "../../../features/groups/groupsSlice";
-import { useDispatch, useSelector } from "react-redux";
-import { getGroups } from "../../../features/groups/groupThunk";
+import InfoBox from "../../infoBox/InfoBox";
+import workflowAiSettingsStyles from "../workflowAiSettings.module.css";
 
-const selectedteams = [
-  {
-    _id: uuidv4(),
-    _mId: uuidv4(),
-    content: {
-      content: "Testing new team",
-      title: "Name",
-    },
-  },
-  {
-    _id: uuidv4(),
-    _mId: uuidv4(),
-    content: {
-      content: "123566",
-      title: "code",
-    },
-  },
-];
 
 const GroupsInSettings = () => {
   const dispatch = useDispatch();
 
-  const { workflowTeams, workflowTeamsLoaded, isAssignTask } = useAppContext();
-
-  const { teamsInWorkflowAI, permissionArray } = useSelector(
-    (state) => state.app
-  );
+  const { workflowTeams, workflowTeamsLoaded } = useAppContext();
   const { isDesktop, nonDesktopStyles } = useAppContext();
 
   const { t } = useTranslation();
@@ -58,11 +36,11 @@ const GroupsInSettings = () => {
   const [groupData, setGroupData] = useState([]);
   const [teamData, setTeamData] = useState([]);
   const [publicData, setTPublicData] = useState([]);
-  const [selectedTeamId, setSelectedTeamId] = useState("");
+  const [ setSelectedTeamId] = useState("");
   const [selectedGroupEdit, setSelectedGroupEdit] = useState();
   const [selectedGroup, setSelectedgroup] = useState("");
   const [isOpen, setIsOpen] = useState(false);
-  const [handleChangeParams, setHandleChangeParams] = useState([]);
+  const [ setHandleChangeParams] = useState([]);
 
   const [groupsInWorkflowAI, setGroupsInWorkflowAI] = useState();
 
@@ -152,7 +130,7 @@ const GroupsInSettings = () => {
   }, [workflowTeams, workflowTeamsLoaded]);
 
   const handleOnChange = ({ item, title, boxId, type }, e) => {
-    // console.log("e.target.name",e.target.value);
+    // ("e.target.name",e.target.value);
     if (e.target.name === "Groups") {
       setIsOpen(true);
 
@@ -180,7 +158,7 @@ const GroupsInSettings = () => {
   };
 
   const handleUpdateTeam = (teamInfo) => {
-    console.log("teamInfo", teamInfo);
+
   };
 
   const groupsInWo = useMemo(() => {

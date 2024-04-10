@@ -1,8 +1,7 @@
-import React, { useState } from 'react';
-import { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
-import CollapseItem from '../collapseItem/CollapseItem';
 import { v4 as uuidv4 } from 'uuid';
+import CollapseItem from '../collapseItem/CollapseItem';
 import sidebarStyles from '../sidebar.module.css';
 
 import { useTranslation } from 'react-i18next';
@@ -176,7 +175,7 @@ const Reports = () => {
   }, [itemsCountToDisplay]);
 
   // useEffect(() => {
-  //   // console.log('test: ', test);
+  //   // ('test: ', test);
   // }, [test]);
 
   return (

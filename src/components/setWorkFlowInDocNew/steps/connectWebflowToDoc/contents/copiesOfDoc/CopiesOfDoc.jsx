@@ -1,15 +1,15 @@
 import React, { useEffect, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { useDispatch, useSelector } from 'react-redux';
+import { v4 as uuidv4 } from 'uuid';
+import AssignButton from '../../../../assignButton/AssignButton';
 import FormLayout from '../../../../formLayout/FormLayout';
 import globalStyles from '../../connectWorkFlowToDoc.module.css';
 import styles from './copiesOdDoc.module.css';
-import { v4 as uuidv4 } from 'uuid';
-import { useForm } from 'react-hook-form';
-import AssignButton from '../../../../assignButton/AssignButton';
-import { useDispatch, useSelector } from 'react-redux';
 
-import { LoadingSpinner } from '../../../../../LoadingSpinner/LoadingSpinner';
 import { useTranslation } from 'react-i18next';
 import { updateSingleProcessStep } from '../../../../../../features/processes/processesSlice';
+import { LoadingSpinner } from '../../../../../LoadingSpinner/LoadingSpinner';
 
 const CopiesOfDoc = ({ currentStepIndex, stepsPopulated }) => {
   const {
@@ -39,7 +39,7 @@ const CopiesOfDoc = ({ currentStepIndex, stepsPopulated }) => {
     if (copiesFeaturesSet) return;
 
     const currentCopies = copiesFeaturesToDisplay.slice();
-    // // console.log('the currentDocToWfs is ',currentDocToWfs)
+    // // ('the currentDocToWfs is ',currentDocToWfs)
     const singleCopyOfCurrentDocument = {
       id: currentDocToWfs?._id,
       feature: currentDocToWfs?.document_name ? currentDocToWfs?.document_name  : currentDocToWfs?.template_name,

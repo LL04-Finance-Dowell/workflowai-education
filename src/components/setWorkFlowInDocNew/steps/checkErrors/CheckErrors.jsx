@@ -1,26 +1,22 @@
-import styles from './checkErrors.module.css';
-import Select from '../../select/Select';
-import SelectDoc from '../selectDoc/SelectDoc';
-import { v4 as uuidv4 } from 'uuid';
+import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { useEffect, useState } from 'react';
-import { PrimaryButton } from '../../../styledComponents/styledComponents';
-import InfoBox from '../../../infoBox/InfoBox';
+import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
-import ProgressBar from '../../../progressBar/ProgressBar';
 import { toast } from 'react-toastify';
-import Popup from '../../../Popup/Popup';
-import React from 'react';
+import { v4 as uuidv4 } from 'uuid';
+import InfoBox from '../../../infoBox/InfoBox';
+import ProgressBar from '../../../progressBar/ProgressBar';
+import { PrimaryButton } from '../../../styledComponents/styledComponents';
+import Select from '../../select/Select';
 import {
   limitTaskTo,
   rights,
   taskType,
 } from '../connectWebflowToDoc/contents/selectMembersToAssign/assignTask/AssignTask';
-import { useTranslation } from 'react-i18next';
-
-import { extractProcessObjChecker } from './utils';
+import styles from './checkErrors.module.css';
 import { selectedGroupMembers } from '../../../../features/groups/groupsSlice';
 import { setErrorsCheckedInNewProcess } from '../../../../features/processes/processesSlice';
+import { extractProcessObjChecker } from './utils';
 
 const CheckErrors = () => {
   const { t } = useTranslation();
@@ -39,9 +35,6 @@ const CheckErrors = () => {
     allowErrorChecksStatusUpdateForNewProcess,
     newProcessErrorMessage,
   } = useSelector((state) => state.processes);
-  const {
-    popupIsOpen,
-  } = useSelector((state) => state.app);
   const [workflowItemsToDisplay, setWorkflowItemsToDisplay] = useState([]);
   const [sortItemActive, setSortItemActive] = useState(null);
   const [sortLoading, setSortLoading] = useState(false);
@@ -163,7 +156,7 @@ const CheckErrors = () => {
     tableOfContentForStep,
 
   ]);
-// console.log('the process steps: ', processSteps)
+// ('the process steps: ', processSteps)
   const handleSortProcess = async() => {
     if (!userDetail) return;
     if (!currentDocToWfs) {

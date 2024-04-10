@@ -1,47 +1,43 @@
-import React from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { json, useNavigate } from 'react-router-dom';
-import { toast } from 'react-toastify';
-import { setEditorLink } from '../../../features/app/appSlice';
-import HoverCard from '../HoverCard';
-import { Button } from '../styledComponents';
-import { detailDocument, documentReport } from '../../../features/document/asyncThunks';
-import { useState } from 'react';
 import axios from 'axios';
-import { LoadingSpinner } from '../../LoadingSpinner/LoadingSpinner';
-import {
-  verifyProcessForUser,
-  getVerifiedProcessLink,
-} from '../../../services/processServices';
+import React, { useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
 import { useAppContext } from '../../../contexts/AppContext';
 import {
-  SetShowDocumentReport,
-  SetSingleDocument
-} from "../../../features/app/appSlice";
+    SetShowDocumentReport,
+    SetSingleDocument, setEditorLink
+} from '../../../features/app/appSlice';
+import { detailDocument, documentReport } from '../../../features/document/asyncThunks';
+import {
+    getVerifiedProcessLink,
+    verifyProcessForUser,
+} from '../../../services/processServices';
+import { LoadingSpinner } from '../../LoadingSpinner/LoadingSpinner';
+import HoverCard from '../HoverCard';
+import { Button } from '../styledComponents';
 
-import {
-  addNewFavoriteForUser,
-  deleteFavoriteForUser,
-} from '../../../services/favoritesServices';
-import { RiDeleteBin6Line } from 'react-icons/ri';
-import { moveItemToArchive } from '../../../services/archiveServices';
-import { setAllDocuments } from '../../../features/document/documentSlice';
-import { BsBookmark, BsFillBookmarkFill, BsArrowBarRight } from 'react-icons/bs';
-import {
-  extractTokenFromVerificationURL,
-  productName,
-  updateVerificationDataWithTimezone,
-} from '../../../utils/helpers';
 import { useTranslation } from 'react-i18next';
-import { DocumentServices } from '../../../services/documentServices';
-import { MdOutlineFiberNew } from 'react-icons/md';
+import { BsArrowBarRight, BsBookmark, BsFillBookmarkFill } from 'react-icons/bs';
 import { IoIosRefresh } from 'react-icons/io';
+import { MdOutlineFiberNew } from 'react-icons/md';
+import { RiDeleteBin6Line } from 'react-icons/ri';
 import { Tooltip } from 'react-tooltip';
+import { setAllDocuments } from '../../../features/document/documentSlice';
+import { moveItemToArchive } from '../../../services/archiveServices';
+import { DocumentServices } from '../../../services/documentServices';
+import {
+    addNewFavoriteForUser,
+    deleteFavoriteForUser,
+} from '../../../services/favoritesServices';
+import {
+    extractTokenFromVerificationURL,
+    productName,
+    updateVerificationDataWithTimezone,
+} from '../../../utils/helpers';
 
-import AddRemoveBtn from '../AddRemoveBtn';
 import PdfViewer from '../../documentViewer/PdfViewer';
-import html2canvas from 'html2canvas';
-import jsPDF from 'jspdf';
+import AddRemoveBtn from '../AddRemoveBtn';
 
 const DocumentCard = ({
   cardItem,
@@ -82,7 +78,7 @@ const DocumentCard = ({
 
 
 
-  // console.log("cardItem", cardItem, isReport)
+  // ("cardItem", cardItem, isReport)
 
   const handleFavoritess = async (item, actionType) => {
     /*  const data = {
@@ -90,7 +86,7 @@ const DocumentCard = ({
       type: "document",
     };
     dispatch(handleFavorites(data)); */
-    // // console.log('the data to be bookmarked is ', item)
+    // // ('the data to be bookmarked is ', item)
     if (actionType === 'add') {
       addToFavoritesState('documents', {
         ...item,
@@ -169,7 +165,7 @@ const DocumentCard = ({
   };
 
   const handleDetailDocumnet = async (item) => {
-    // console.log("handle detail doc hit ", item)
+    // ("handle detail doc hit ", item)
     if (dataLoading) return;
     if (documentLoading)
       return toast.info('Please wait for this document to be refreshed first');
@@ -189,7 +185,7 @@ const DocumentCard = ({
         /*  dispatch(setEditorLink(response)); */
 
         // setDataLoading(false);
-        console.log("response", response, item)
+        ("response", response, item)
         handleGoToEditor(response, item);
       } catch (error) {
         setDataLoading(false);
@@ -225,7 +221,7 @@ const DocumentCard = ({
       return
     }
 
-    console.log("data", data)
+    ("data", data)
     dispatch(detailDocument(data));
   };
 
@@ -235,22 +231,22 @@ const DocumentCard = ({
   };
 
   const viewAsPDF = async (item) => {
-    console.log("view as Preview")
+    ("view as Preview")
     setPdfUrl('https://dowellfileuploader.uxlivinglab.online/view-pdf/Morvin%20Nov%20Inv<br>.pdf');
     // setPdfUrl(pdfUrl);
     setOpenPdfDrawer(!openPdfDrawer);
   };
 
   const viewAsPdfLink = async (url) => {
-    console.log("view as Preview", url)
+    ("view as Preview", url)
     // setPdfUrl('https://dowellfileuploader.uxlivinglab.online/view-pdf/Morvin%20Nov%20Inv<br>.pdf');
     // setPdfUrl(url);
     setOpenPdfDrawer(!openPdfDrawer);
-    console.log("pdfUrl, openpdfDrawer", openPdfDrawer, pdfUrl)
+    ("pdfUrl, openpdfDrawer", openPdfDrawer, pdfUrl)
   };
 
   const handleShowDocument = async (item) => {
-    console.log("itemhandleMubeen", item)
+    ("itemhandleMubeen", item)
     dispatch(SetSingleDocument(item));
     getDocumentDetail(item.collection_id)
     // navigate("/documents/document-detail");
@@ -267,7 +263,7 @@ const DocumentCard = ({
         navigate("/documents/document-detail");
       })
       .catch((error) => {
-        // console.log(error);
+        // (error);
         toast.info("Failed to fetch Document details");
       });
   }
@@ -341,7 +337,7 @@ const DocumentCard = ({
       setDataLoading(false);
       dispatch(setEditorLink(response));
     } catch (err) {
-      // // console.log(err.response ? err.response.data : err.message);
+      // // (err.response ? err.response.data : err.message);
       setDataLoading(false);
       toast.info(
         err.response
@@ -354,7 +350,7 @@ const DocumentCard = ({
   };
 
   const handleFetchNewDocumentDetail = async (documentId) => {
-    // console.log("chkeinggggggggg")
+    // ("chkeinggggggggg")
     if (documentLoading) return;
     if (dataLoading)
       return toast.info('Please wait for this document to open first');
@@ -378,14 +374,14 @@ const DocumentCard = ({
 
       setDocumentLoading(false);
     } catch (error) {
-      // // console.log(error.response ? error.response.data : error.message);
+      // // (error.response ? error.response.data : error.message);
       toast.info('Refresh for document failed');
       setDocumentLoading(false);
     }
   };
 
   const generatePdfLink = async (item) => {
-    console.log("cardItem", item);
+    ("cardItem", item);
     const apiUrl = 'https://100058.pythonanywhere.com/api/generate-pdf-link/';
     const collectionId = item?.collection_id || "653b5ba638ec7dcbdb556a38";
 
@@ -393,7 +389,7 @@ const DocumentCard = ({
     const storedData = localStorage.getItem(collectionId);
     if (storedData) {
       const storedJson = JSON.parse(storedData);
-      console.log('Using cached PDF link:', storedJson.download_url);
+      ('Using cached PDF link:', storedJson.download_url);
       setPdfUrlLink(storedJson.download_url);
       viewAsPdfLink(storedJson.download_url);
       toast.info('PDF loaded from cache successfully');
@@ -406,11 +402,11 @@ const DocumentCard = ({
       // item_id: "653b5ba638ec7dcbdb556a38",
     };
 
-    console.log("generate pdf link", apiUrl, payload)
+    ("generate pdf link", apiUrl, payload)
     await axios.post(apiUrl, payload)
       .then((response) => {
         // Handle the API response here
-        console.log('Pdf generated successfully', response);
+        ('Pdf generated successfully', response);
         setPdfUrlLink(response.data.download_url);
         localStorage.setItem(item?.collection_id, JSON.stringify({ download_url: response.data.download_url }));
         // Assuming response.data contains the PDF link
@@ -432,7 +428,7 @@ const DocumentCard = ({
   //     return;
   //   }
   //   debugger
-  //   console.log("jsonData", jsonData)
+  //   ("jsonData", jsonData)
   //   // Convert JSON data into HTML content
   //   const htmlContent = jsonData[1]?.map(item => {
   //     if (item.id.includes('t')) {
@@ -450,7 +446,7 @@ const DocumentCard = ({
   //     }
   //   }).join('');
 
-  //   console.log("htmlContent", htmlContent)
+  //   ("htmlContent", htmlContent)
 
   //   const pdf = new jsPDF('p', 'pt', 'a4');
   //   const pageHeight = pdf.internal.pageSize.getHeight();
@@ -475,7 +471,7 @@ const DocumentCard = ({
   //   const collection_id = item.collection_id;
 
   //   const contentOfDocument = await documentServices.contentDocument(collection_id, item);
-  //   console.log("contentOfDocument in pdf", contentOfDocument.data[0]);
+  //   ("contentOfDocument in pdf", contentOfDocument.data[0]);
   //   const jsonData = contentOfDocument.data[0];
 
   //   // generatePdfContent("data")

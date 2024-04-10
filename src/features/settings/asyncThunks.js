@@ -1,12 +1,11 @@
-import { createAsyncThunk } from '@reduxjs/toolkit';
-import { WorkflowSettingServices } from '../../services/workflowSettingServices';
-import { setUpdateProccessApi } from '../processes/processesSlice';
-
+import { createAsyncThunk } from "@reduxjs/toolkit";
+import { WorkflowSettingServices } from "../../services/workflowSettingServices";
+import { setUpdateProccessApi } from "../processes/processesSlice";
 
 const workflowSettingServices = new WorkflowSettingServices();
 
 export const createWorkflowSettings = createAsyncThunk(
-  'settings/create',
+  "settings/create",
   async (data, thunkAPI) => {
     try {
       const res = await workflowSettingServices.createWorkflowSettings(data);
@@ -18,34 +17,28 @@ export const createWorkflowSettings = createAsyncThunk(
 
         return res.data;
       }
-    } catch (error) {
-      console.log(error);
-    }
+    } catch (_error) {}
   }
 );
 
 export const getWorkflowSettings = createAsyncThunk(
-  'settings/get',
+  "settings/get",
   async (data) => {
     try {
       const res = await workflowSettingServices.getWorkflowSettings(data);
 
       return res.data;
-    } catch (error) {
-      console.log(error);
-    }
+    } catch (_error) {}
   }
 );
 
 export const updateWorkflowSettings = createAsyncThunk(
-  'settings/update',
+  "settings/update",
   async (data) => {
     try {
       const res = await workflowSettingServices.updateWorkflowSettings(data);
 
       return res.data;
-    } catch (error) {
-      console.log(error);
-    }
+    } catch (_error) {}
   }
 );

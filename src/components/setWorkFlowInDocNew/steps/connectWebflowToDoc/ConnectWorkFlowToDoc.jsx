@@ -4,19 +4,21 @@ import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import Dropdown from './dropdown/Dropdown';
 
+import React from 'react';
+import { useForm } from 'react-hook-form';
+import { useTranslation } from 'react-i18next';
+import {
+    setProcessSteps,
+    setSavedProcessConfigured,
+    updateSingleProcessStep,
+} from '../../../../features/processes/processesSlice';
 import BookSpinner from '../../../bookSpinner/BookSpinner';
 import { PrimaryButton } from '../../../styledComponents/styledComponents';
-import { useForm } from 'react-hook-form';
-import CopiesOfDoc from './contents/copiesOfDoc/CopiesOfDoc';
-import AssignDocumentMap from './contents/assignDocumentMap/AssignDocumentMap';
-import SelectMembersToAssign from './contents/selectMembersToAssign/SelectMembersToAssign';
 import AssignCollapse from './contents/assignCollapse/AssignCollapse';
-import React from 'react';
-import { useTranslation } from 'react-i18next';
+import AssignDocumentMap from './contents/assignDocumentMap/AssignDocumentMap';
+import CopiesOfDoc from './contents/copiesOfDoc/CopiesOfDoc';
+import SelectMembersToAssign from './contents/selectMembersToAssign/SelectMembersToAssign';
 import AssignTask from './contents/selectMembersToAssign/assignTask/AssignTask';
-import {   setProcessSteps,
-  setSavedProcessConfigured,
-  updateSingleProcessStep, } from '../../../../features/processes/processesSlice';
 
 const ConnectWorkFlowToDoc = ({ stepsPopulated, savedProcessSteps, addWorkflowStep }) => {
   const { register } = useForm();
@@ -26,7 +28,7 @@ const ConnectWorkFlowToDoc = ({ stepsPopulated, savedProcessSteps, addWorkflowSt
 
     ////copied process
     const copiedProcess = useSelector((state) => state.copyProcess.processStep);
-  // // console.log('the copied procesSteps are ', copiedProcess)
+  // // ('the copied procesSteps are ', copiedProcess)
   const { docCurrentWorkflow, processSteps,savedProcessConfigured } = useSelector(
     (state) => state.processes
   );
@@ -205,7 +207,7 @@ const ConnectWorkFlowToDoc = ({ stepsPopulated, savedProcessSteps, addWorkflowSt
   };
 
   const handleResetStepAndSuccessors = (indexPassed) => {
-    // console.log('resetting...');
+    // ('resetting...');
   };
 
   const handleSetStepAndProceedToNext = (
@@ -230,7 +232,7 @@ const ConnectWorkFlowToDoc = ({ stepsPopulated, savedProcessSteps, addWorkflowSt
       if (foundNextStepElem) foundNextStepElem.scrollIntoView();
     }
   };
-// console.log("the stepsPopulated are ", stepsPopulated)
+// ("the stepsPopulated are ", stepsPopulated)
   return (
     <>
       <div className={styles.container}>

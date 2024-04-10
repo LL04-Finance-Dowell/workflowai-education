@@ -1,21 +1,21 @@
-import React, { useEffect, useRef } from 'react';
+/* eslint-disable react-hooks/exhaustive-deps */
+import React, { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import Radio from '../../../../radio/Radio';
-import styles from './selectMembersToAssign.module.css';
-import { v4 as uuidv4 } from 'uuid';
-import { useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { Tooltip } from 'react-tooltip';
-import useClickInside from '../../../../../../hooks/useClickInside';
-import { toast } from 'react-toastify';
-import { useAppContext } from '../../../../../../contexts/AppContext';
-import { LoadingSpinner } from '../../../../../LoadingSpinner/LoadingSpinner';
 import { useTranslation } from 'react-i18next';
+import { useDispatch, useSelector } from 'react-redux';
+import ReactSelect from 'react-select';
+import { toast } from 'react-toastify';
+import { Tooltip } from 'react-tooltip';
+import { v4 as uuidv4 } from 'uuid';
+import { useAppContext } from '../../../../../../contexts/AppContext';
 import CreateGroup from '../../../../../../features/groups/CreateGroup/CreateGroup';
 import { getGroups } from '../../../../../../features/groups/groupThunk';
 import { createGroupInsertId, selectAllGroups, setSelectedGroupsMembers } from '../../../../../../features/groups/groupsSlice';
-import ReactSelect from 'react-select';
 import { removeFromPublicMembersSelectedForProcess, removeFromTeamMembersSelectedForProcess, removeFromTeamsSelectedSelectedForProcess, removeFromUserMembersSelectedForProcess, resetPublicMembersSelectedForProcess, setInBatchPublicMembersSelectedForProcess, setPublicMembersSelectedForProcess, setTeamMembersSelectedForProcess, setTeamsSelectedSelectedForProcess, setUserMembersSelectedForProcess } from '../../../../../../features/processes/processesSlice';
+import useClickInside from '../../../../../../hooks/useClickInside';
+import { LoadingSpinner } from '../../../../../LoadingSpinner/LoadingSpinner';
+import Radio from '../../../../radio/Radio';
+import styles from './selectMembersToAssign.module.css';
 
 
 const SelectMembersToAssign = ({
@@ -80,7 +80,7 @@ const SelectMembersToAssign = ({
   const [totalPublicVal, setTotalPublicVal] = useState(current.portfolios.filter((item) => !usedId.some((link) => link?.member === item?.member)).length)
 
   const handleSetCurrent = (item) => {
-    // console.log('handlesetcurrent is ', item)
+    // ('handlesetcurrent is ', item)
     setCurrent(item);
   };
   const handleOverlayModal = (item) => {
@@ -121,17 +121,17 @@ const SelectMembersToAssign = ({
  
     switch (current.header) {
       case 'Team':
-        // console.log('ENTERED TEAM');
+        // ('ENTERED TEAM');
         const teamNum = teamMembersSelectedForProcess.filter(item => item?.stepIndex === currentStepIndex )
         setSelectionCount(teamNum.length)
         break;
       case 'Users':
-        // console.log('ENTERED USER');
+        // ('ENTERED USER');
         const userNum = userMembersSelectedForProcess.filter(item => item?.stepIndex === currentStepIndex )
         setSelectionCount(userNum.length)
         break
       case 'Public':
-        // console.log('ENTERED PUBLIC');
+        // ('ENTERED PUBLIC');
         const publicNum = publicMembersSelectedForProcess.filter(item => item?.stepIndex === currentStepIndex )
         setSelectionCount(publicNum.length)
         break
@@ -140,14 +140,9 @@ const SelectMembersToAssign = ({
     }
 
 
-
   }, [teamMembersSelectedForProcess,
     userMembersSelectedForProcess,
     publicMembersSelectedForProcess, current.header,currentStepIndex])
-
-
-
-
     useEffect(() => {
       if (selectedMembersSet || !workflowTeamsLoaded ) return;
   
@@ -199,7 +194,7 @@ const SelectMembersToAssign = ({
               ...extractAndFormatPortfoliosForMembers('team_member'),
               ...extractAndFormatPortfoliosForMembers('owner')
             ];
-              // console.log('the team portfolio issss', member.portfolios)
+              // ('the team portfolio issss', member.portfolios)
             member.teams = workflowTeams?.filter(
               (team) => team.team_type === 'team'
             );

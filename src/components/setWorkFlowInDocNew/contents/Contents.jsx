@@ -1,14 +1,14 @@
 // ? Ln 257 <span> used instead of <button> (style conflict) and <a> (ESLint prompts)
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { AiOutlineCloseCircle } from 'react-icons/ai';
 import { useDispatch, useSelector } from 'react-redux';
 
-import styles from './contents.module.css';
-import { Tooltip } from 'react-tooltip';
 import { toast } from 'react-toastify';
-import ContentPagination from './contentPagination/ContentPagination';
-import { removeFromTableOfContentForStep, setTableOfContentForStep } from '../../../features/processes/processesSlice';
+import { Tooltip } from 'react-tooltip';
 import { updateSingleTableOfContentRequiredStatus } from '../../../features/app/appSlice';
+import { removeFromTableOfContentForStep, setTableOfContentForStep } from '../../../features/processes/processesSlice';
+import ContentPagination from './contentPagination/ContentPagination';
+import styles from './contents.module.css';
 
 const Contents = ({
   contents,
@@ -40,7 +40,7 @@ const Contents = ({
   }; */
 
   const handleContentSelection = (valueAsJSON, contentPage) => {
-    // // console.log('the valueAsJSON, contentPage are ',valueAsJSON, contentPage)
+    // // ('the valueAsJSON, contentPage are ',valueAsJSON, contentPage)
     const contentStepAlreadyAdded = tableOfContentForStep.find(
       (step) =>
         step.workflow === docCurrentWorkflow._id &&

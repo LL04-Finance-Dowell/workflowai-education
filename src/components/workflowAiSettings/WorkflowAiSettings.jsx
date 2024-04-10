@@ -4,19 +4,16 @@ import { useSelector } from 'react-redux';
 import styled from 'styled-components';
 import InfoBox from '../infoBox/InfoBox';
 
+import { useAppContext } from '../../contexts/AppContext';
+import NameChangeModal from '../modal/NameChangeModal';
+import Sidebar from '../newSidebar/Sidebar';
 import EnabledDisabkedProcess from './enabledDisabkedProcess/EnabledDisabkedProcess';
 import EnabledProcess from './enabledProcess/EnabledProcess';
+import GroupsInSettings from './groupsInWorkflowAI/GroupsInSettings';
 import TeamsInWorkflowAi from './teamInWorkflowAi/TeamsInWorkflowAi';
 import Themes from './themes/Themes';
 import { workflowAiSettingsArray } from './veriables';
 import styles from './workflowAiSettings.module.css';
-import { ImHome3 } from 'react-icons/im';
-import { Link } from 'react-router-dom';
-import { useAppContext } from '../../contexts/AppContext';
-import { useTranslation } from 'react-i18next';
-import NameChangeModal from '../modal/NameChangeModal';
-import Sidebar from '../newSidebar/Sidebar';
-import GroupsInSettings from './groupsInWorkflowAI/GroupsInSettings';
 
 
 const Container = styled.div`
@@ -26,7 +23,6 @@ const Container = styled.div`
 `;
 
 const WorkflowAiSettings = () => {
-  const { t } = useTranslation();
 
   const { themeColor } = useSelector((state) => state.app);
 

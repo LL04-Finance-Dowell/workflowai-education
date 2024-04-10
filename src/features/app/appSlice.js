@@ -1,16 +1,11 @@
-import { createSlice } from '@reduxjs/toolkit';
-import { v4 as uuidv4 } from 'uuid';
-import { getItemsCounts } from './asyncThunks';
-import {
-  permissionArray,
-
-} from '../../components/workflowAiSettings/veriables';
+import { createSlice } from "@reduxjs/toolkit";
+import { permissionArray } from "../../components/workflowAiSettings/veriables";
+import { getItemsCounts } from "./asyncThunks";
 
 const initialState = {
   errorMessage: null,
   itemsCount: null,
-  itemsCountStatus: 'idle',
-  errorMessage: null,
+  itemsCountStatus: "idle",
   toggleManageFileForm: false,
   currentWorkflow: null,
   editorLink: null,
@@ -18,12 +13,12 @@ const initialState = {
   selectedWorkflowsToDoc: [],
   currentDocToWfs: null,
   tableOfContentForStep: [],
-  themeColor: '#61CE70',
+  themeColor: "#61CE70",
   permissionArray,
   column: [],
-  IconColor: '',
-  currentMessage:'',   
-  creditResponse:[],                           
+  IconColor: "",
+  currentMessage: "",
+  creditResponse: [],
   userDetailPosition: null,
   languageSelectPosition: null,
   temLoading: false,
@@ -33,26 +28,26 @@ const initialState = {
   ShowDocumentReport: [],
   SingleDocument: [],
   KnowledgeFolders: [],
-  DocumentId: '',
+  DocumentId: "",
   KnowledgeFolderTemplates: [],
   linksFetched: false,
-  DetailFetched:false,
+  DetailFetched: false,
   showGeneratedLinksPopup: false,
-  popupIsOpen:false,
+  popupIsOpen: false,
   legalStatusLoading: true,
   showLegalStatusPopup: false,
   legalTermsAgreed: false,
-  dateAgreedToLegalStatus: '',
+  dateAgreedToLegalStatus: "",
   legalArgeePageLoading: false,
   adminUser: false,
   adminUserPortfolioLoaded: false,
   selectedPortfolioTypeForWorkflowSettings: null,
   showApiKeyFetchFailureModal: false,
-  apiKeyFetchFailureMessage: '',
+  apiKeyFetchFailureMessage: "",
 };
 
 export const appSlice = createSlice({
-  name: 'app',
+  name: "app",
   initialState,
   reducers: {
     setToggleManageFileForm: (state, action) => {
@@ -66,9 +61,8 @@ export const appSlice = createSlice({
     },
     setError: (state, action) => {
       state.errorMessage = action.payload;
-
     },
-  
+
     removeFromSelectedWorkflowsToDoc: (state, action) => {
       state.selectedWorkflowsToDoc = state.selectedWorkflowsToDoc.filter(
         (item) => item._id !== action.payload
@@ -86,8 +80,6 @@ export const appSlice = createSlice({
     setThemeColor: (state, action) => {
       state.themeColor = action.payload;
     },
-
-  
 
     setPermissionArray: (state, action) => {
       state.permissionArray = state.permissionArray.map((item) => ({
@@ -134,7 +126,7 @@ export const appSlice = createSlice({
     setIconColor: (state, action) => {
       state.IconColor = action.payload;
     },
- 
+
     setCurrentMessage: (state, action) => {
       state.currentMessage = action.payload;
     },
@@ -174,8 +166,7 @@ export const appSlice = createSlice({
     setShowGeneratedLinksPopup: (state, action) => {
       state.showGeneratedLinksPopup = action.payload;
     },
-  
-  
+
     setPopupIsOpen: (state, action) => {
       state.popupIsOpen = action.payload;
     },
@@ -214,9 +205,9 @@ export const appSlice = createSlice({
       const currentTableOfContents = state.tableOfContentForStep;
       if (
         !action.payload ||
-        !action.payload.hasOwnProperty('workflow') ||
-        !action.payload.hasOwnProperty('stepIndex') ||
-        !action.payload.hasOwnProperty('id')
+        !action.payload.hasOwnProperty("workflow") ||
+        !action.payload.hasOwnProperty("stepIndex") ||
+        !action.payload.hasOwnProperty("id")
       )
         return void (state.tableOfContentForStep = currentTableOfContents);
 
@@ -238,7 +229,6 @@ export const appSlice = createSlice({
       state.tableOfContentForStep = currentTableOfContents;
     },
 
-   
     setShowApiKeyFetchFailureModal: (state, action) => {
       state.showApiKeyFetchFailureModal = action.payload;
     },
@@ -248,16 +238,17 @@ export const appSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder.addCase(getItemsCounts.rejected, (state, action) => {
-      state.itemsCountStatus = 'error';
-      state.errorMessage = "Cannot fetch the data of this document, please try again later";
+      state.itemsCountStatus = "error";
+      state.errorMessage =
+        "Cannot fetch the data of this document, please try again later";
     });
 
     //getItemsCount
     builder.addCase(getItemsCounts.pending, (state) => {
-      state.itemsCountStatus = 'pending';
+      state.itemsCountStatus = "pending";
     });
     builder.addCase(getItemsCounts.fulfilled, (state, action) => {
-      state.itemsCountStatus = 'succeeded';
+      state.itemsCountStatus = "succeeded";
       state.itemsCount = action.payload;
     });
     // builder.addCase(getItemsCounts.rejected, (state, action) => {
@@ -309,7 +300,7 @@ export const {
   setShowApiKeyFetchFailureModal,
   setError,
   setNotificationsForUser,
-  setAllProcesses
+  setAllProcesses,
 } = appSlice.actions;
 
 export default appSlice.reducer;

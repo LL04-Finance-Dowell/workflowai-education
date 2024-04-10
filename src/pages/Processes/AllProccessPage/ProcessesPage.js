@@ -1,26 +1,29 @@
-import SectionBox from '../../../components/manageFiles/sectionBox/SectionBox';
-import { v4 as uuidv4 } from 'uuid';
-import { useState } from 'react';
-import WorkflowLayout from '../../../layouts/WorkflowLayout/WorkflowLayout';
-import ManageFiles from '../../../components/manageFiles/ManageFiles';
-import ProcessDetail from '../../../components/manageFiles/ProcessDetail/ProcessDetail';
-import { useDispatch, useSelector } from 'react-redux';
-import ProcessCard from '../../../components/hoverCard/processCard/ProcessCard';
-import { ProcessDetailModail } from '../../../components/newSidebar/manageFile/ProcessDetailModal/ProcessDetailModail';
-import GeneratedLinksModal from '../../../components/setWorkFlowInDocNew/steps/processDocument/components/GeneratedLinksModal/GeneratedLinksModal';
-import { useEffect } from 'react';
-import { getAllProcessesV2 } from '../../../services/processServices';
+import { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { v4 as uuidv4 } from "uuid";
+import ProcessCard from "../../../components/hoverCard/processCard/ProcessCard";
+import ManageFiles from "../../../components/manageFiles/ManageFiles";
+import ProcessDetail from "../../../components/manageFiles/ProcessDetail/ProcessDetail";
+import SectionBox from "../../../components/manageFiles/sectionBox/SectionBox";
+import { ProcessDetailModail } from "../../../components/newSidebar/manageFile/ProcessDetailModal/ProcessDetailModail";
+import GeneratedLinksModal from "../../../components/setWorkFlowInDocNew/steps/processDocument/components/GeneratedLinksModal/GeneratedLinksModal";
+import WorkflowLayout from "../../../layouts/WorkflowLayout/WorkflowLayout";
+import { getAllProcessesV2 } from "../../../services/processServices";
 
-import { useNavigate } from 'react-router-dom';
-import { productName } from '../../../utils/helpers';
-import { useAppContext } from '../../../contexts/AppContext';
-import EvaluationReportComponent from '../../../components/manageFiles/ProcessDetail/StepDetail';
+import { useNavigate } from "react-router-dom";
+import EvaluationReportComponent from "../../../components/manageFiles/ProcessDetail/StepDetail";
+import { useAppContext } from "../../../contexts/AppContext";
+import { productName } from "../../../utils/helpers";
 
 //import create proccess page to choose between template approval and doc approval
-import CreateProcess from '../../../components/manageFiles/files/createProcess/createProcess';
-import DocumentDetailReport from '../../../components/manageFiles/ProcessDetail/DocumentDetailReport';
-import ScaleDetailReport from '../../../components/manageFiles/ProcessDetail/ScaleDetailReport';
-import { setAllProcesses, setProcessesLoaded, setProcessesLoading } from '../../../features/processes/processesSlice';
+import CreateProcess from "../../../components/manageFiles/files/createProcess/createProcess";
+import DocumentDetailReport from "../../../components/manageFiles/ProcessDetail/DocumentDetailReport";
+import ScaleDetailReport from "../../../components/manageFiles/ProcessDetail/ScaleDetailReport";
+import {
+  setAllProcesses,
+  setProcessesLoaded,
+  setProcessesLoading,
+} from "../../../features/processes/processesSlice";
 
 const ProcessesPage = ({
   home,
@@ -35,14 +38,10 @@ const ProcessesPage = ({
   chooseProcess,
   showEvaluationReport,
   showDocumentReport,
-  showScaleReport
+  showScaleReport,
 }) => {
-  const {
-    ArrayofLinks,
-    showGeneratedLinksPopup,
-    linksFetched,
-    DetailFetched
-  } = useSelector((state) => state.app);
+  const { ArrayofLinks, showGeneratedLinksPopup, linksFetched, DetailFetched } =
+    useSelector((state) => state.app);
   const {
     processesLoading,
     allProcesses,
@@ -50,13 +49,10 @@ const ProcessesPage = ({
     showsProcessDetailPopup,
   } = useSelector((state) => state.processes);
   const { userDetail } = useSelector((state) => state.auth);
-
-
-  const [completedProcess, SetcompletedPcocess] = useState();
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [currentUserPortfolioDataType, setCurrentUserPortfolioDataType] =
-    useState('');
+    useState("");
   const {
     activeProcesses,
     activeProcessesStatus,
@@ -65,24 +61,24 @@ const ProcessesPage = ({
     fetchProcessReports,
   } = useAppContext();
 
-  // console.log("userdetail", userDetail)
+  // ("userdetail", userDetail)
 
   useEffect(() => {
-    if (showOnlySaved) navigate('#saved-processes');
-    if (showSingleProcess) navigate('#processdetail');
-    if (showEvaluationReport) navigate('#evaluation-report');
-    if (showDocumentReport) navigate('#document-report');
-    if (showScaleReport) navigate('#scale-report');
-    if (showOnlyPaused) navigate('#paused-processes');
-    if (showOnlyCancelled) navigate('#cancelled-processes');
-    if (showOnlyTrashed) navigate('#thrashed-processes');
-    if (showOnlyTests) navigate('#test-processes');
-    if (home) navigate('#drafts');
+    if (showOnlySaved) navigate("#saved-processes");
+    if (showSingleProcess) navigate("#processdetail");
+    if (showEvaluationReport) navigate("#evaluation-report");
+    if (showDocumentReport) navigate("#document-report");
+    if (showScaleReport) navigate("#scale-report");
+    if (showOnlyPaused) navigate("#paused-processes");
+    if (showOnlyCancelled) navigate("#cancelled-processes");
+    if (showOnlyTrashed) navigate("#thrashed-processes");
+    if (showOnlyTests) navigate("#test-processes");
+    if (home) navigate("#drafts");
     if (showOnlyCompleted) {
-      if (!completedProcesses) fetchProcessReports('completed');
-      navigate('#completed-processes');
+      if (!completedProcesses) fetchProcessReports("completed");
+      navigate("#completed-processes");
     }
-    if (showOnlyActive && !activeProcesses) fetchProcessReports('active');
+    if (showOnlyActive && !activeProcesses) fetchProcessReports("active");
   }, [
     showOnlySaved,
     showSingleProcess,
@@ -96,6 +92,10 @@ const ProcessesPage = ({
     showEvaluationReport,
     showDocumentReport,
     showScaleReport,
+    navigate,
+    activeProcesses,
+    fetchProcessReports,
+    completedProcesses,
   ]);
 
   useEffect(() => {
@@ -112,20 +112,20 @@ const ProcessesPage = ({
     const [userCompanyId, userPortfolioDataType] = [
       userDetail?.portfolio_info?.length > 1
         ? userDetail?.portfolio_info.find(
-          (portfolio) => portfolio.product === productName
-        )?.org_id
+            (portfolio) => portfolio.product === productName
+          )?.org_id
         : userDetail?.portfolio_info[0]?.org_id,
       userDetail?.portfolio_info?.length > 1
         ? userDetail?.portfolio_info.find(
-          (portfolio) => portfolio.product === productName
-        )?.data_type
+            (portfolio) => portfolio.product === productName
+          )?.data_type
         : userDetail?.portfolio_info[0]?.data_type,
     ];
 
     getAllProcessesV2(userCompanyId, userPortfolioDataType)
       .then((res) => {
         const savedProcessesInLocalStorage = JSON.parse(
-          localStorage.getItem('user-saved-processes')
+          localStorage.getItem("user-saved-processes")
         );
         if (savedProcessesInLocalStorage) {
           const processes = [
@@ -144,17 +144,17 @@ const ProcessesPage = ({
         dispatch(setProcessesLoaded(true));
       })
       .catch((err) => {
-        // console.log('Failed: ', err.response);
+        // ('Failed: ', err.response);
         dispatch(setProcessesLoading(false));
       });
-  }, [processesLoaded, userDetail]);
+  }, [dispatch, processesLoaded, userDetail]);
 
   useEffect(() => {
     const userPortfolioDataType =
       userDetail?.portfolio_info?.length > 1
         ? userDetail?.portfolio_info.find(
-          (portfolio) => portfolio.product === productName
-        )?.data_type
+            (portfolio) => portfolio.product === productName
+          )?.data_type
         : userDetail?.portfolio_info[0].data_type;
 
     setCurrentUserPortfolioDataType(userPortfolioDataType);
@@ -162,16 +162,20 @@ const ProcessesPage = ({
 
   return (
     <WorkflowLayout>
-      <div id='new-process'>
-        <ManageFiles title='' removePageSuffix={true}>
+      <div id="new-process">
+        <ManageFiles title="" removePageSuffix={true}>
           {home ? (
-            <div id='drafts'>
+            <div id="drafts">
               <SectionBox
-                cardBgColor='#1ABC9C'
-                title='drafts'
+                cardBgColor="#1ABC9C"
+                title="drafts"
                 Card={ProcessCard}
                 cardItems={allProcesses
-                  .filter((process) => process.processing_state === 'draft' || process.processing_action === "imports")
+                  .filter(
+                    (process) =>
+                      process.processing_state === "draft" ||
+                      process.processing_action === "imports"
+                  )
                   .filter(
                     (process) =>
                       process.data_type === currentUserPortfolioDataType
@@ -181,29 +185,31 @@ const ProcessesPage = ({
                       process.created_by === userDetail?.userinfo?.username
                   )
                   .filter((process) => process.workflow_construct_ids)}
-                status={processesLoading ? 'pending' : 'success'}
-                itemType={'processes'}
+                status={processesLoading ? "pending" : "success"}
+                itemType={"processes"}
               />
             </div>
           ) : (
             <></>
           )}
           {showOnlySaved ? (
-            <div id='saved-processes'>
+            <div id="saved-processes">
               <SectionBox
-                cardBgColor='#1ABC9C'
-                title='saved process'
+                cardBgColor="#1ABC9C"
+                title="saved process"
                 Card={ProcessCard}
                 cardItems={allProcesses
                   .filter(
-                    (process) => process.processing_state === 'processing' || process.processing_state === 'draft'
+                    (process) =>
+                      process.processing_state === "processing" ||
+                      process.processing_state === "draft"
                   )
                   .filter(
                     (process) =>
                       process.data_type === currentUserPortfolioDataType
                   )}
-                status={processesLoading ? 'pending' : 'success'}
-                itemType={'processes'}
+                status={processesLoading ? "pending" : "success"}
+                itemType={"processes"}
               />
             </div>
           ) : (
@@ -217,7 +223,7 @@ const ProcessesPage = ({
           {showsProcessDetailPopup && DetailFetched && <ProcessDetailModail />}
 
           {showSingleProcess ? (
-            <div id='processdetail'>
+            <div id="processdetail">
               <ProcessDetail />
             </div>
           ) : (
@@ -225,21 +231,21 @@ const ProcessesPage = ({
           )}
 
           {showDocumentReport ? (
-            <div id='document'>
+            <div id="document">
               <DocumentDetailReport />
             </div>
           ) : (
             <></>
           )}
           {showScaleReport ? (
-            <div id='scale'>
+            <div id="scale">
               <ScaleDetailReport />
             </div>
           ) : (
             <></>
           )}
           {showEvaluationReport ? (
-            <div id='evaluation'>
+            <div id="evaluation">
               <EvaluationReportComponent />
             </div>
           ) : (
@@ -247,101 +253,101 @@ const ProcessesPage = ({
           )}
 
           {showOnlyPaused ? (
-            <div id='paused-processes'>
+            <div id="paused-processes">
               <SectionBox
-                cardBgColor='#1ABC9C'
-                title='paused process'
+                cardBgColor="#1ABC9C"
+                title="paused process"
                 Card={ProcessCard}
                 cardItems={allProcesses
-                  .filter((process) => process.processing_state === 'paused')
+                  .filter((process) => process.processing_state === "paused")
                   .filter(
                     (process) =>
                       process.data_type === currentUserPortfolioDataType
                   )}
-                status={processesLoading ? 'pending' : 'success'}
-                itemType={'processes'}
+                status={processesLoading ? "pending" : "success"}
+                itemType={"processes"}
               />
             </div>
           ) : (
             <></>
           )}
           {showOnlyCancelled ? (
-            <div id='cancelled-processes'>
+            <div id="cancelled-processes">
               <SectionBox
-                cardBgColor='#1ABC9C'
-                title='cancelled process'
+                cardBgColor="#1ABC9C"
+                title="cancelled process"
                 Card={ProcessCard}
                 cardItems={allProcesses
-                  .filter((process) => process.processing_state === 'cancelled')
+                  .filter((process) => process.processing_state === "cancelled")
                   .filter(
                     (process) =>
                       process.data_type === currentUserPortfolioDataType
                   )}
-                status={processesLoading ? 'pending' : 'success'}
-                itemType={'processes'}
+                status={processesLoading ? "pending" : "success"}
+                itemType={"processes"}
               />
             </div>
           ) : (
             <></>
           )}
           {showOnlyTrashed ? (
-            <div id='trashed-processes'>
+            <div id="trashed-processes">
               <SectionBox
-                cardBgColor='#1ABC9C'
-                title='trashed process'
+                cardBgColor="#1ABC9C"
+                title="trashed process"
                 Card={ProcessCard}
                 cardItems={allProcesses.filter(
-                  (process) => process.processing_state === 'trash'
+                  (process) => process.processing_state === "trash"
                 )}
-                status={processesLoading ? 'pending' : 'success'}
-                itemType={'processes'}
+                status={processesLoading ? "pending" : "success"}
+                itemType={"processes"}
               />
             </div>
           ) : (
             <></>
           )}
           {showOnlyTests ? (
-            <div id='test-processes'>
+            <div id="test-processes">
               <SectionBox
-                cardBgColor='#1ABC9C'
-                title='test process'
+                cardBgColor="#1ABC9C"
+                title="test process"
                 Card={ProcessCard}
                 cardItems={allProcesses
-                  .filter((process) => process.processing_state === 'test')
+                  .filter((process) => process.processing_state === "test")
                   .filter(
                     (process) =>
                       process.data_type === currentUserPortfolioDataType
                   )}
-                status={processesLoading ? 'pending' : 'success'}
-                itemType={'processes'}
+                status={processesLoading ? "pending" : "success"}
+                itemType={"processes"}
               />
             </div>
           ) : (
             <></>
           )}
           {showOnlyCompleted ? (
-            <div id='completed-processes'>
+            <div id="completed-processes">
               <SectionBox
-                cardBgColor='#1ABC9C'
-                title='completed process'
+                cardBgColor="#1ABC9C"
+                title="completed process"
                 Card={ProcessCard}
                 cardItems={completedProcesses}
                 status={completedProcessesStatus}
-                itemType={'processes'}
+                itemType={"processes"}
               />
             </div>
           ) : (
             <></>
           )}
           {showOnlyActive && (
-            <div id='active-processes'>
+            <div id="active-processes">
               <SectionBox
-                cardBgColor='#1ABC9C'
-                title='active process'
+                cardBgColor="#1ABC9C"
+                title="active process"
                 Card={ProcessCard}
                 cardItems={activeProcesses}
                 status={activeProcessesStatus}
-                itemType={'processes'}
+                itemType={"processes"}
               />
             </div>
           )}

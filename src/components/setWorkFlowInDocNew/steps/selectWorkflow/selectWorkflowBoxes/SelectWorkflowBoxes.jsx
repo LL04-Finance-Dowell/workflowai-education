@@ -1,15 +1,19 @@
 // ? <span> used instead of <button> (style conflicts) or <a> (ESLint prompts)
-import React, { useState, useEffect, useRef, memo, useCallback } from 'react';
-import styles from './infoBoxes.module.css';
-import { v4 as uuidv4 } from 'uuid';
+import { useScroll, useTransform } from 'framer-motion';
+import React, { memo, useCallback, useEffect, useRef, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { useTranslation } from 'react-i18next';
+import { AiOutlinePlus } from 'react-icons/ai';
+import { FaSearch } from 'react-icons/fa';
 import { GrAdd } from 'react-icons/gr';
 import { MdOutlineRemove } from 'react-icons/md';
-import { useScroll, useTransform } from 'framer-motion';
-import { useSelector, useDispatch } from 'react-redux';
-import { useAppContext } from '../../../../../contexts/AppContext';
+import { useDispatch, useSelector } from 'react-redux';
+import { toast } from 'react-toastify';
+import { v4 as uuidv4 } from 'uuid';
+import { allWorkflows } from '../../../../../features/workflow/asyncTHunks';
 import Collapse from '../../../../../layouts/collapse/Collapse';
+import { productName } from '../../../../../utils/helpers';
 import { LoadingSpinner } from '../../../../LoadingSpinner/LoadingSpinner';
-import { useForm } from 'react-hook-form';
 import {
   InfoBoxContainer,
   InfoContentBox,
@@ -18,17 +22,11 @@ import {
   InfoSearchbar,
   InfoTitleBox,
 } from '../../../../infoBox/styledComponents';
-import { allWorkflows } from '../../../../../features/workflow/asyncTHunks';
-import { toast } from 'react-toastify';
-import { useTranslation } from 'react-i18next';
-import { productName } from '../../../../../utils/helpers';
-import { FaSearch } from 'react-icons/fa';
-import { AiOutlinePlus } from 'react-icons/ai';
-import ManageFiles from '../../../../manageFiles/ManageFiles';
 import CreateWorkflows from '../../../../manageFiles/files/workflows/createWorkflows/CreateWorkflow';
+import styles from './infoBoxes.module.css';
 
-import { startConnecting } from '../../../../../features/processCopyReducer';
-import { removeFromSelectedMembersForProcess,
+import {
+  removeFromSelectedMembersForProcess,
   setMembersSetForProcess,
   setSelectedMembersForProcess,
   setSelectedWorkflowsToDoc,
@@ -52,7 +50,6 @@ const InfoBoxes = ({ savedDoc, handleRemove }) => {
   const { allWorkflows: allWorkflowsArray, allWorkflowsStatus } = useSelector(
     (state) => state.workflow
   );
-  const {  isMobile } =useAppContext();
   const [compInfoBoxes, setCompInfoBoxes] = useState(infoBoxes);
   const [openWF, setOpenWF] = useState(false)
 
@@ -62,16 +59,16 @@ const InfoBoxes = ({ savedDoc, handleRemove }) => {
     const startCopyingWF = useSelector((state)=> state.copyProcess.startSelectWorkflow)
 
     useEffect(()=>{
-      // // console.log('entered to pick the wf to connect it with doc ')
+      // // ('entered to pick the wf to connect it with doc ')
       
       if (currentDocToWfs && copiedWorkflow !==null && startCopyingWF) {
-        // // console.log('started picking wf')
+        // // ('started picking wf')
           dispatch(setSelectedWorkflowsToDoc(copiedWorkflow));
           // dispatch(startConnecting())
-          // // console.log('finished picking wf')
+          // // ('finished picking wf')
       }}
       
-    ,[copiedWorkflow, currentDocToWfs, startCopyingWF])
+    ,[copiedWorkflow, currentDocToWfs, dispatch, startCopyingWF])
 
   useEffect(() => {
     const data = {
@@ -260,7 +257,7 @@ const InfoBoxes = ({ savedDoc, handleRemove }) => {
   const y = useTransform(scrollYProgress, [0, 1], ['200px', '-200px']);
 
   const handleTogleBox = (id) => {
-    // console.log("compInfoBoxes ", compInfoBoxes)
+    // ("compInfoBoxes ", compInfoBoxes)
     const updatedInfoBoxes = compInfoBoxes.map((item) =>
       item.id === id ? { ...item, isOpen: !item.isOpen } : item
     );
@@ -353,7 +350,7 @@ const InfoBoxes = ({ savedDoc, handleRemove }) => {
                     fullWidth={true}
                   />
                   {
-                    infoBox.title == 'workflow' ? 
+                    infoBox.title === 'workflow' ? 
                     <button 
                       onClick={()=>setOpenWF(!openWF)}
                       style={{marginTop:'3px', marginRight:'5px', paddingLeft:'5px', paddingRight:'5px', backgroundColor:'green'}}

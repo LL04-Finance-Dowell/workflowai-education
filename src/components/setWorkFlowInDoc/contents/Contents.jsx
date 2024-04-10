@@ -1,10 +1,10 @@
 // ? Ln 167 Used <span> instead of <button> (style conflicts) and <a> (ESLint prompts)
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { AiOutlineCloseCircle, AiOutlineInfoCircle } from 'react-icons/ai';
 import { useDispatch, useSelector } from 'react-redux';
 
-import styles from './contents.module.css';
 import { removeFromTableOfContentForStep, setTableOfContentForStep } from '../../../features/processes/processesSlice';
+import styles from './contents.module.css';
 
 const Contents = ({
   contents,
@@ -55,7 +55,7 @@ const Contents = ({
       workflow: docCurrentWorkflow._id,
       stepIndex: currentStepIndex,
     };
-    // // console.log(newTableOfContentObj)
+    // // (newTableOfContentObj)
     dispatch(setTableOfContentForStep(newTableOfContentObj));
   };
 
@@ -65,7 +65,7 @@ const Contents = ({
       r[a.pageNum].push(a);
       return r;
     }, Object.create(null));
-    // // console.log(contentsGroupedByPageNum)
+    // // (contentsGroupedByPageNum)
     setContentsPageWise(contentsGroupedByPageNum);
 
     setShowContent(

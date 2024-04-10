@@ -1,14 +1,14 @@
-import { useEffect } from 'react';
+/* eslint-disable react-hooks/exhaustive-deps */
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import Select from '../../../../../select/Select';
-import { useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import FormLayout from '../../../../../formLayout/FormLayout';
 import AssignButton from '../../../../../assignButton/AssignButton';
+import FormLayout from '../../../../../formLayout/FormLayout';
+import Select from '../../../../../select/Select';
 
+import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { useAppContext } from '../../../../../../../contexts/AppContext';
-import { useTranslation } from 'react-i18next';
 import { updateSingleProcessStep } from '../../../../../../../features/processes/processesSlice';
 
 const AssignTask = ({ currentStepIndex, stepsPopulated }) => {
@@ -35,7 +35,7 @@ const AssignTask = ({ currentStepIndex, stepsPopulated }) => {
 
       useEffect(()=>{
         if(copiedProcess == null){ return }
-        // // console.log('entered the useEffect to assign task1')
+        // // ('entered the useEffect to assign task1')
         const initialProcessStepObj = {
           workflow: docCurrentWorkflow._id,
           indexToUpdate: currentStepIndex,
@@ -73,7 +73,7 @@ const AssignTask = ({ currentStepIndex, stepsPopulated }) => {
         );
     
         setIsAssignTask(copiedProcess.process_steps[currentStepIndex].stepTaskType === 'assign_task' ? true : false);
-        // // console.log('finished the useEffect to assign task1')
+        // // ('finished the useEffect to assign task1')
       },[copiedProcess])
 
   const onSubmit = (data) => {
@@ -154,7 +154,7 @@ const AssignTask = ({ currentStepIndex, stepsPopulated }) => {
           label='Task Type'
           register={register}
           name='taskType'
-          options={whichApproval == 'new-set-workflow-document' ? taskType : taskTypeReverse}
+          options={whichApproval === 'new-set-workflow-document' ? taskType : taskTypeReverse}
           takeNormalValue={true}
           currentValue={
             processSteps.find(

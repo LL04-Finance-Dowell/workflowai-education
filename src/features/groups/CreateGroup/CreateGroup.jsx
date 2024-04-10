@@ -1,20 +1,21 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import { useEffect, useMemo, useState } from "react";
 import Overlay from "../../../components/manageFiles/overlay/Overlay";
 
-import styles from "./CreateGroup.module.css";
-import { useTranslation } from "react-i18next";
 import { Controller, useForm } from "react-hook-form";
-import ReactSelect from "react-select";
+import { useTranslation } from "react-i18next";
 import { useDispatch, useSelector } from "react-redux";
-import {
-  getGroupsStatus,
-  selectedGroupForEdit,
-  setUpdatedGroupFlag,
-  updateGroupFlag,
-  updateGroupsStatus,
-} from "../groupsSlice";
-import { createGroups, editGroups, getGroups } from "../groupThunk";
+import ReactSelect from "react-select";
 import { toast } from "react-toastify";
+import { createGroups, editGroups, getGroups } from "../groupThunk";
+import {
+    getGroupsStatus,
+    selectedGroupForEdit,
+    setUpdatedGroupFlag,
+    updateGroupFlag,
+    updateGroupsStatus,
+} from "../groupsSlice";
+import styles from "./CreateGroup.module.css";
 
 const CreateGroup = ({
   totalPublicMembersVal,
@@ -49,7 +50,6 @@ team:teamList?.length ? [...teamList] : []
 
   useEffect(() => {
     if (selectedG) setSelectedGroup(selectedG);
-    console.log("dropdownData",selectedG);
   }, [selectedG, defaultValues,updatedFlag]);
 
   useEffect(() => {
@@ -74,7 +74,6 @@ team:teamList?.length ? [...teamList] : []
   }, [defaultValues, reset]);
 
   const onSubmit = async (data) => {
-    console.log("data",data);
     const company_id = userDetail?.portfolio_info[0]?.org_id;
     const reformatTeam = data.team.map((data) => {
       return data?.value;
@@ -91,7 +90,7 @@ team:teamList?.length ? [...teamList] : []
         "group_id":selectedGroup._id,
         ...finalPayload
       }
-      console.log("finalForEdit",finalForEdit);
+
       dispatch(editGroups({ payload: finalForEdit, company_id: company_id }));
       dispatch(setUpdatedGroupFlag())
       if (updateStatus === "succeeded") {
@@ -206,7 +205,6 @@ team:teamList?.length ? [...teamList] : []
           const uniqueList = Reformat?.filter(
             (data) => !existingContent?.includes(data.label)
           );
-          console.log(uniqueList);
           setTeamsData([...uniqueList]);
         }
       } else {

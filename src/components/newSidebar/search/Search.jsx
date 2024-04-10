@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import styles from './search.module.css';
-import CollapseItem from '../collapseItem/CollapseItem';
-import { v4 as uuidv4 } from 'uuid';
-import { FaSearch } from 'react-icons/fa';
 import { useForm } from 'react-hook-form';
+import { FaSearch } from 'react-icons/fa';
+import { v4 as uuidv4 } from 'uuid';
+import CollapseItem from '../collapseItem/CollapseItem';
+import styles from './search.module.css';
 
 import { LoadingSpinner } from '../../LoadingSpinner/LoadingSpinner';
 
@@ -12,9 +12,9 @@ import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 
 import { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAppContext } from '../../../contexts/AppContext';
 import { searchItemByKeyAndGroupResults } from '../../../pages/Search/util';
-import { useTranslation } from 'react-i18next';
 
 const Search = () => {
   const {
@@ -44,10 +44,10 @@ const Search = () => {
 
     setSearchLoading(true);
   };
-// // console.log('the demoTemplates are ', demoTemplates)
+// // ('the demoTemplates are ', demoTemplates)
   useEffect(() => {
     setRerender(uuidv4());
-    // // console.log('hit the first useEffect')
+    // // ('hit the first useEffect')
   }, [searchResultItems]);
 
   useEffect(() => {
@@ -62,7 +62,7 @@ const Search = () => {
 
     try {
       const results = searchItemByKeyAndGroupResults(search, searchItems);
-// // console.log('hit the second useEffect',results, search, searchItems)
+// // ('hit the second useEffect',results, search, searchItems)
       setSearchResultLoaded(true);
       setSearchLoading(false);
       setSearchResults(results);
@@ -162,7 +162,7 @@ const Search = () => {
       });
       setSearchResultItems(updatedItems);
     } catch (error) {
-      // console.log(error);
+      // (error);
       setSearchLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -181,7 +181,7 @@ const Search = () => {
       state: { searchResults: searchResults, searchItem: search },
     });
   };
-  // // console.log('searchLoading ',searchLoading, " searchResults ",searchResults, " searchResultItems ", searchResultItems," searchResultLoaded ",searchResultLoaded)
+  // // ('searchLoading ',searchLoading, " searchResults ",searchResults, " searchResultItems ", searchResultItems," searchResultLoaded ",searchResultLoaded)
 
   return (
     <div className={styles.container}>

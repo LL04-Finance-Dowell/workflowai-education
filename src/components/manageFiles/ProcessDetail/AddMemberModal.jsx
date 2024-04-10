@@ -1,8 +1,8 @@
+import axios from 'axios';
 import { useState } from 'react';
 import Button from 'react-bootstrap/Button';
 import Modal from 'react-bootstrap/Modal';
-import { useDispatch, useSelector } from 'react-redux';
-import axios from 'axios';
+import { useSelector } from 'react-redux';
 import { toast } from 'react-toastify';
 
 
@@ -23,7 +23,7 @@ export default function AddMemberModal(props) {
 
 
 
-  // console.log("userDetail", userDetail, ProcessDetail, props.step)
+  // ("userDetail", userDetail, ProcessDetail, props.step)
 
   // Step 3: Handle Selection
   const handleSelectRow = (email) => {
@@ -32,7 +32,7 @@ export default function AddMemberModal(props) {
       : [...selectedRows, email];
 
     setSelectedRows(updatedSelectedRows);
-    // console.log("updatedSelectedRows", updatedSelectedRows)
+    // ("updatedSelectedRows", updatedSelectedRows)
   };
 
   const handleTeamSubmit = (e) => {
@@ -48,13 +48,13 @@ export default function AddMemberModal(props) {
       portfolio: selectedRows[0]?.portfolio_name || 'Portfolio',
     }];
 
-    // console.log('payload', payload)
+    // ('payload', payload)
 
     // Making a POST request with Axios
     axios.post(apiUrl, payload)
       .then((response) => {
         // Handle the API response here
-        // console.log('API Response:', response.data);
+        // ('API Response:', response.data);
         setAssignPortfolio(response.data)
         toast.success("Member added in portfolio")
       })
@@ -76,13 +76,13 @@ export default function AddMemberModal(props) {
       portfolio: selectedRows[0]?.portfolio_name || 'Portfolio',
     };
 
-    // console.log('payload', payload)
+    // ('payload', payload)
 
     // Making a POST request with Axios
     axios.post(apiUrl, payload)
       .then((response) => {
         // Handle the API response here
-        // console.log('API Response:', response.data);
+        // ('API Response:', response.data);
         setAssignPublicPortfolio(response.data)
         toast.success("Member Added in Portfolio")
       })
@@ -104,13 +104,13 @@ export default function AddMemberModal(props) {
       portfolio: selectedRows[0]?.portfolio_name || 'Portfolio',
     };
 
-    // console.log('payload', payload)
+    // ('payload', payload)
 
     // Making a POST request with Axios
     axios.post(apiUrl, payload)
       .then((response) => {
         // Handle the API response here
-        // console.log('API Response:', response.data);
+        // ('API Response:', response.data);
         setAssignUserPortfolio(response.data)
         toast.success("Member Added in Portfolio")
       })

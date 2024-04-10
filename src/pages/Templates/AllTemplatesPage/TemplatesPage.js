@@ -1,16 +1,15 @@
-import ManageFiles from '../../../components/manageFiles/ManageFiles';
-import SectionBox from '../../../components/manageFiles/sectionBox/SectionBox';
-import WorkflowLayout from '../../../layouts/WorkflowLayout/WorkflowLayout';
-import './style.css';
-import { v4 as uuidv4 } from 'uuid';
-import { useDispatch, useSelector } from 'react-redux';
-import { useEffect, useState } from 'react';
-import { allTemplates } from '../../../features/template/asyncThunks';
-import TemplateCard from '../../../components/hoverCard/templateCard/TemplateCard';
-import { useNavigate } from 'react-router-dom';
-import { productName } from '../../../utils/helpers';
-import { useAppContext } from '../../../contexts/AppContext';
-import { TemplateServices } from '../../../services/templateServices';
+import { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import { v4 as uuidv4 } from "uuid";
+import TemplateCard from "../../../components/hoverCard/templateCard/TemplateCard";
+import ManageFiles from "../../../components/manageFiles/ManageFiles";
+import SectionBox from "../../../components/manageFiles/sectionBox/SectionBox";
+import { useAppContext } from "../../../contexts/AppContext";
+import { allTemplates } from "../../../features/template/asyncThunks";
+import WorkflowLayout from "../../../layouts/WorkflowLayout/WorkflowLayout";
+import { productName } from "../../../utils/helpers";
+import "./style.css";
 
 const TemplatesPage = ({
   home,
@@ -36,7 +35,7 @@ const TemplatesPage = ({
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [currentUserPortfolioDataType, setCurrentUserPortfolioDataType] =
-    useState('');
+    useState("");
 
   useEffect(() => {
     if (isDemo) {
@@ -44,25 +43,25 @@ const TemplatesPage = ({
         fetchDemoTemplates();
       }
     }
-  }, []);
+  }, [demoTemplates, fetchDemoTemplates, isDemo]);
 
   useEffect(() => {
     if (isReports && !tempReports) fetchTemplateReports();
-  }, []);
+  }, [fetchTemplateReports, isReports, tempReports]);
 
   useEffect(() => {
     const data = {
       company_id:
         userDetail?.portfolio_info?.length > 1
           ? userDetail?.portfolio_info.find(
-            (portfolio) => portfolio.product === productName
-          )?.org_id
+              (portfolio) => portfolio.product === productName
+            )?.org_id
           : userDetail?.portfolio_info[0].org_id,
       data_type:
         userDetail?.portfolio_info?.length > 1
           ? userDetail?.portfolio_info.find(
-            (portfolio) => portfolio.product === productName
-          )?.data_type
+              (portfolio) => portfolio.product === productName
+            )?.data_type
           : userDetail?.portfolio_info[0].data_type,
     };
 
@@ -70,19 +69,17 @@ const TemplatesPage = ({
     if (savedTemplatesItemsStatus === "idle")
       dispatch(savedTemplates(savedTemplatesData)); */
 
-    if (allTemplatesStatus === 'idle') dispatch(allTemplates(data));
+    if (allTemplatesStatus === "idle") dispatch(allTemplates(data));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userDetail]);
 
-  useEffect(() => {
+  useEffect(() => {}, [allTemplatesArray]);
 
-  }, [allTemplatesArray])
-
-  var reverseArray = [...allTemplatesArray].reverse()
+  var reverseArray = [...allTemplatesArray].reverse();
   useEffect(() => {
-    if (showOnlySaved) navigate('#saved-templates');
-    if (showOnlyTrashed) navigate('#trashed-templates');
-    if (home) navigate('#drafts');
+    if (showOnlySaved) navigate("#saved-templates");
+    if (showOnlyTrashed) navigate("#trashed-templates");
+    if (home) navigate("#drafts");
     // if (isDemo) navigate('#demo');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showOnlySaved, showOnlyTrashed, home]);
@@ -91,8 +88,8 @@ const TemplatesPage = ({
     const userPortfolioDataType =
       userDetail?.portfolio_info?.length > 1
         ? userDetail?.portfolio_info.find(
-          (portfolio) => portfolio.product === productName
-        )?.data_type
+            (portfolio) => portfolio.product === productName
+          )?.data_type
         : userDetail?.portfolio_info[0]?.data_type;
 
     setCurrentUserPortfolioDataType(userPortfolioDataType);
@@ -100,16 +97,16 @@ const TemplatesPage = ({
 
   return (
     <WorkflowLayout>
-      <div id='new-template'>
+      <div id="new-template">
         <ManageFiles
-          title={customTempName ? customTempName : 'Templates'}
+          title={customTempName ? customTempName : "Templates"}
           removePageSuffix={true}
         >
           {home ? (
-            <div id='drafts'>
+            <div id="drafts">
               <SectionBox
-                cardBgColor='#1ABC9C'
-                title={customTempName ? `My ${customTempName}` : 'My Templates'}
+                cardBgColor="#1ABC9C"
+                title={customTempName ? `My ${customTempName}` : "My Templates"}
                 Card={TemplateCard}
                 cardItems={
                   reverseArray &&
@@ -124,64 +121,64 @@ const TemplatesPage = ({
                     )
                 }
                 status={allTemplatesStatus}
-                itemType={'templates'}
+                itemType={"templates"}
               />
             </div>
           ) : (
             <></>
           )}
           {showOnlySaved ? (
-            <div id='saved-templates'>
+            <div id="saved-templates">
               <SectionBox
-                cardBgColor='#1ABC9C'
-                title='saved templates'
+                cardBgColor="#1ABC9C"
+                title="saved templates"
                 Card={TemplateCard}
                 cardItems={reverseArray.filter(
                   (item) => item.data_type === currentUserPortfolioDataType
                 )}
                 status={allTemplatesStatus}
-                itemType={'templates'}
+                itemType={"templates"}
               />
             </div>
           ) : (
             <></>
           )}
           {showOnlyTrashed ? (
-            <div id='trashed-templates'>
+            <div id="trashed-templates">
               <SectionBox
-                cardBgColor='#1ABC9C'
-                title='trashed templates'
+                cardBgColor="#1ABC9C"
+                title="trashed templates"
                 Card={TemplateCard}
                 cardItems={[]}
                 status={allTemplatesStatus}
-                itemType={'templates'}
+                itemType={"templates"}
               />
             </div>
           ) : (
             <></>
           )}
           {isDemo && demoTemplates && (
-            <div id='demo-templates'>
+            <div id="demo-templates">
               <SectionBox
-                cardBgColor='#1ABC9C'
-                title='demo templates'
+                cardBgColor="#1ABC9C"
+                title="demo templates"
                 Card={TemplateCard}
                 cardItems={[...demoTemplates]?.reverse()}
                 status={demoTempStatus}
-                itemType={'templates'}
+                itemType={"templates"}
                 isDemo={true}
               />
             </div>
           )}
           {isReports && (
-            <div id='demo-templates'>
+            <div id="demo-templates">
               <SectionBox
-                cardBgColor='#1ABC9C'
-                title='template reports'
+                cardBgColor="#1ABC9C"
+                title="template reports"
                 Card={TemplateCard}
                 cardItems={tempReports}
                 status={tempReportsStatus}
-                itemType={'templates'}
+                itemType={"templates"}
                 isReports={true}
               />
             </div>

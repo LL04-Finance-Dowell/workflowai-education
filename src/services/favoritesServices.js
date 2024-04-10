@@ -1,4 +1,4 @@
-import { httpApiUrl, httpApiUrlV2, httpFavourite } from '../httpCommon/httpCommon';
+import { httpApiUrlV2, httpFavourite } from "../httpCommon/httpCommon";
 
 export class FavoriteServices {
   addFavorite = (data) => {};

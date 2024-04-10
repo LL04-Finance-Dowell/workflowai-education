@@ -5,22 +5,21 @@ import { setToggleManageFileForm } from '../../../features/app/appSlice';
 import { detailWorkflow } from '../../../features/workflow/asyncTHunks';
 import HoverCard from '../HoverCard';
 
-import styles from './workflowCard.module.css';
-import { RxUpdate } from 'react-icons/rx';
 import { RiDeleteBin6Line } from 'react-icons/ri';
-import { useAppContext } from '../../../contexts/AppContext';
+import { RxUpdate } from 'react-icons/rx';
 import { toast } from 'react-toastify';
 import { Tooltip } from 'react-tooltip';
+import { useAppContext } from '../../../contexts/AppContext';
 import {
-  addNewFavoriteForUser,
-  deleteFavoriteForUser,
+    addNewFavoriteForUser,
+    deleteFavoriteForUser,
 } from '../../../services/favoritesServices';
+import styles from './workflowCard.module.css';
 
-import { moveItemToArchive } from '../../../services/archiveServices';
-import { setAllWorkflows } from '../../../features/workflow/workflowsSlice';
-import { BsBookmark, BsFillBookmarkFill } from 'react-icons/bs';
 import { useTranslation } from 'react-i18next';
-import LoadingScreen from '../../LoadingScreen/loadingScreen';
+import { BsBookmark, BsFillBookmarkFill } from 'react-icons/bs';
+import { setAllWorkflows } from '../../../features/workflow/workflowsSlice';
+import { moveItemToArchive } from '../../../services/archiveServices';
 
 const WorkflowCard = ({ cardItem }) => {
   const dispatch = useDispatch();
@@ -68,7 +67,7 @@ const WorkflowCard = ({ cardItem }) => {
       ).data;
       toast.success(response);
     } catch (error) {
-      // console.log(error.response ? error.response.data : error.message);
+      // (error.response ? error.response.data : error.message);
       toast.info(
         error.response
           ? error.response.status === 500

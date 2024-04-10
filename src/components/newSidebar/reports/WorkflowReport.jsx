@@ -1,13 +1,12 @@
 import * as React from "react";
+import { useSelector } from 'react-redux';
+import { useLocation, useNavigate } from "react-router-dom";
+import fluent from '../../../assets/fluent_text-abc-underline-double-32-filled.jpg';
+import green from '../../../assets/ic_round-person.jpg';
+import backOutline from '../../../assets/ion_chevron-back-outline.jpg';
+import errorImage from '../../../assets/mingcute_question-fill.jpg';
+import handHold from '../../../assets/streamline_hand-held-tablet-writing-solid.jpg';
 import styles from './workflowreport.module.css';
-import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate } from "react-router-dom";
-import handHold from '../../../assets/streamline_hand-held-tablet-writing-solid.jpg'
-import fluent from '../../../assets/fluent_text-abc-underline-double-32-filled.jpg'
-import green from '../../../assets/ic_round-person.jpg'
-import errorImage from '../../../assets/mingcute_question-fill.jpg'
-import backOutline from '../../../assets/ion_chevron-back-outline.jpg'
-import { useLocation } from 'react-router-dom';
 
 
 
@@ -17,7 +16,7 @@ export const WorkflowReport = () => {
 	// Inside your component
 	const location = useLocation();
 	const passedData = location.state;
-	// console.log("ShowDocumentReport", passedData)
+	// ("ShowDocumentReport", passedData)
 
 	const handleBack = () => {
 		navigate('/documents/draft-reports');

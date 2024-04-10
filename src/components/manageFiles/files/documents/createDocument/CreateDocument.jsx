@@ -1,27 +1,22 @@
-import styles from './createDocument.module.css';
-import { v4 as uuidv4 } from 'uuid';
-import { useRef, useState } from 'react';
-import { useForm } from 'react-hook-form';
-import Overlay from '../../../overlay/Overlay';
-import { BsArrowRightShort } from 'react-icons/bs';
-import Collapse from '../../../../../layouts/collapse/Collapse';
-import { useDispatch, useSelector } from 'react-redux';
-import { allTemplates } from '../../../../../features/template/asyncThunks';
-import { useEffect } from 'react';
-import { createDocument } from '../../../../../features/document/asyncThunks';
-import { setToggleManageFileForm } from '../../../../../features/app/appSlice';
-import Spinner from '../../../../spinner/Spinner';
-import { useTranslation } from 'react-i18next';
-import { productName } from '../../../../../utils/helpers';
 import axios from 'axios';
-import { toast } from 'react-toastify';
-import { FaPlus } from 'react-icons/fa';
-import Select from 'react-select'
-import { createTemplate } from '../../../../../features/template/asyncThunks';
-import addImage from '../../../../../../src/assets/carbon_add-filled.jpg';
+import { useEffect, useRef, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { useTranslation } from 'react-i18next';
 import { BsArrowRight } from 'react-icons/bs';
+import { useDispatch, useSelector } from 'react-redux';
+import Select from 'react-select';
+import { toast } from 'react-toastify';
 import { Tooltip } from 'react-tooltip';
+import { v4 as uuidv4 } from 'uuid';
+import addImage from '../../../../../../src/assets/carbon_add-filled.jpg';
+import { setToggleManageFileForm } from '../../../../../features/app/appSlice';
+import { createDocument } from '../../../../../features/document/asyncThunks';
+import { allTemplates, createTemplate } from '../../../../../features/template/asyncThunks';
 import { api_url_v3 } from '../../../../../httpCommon/httpCommon';
+import { productName } from '../../../../../utils/helpers';
+import Spinner from '../../../../spinner/Spinner';
+import Overlay from '../../../overlay/Overlay';
+import styles from './createDocument.module.css';
 
 
 const CreateDocument = ({ handleToggleOverlay }) => {
@@ -41,7 +36,7 @@ const CreateDocument = ({ handleToggleOverlay }) => {
 
   const { register, handleSubmit, setValue } = useForm();
 
-  // console.log("userDetaiDocument", userDetail.userinfo.email)
+  // ("userDetaiDocument", userDetail.userinfo.email)
   const handleNewItemClick = async (e, content) => {
     if (content === "template") {
       e.preventDefault();
@@ -87,7 +82,7 @@ const CreateDocument = ({ handleToggleOverlay }) => {
           })
     
           .catch((error) => {
-            // console.log(error.response?.data?.message);
+            // (error.response?.data?.message);
             toast.info(error.response?.data?.message);
           });
       }
@@ -132,13 +127,13 @@ const CreateDocument = ({ handleToggleOverlay }) => {
         },
       )
       .then((res) => {
-        // console.log(res)
+        // (res)
         if (res.data.success === true) {
           dispatch(setEditorLink(response?.payload?.editor_link));
         }
       })
       .catch((error) => {
-        // console.log(error);
+        // (error);
         toast.info(error.response?.data?.message)
       });
     }
@@ -150,13 +145,13 @@ const CreateDocument = ({ handleToggleOverlay }) => {
   };
 
   const handleOptionClick = (item) => {
-    // console.log("handleOptionClick", item)
+    // ("handleOptionClick", item)
     setToggleDropdown(false);
     setCurrentOption(item.label);
     setCurrentItem(item.value)
     setValue('template', item.value);
     ref.current?.focus();
-    // console.log("handleOptionClick", currentOption)
+    // ("handleOptionClick", currentOption)
 
     // handleSubmit(onSubmit)();
   };

@@ -1,22 +1,22 @@
 import React, { useState } from "react";
+import { BiCopy, BiLink } from "react-icons/bi";
 import { RiDeleteBin6Line } from "react-icons/ri";
-import { BiLink, BiCopy } from "react-icons/bi";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { Tooltip } from "react-tooltip";
 import { toast } from "react-toastify";
+import { Tooltip } from "react-tooltip";
 
 import { moveItemToArchive } from "../../../services/archiveServices";
 import HoverCard from "../HoverCard";
 
-import { Button } from "../styledComponents";
-import { LoadingSpinner } from "../../LoadingSpinner/LoadingSpinner";
 import axios from "axios";
+import { Modal } from 'react-bootstrap';
+import { SetArrayofLinks, setDetailFetched, setLinksFetched, setShowGeneratedLinksPopup } from "../../../features/app/appSlice";
+import { SetProcessDetail, setAllProcesses } from "../../../features/processes/processesSlice";
 import { api_url } from "../../../httpCommon/httpCommon";
 import { productName } from "../../../utils/helpers";
-import { Modal } from 'react-bootstrap';
-import { SetProcessDetail, setAllProcesses } from "../../../features/processes/processesSlice";
-import { SetArrayofLinks, setDetailFetched, setLinksFetched, setShowGeneratedLinksPopup } from "../../../features/app/appSlice";
+import { LoadingSpinner } from "../../LoadingSpinner/LoadingSpinner";
+import { Button } from "../styledComponents";
 
 const ProcessCard = ({ cardItem, title }) => {
   const { allProcesses } = useSelector((state) => state.processes);
@@ -31,9 +31,9 @@ const ProcessCard = ({ cardItem, title }) => {
 
   ///pop up
   const [isPopupVisible, setPopupVisibility] = useState(false);
-  // // console.log(allProcesses)
+  // // (allProcesses)
   const handleProcessItemClick = async (item) => {
-  //  console.log("urlforworkflow", `/workflows/new-set-workflow?id=${item._id}&state=${item.processing_state
+  //  ("urlforworkflow", `/workflows/new-set-workflow?id=${item._id}&state=${item.processing_state
   //     }${item.isFromLocalStorage ? "&local=true" : ""}`)
     // if (item.processing_state === "draft" && item.workflow_construct_ids) {
     //   navigate(
@@ -42,10 +42,10 @@ const ProcessCard = ({ cardItem, title }) => {
     //   );
     //   return;
     // }
-    // console.log("process_id", item._id, item.process_title, item.processing_state)
+    // ("process_id", item._id, item.process_title, item.processing_state)
     getProcessDetail(item._id, item.process_title);
-    console.log(item._id);
-    console.log(item);
+    (item._id);
+    (item);
     // dispatch(setshowsProcessDetailPopup(true));
     setProcessDetailLoading(true);
   };
@@ -60,7 +60,7 @@ const ProcessCard = ({ cardItem, title }) => {
         navigate("/processes/processdetail");
       })
       .catch((error) => {
-        // console.log(error);
+        // (error);
         setProcessDetailLoading(false);
         toast.info(
           process_title
@@ -95,7 +95,7 @@ const ProcessCard = ({ cardItem, title }) => {
 
         setcopyprocessLoading(false);
       } else {
-        // console.log("Post request failed. Status code:", response.status);
+        // ("Post request failed. Status code:", response.status);
         setcopyprocessLoading(false);
       }
     } catch (error) {
@@ -105,7 +105,7 @@ const ProcessCard = ({ cardItem, title }) => {
   }
 
   const handleGetLinksClick = async (item) => {
-    // console.log("the item is ", item);
+    // ("the item is ", item);
     // createProcessLinks(item._id, item.created_by);
     setPopupVisibility(false)
     setProcessLinkLoading(true);
@@ -135,28 +135,28 @@ const ProcessCard = ({ cardItem, title }) => {
     })
       .then((res) => res.json())
       .then((data) => {
-        // console.log("the response for fetching process is ", data);
+        // ("the response for fetching process is ", data);
         dispatch(SetArrayofLinks(data));
         dispatch(setLinksFetched(true));
         setProcessLinkLoading(false);
       })
       .catch((err) => {
-        // console.log(err);
+        // (err);
         setProcessLinkLoading(false);
         toast.info("Link fetching for process failed");
       });
   }
   async function getProcessLinks(process_id) {
-    // console.log("the process id is ", process_id);
+    // ("the process id is ", process_id);
     try {
       // const response = await fetch(`${api_url}processes/${process_id}/all-links/`);
       // if (!response.ok) {
       //   throw new Error("Network response was not ok");
       // }
       // const data = await response.json();
-      // // console.log("the response for fetching process is ", response);
+      // // ("the response for fetching process is ", response);
       const data = [{ "Link 1": `https://ll04-finance-dowell.github.io/100018-dowellWorkflowAi-testing/#/processes/process-import/${process_id}` }]
-      // console.log("the process link is ", data)
+      // ("the process link is ", data)
       dispatch(SetArrayofLinks(data));
       dispatch(setLinksFetched(true));
       setProcessLinkLoading(false);
@@ -206,7 +206,7 @@ const ProcessCard = ({ cardItem, title }) => {
       ).data;
       toast.success(response);
     } catch (error) {
-      // console.log(error.response ? error.response.data : error.message);
+      // (error.response ? error.response.data : error.message);
       toast.info(error.response ? error.response.data : error.message);
       copyOfProcessToUpdate.data_type = "Real_Data";
       copyOfAllProcesses[foundProcessIndex] = copyOfProcessToUpdate;

@@ -1,4 +1,4 @@
-import { httpApiUrl, httpApiUrlV2, httpProcess, processReport } from '../httpCommon/httpCommon';
+import { httpApiUrlV2, httpProcess } from "../httpCommon/httpCommon";
 
 // API Route Disabled
 // export const saveWorkflowsToDocument = async (data) => {
@@ -6,7 +6,7 @@ import { httpApiUrl, httpApiUrlV2, httpProcess, processReport } from '../httpCom
 // }
 
 export const startNewProcess = async (data) => {
-  return await httpProcess.post('/', data);
+  return await httpProcess.post("/", data);
 };
 
 export const getVerifiedProcessLink = async (processId, data) => {
@@ -24,7 +24,6 @@ export const getSingleProcessV2 = async (processId) => {
 export const getAllProcessesV2 = async (companyId, dataType) => {
   return await httpApiUrlV2.get(
     `processes/${companyId}/organisations/?data_type=${dataType}`
-    // https://100094.pythonanywhere.com/v2/processes/65ad8a28c9038ff4498672c9/organisations/?data_type=Real_Data
   );
 };
 
@@ -61,44 +60,44 @@ export const getActiveProcesses = (companyId, dataType, processState) => {
 // };
 
 export const startDraftProcessingV2 = async (processId, data) => {
-  return await httpProcess.post(`${processId}/trigger/`, data)
-}
+  return await httpProcess.post(`${processId}/trigger/`, data);
+};
 
 export const startOngoingProcessingV2 = async (processId, data) => {
-  return await httpProcess.post(`${processId}/trigger/`, data)
-}
+  return await httpProcess.post(`${processId}/trigger/`, data);
+};
 
 export const finalizeOrReject = async (processId) => {
-  return await httpProcess.post(`${processId}/finalize-or-reject/`)
-}
+  return await httpProcess.post(`${processId}/finalize-or-reject/`);
+};
 
 export const processActionOptions = {
-  saveWorkflowToDocument: 'save_workflow_to_document',
-  saveAndStartProcess: 'save_and_start_processing',
+  saveWorkflowToDocument: "save_workflow_to_document",
+  saveAndStartProcess: "save_and_start_processing",
 };
 
 export const newProcessActionOptions = {
   saveWorkflowToDocumentAndDrafts:
-    'save_workflow_to_document_and_save_to_drafts',
-  cancelProcessBeforeCompletion: 'cancel_process_before_completion',
+    "save_workflow_to_document_and_save_to_drafts",
+  cancelProcessBeforeCompletion: "cancel_process_before_completion",
   pauseProcessAfterCompletingOngoingStep:
-    'pause_processing_after_completing_ongoing_step',
-  resumeProcessingFromNextStep: 'resume_processing_from_next_step',
-  testDocumentProcessWorkflowWise: 'test_document_processing_wf_wise',
-  testDocumentProcessWorkflowStepWise: 'test_document_processing_wf_steps_wise',
-  testDocumentProcessContentWise: 'test_document_processing_content_wise',
-  startDocumentProcessingWorkflowWise: 'start_document_processing_wf_wise',
+    "pause_processing_after_completing_ongoing_step",
+  resumeProcessingFromNextStep: "resume_processing_from_next_step",
+  testDocumentProcessWorkflowWise: "test_document_processing_wf_wise",
+  testDocumentProcessWorkflowStepWise: "test_document_processing_wf_steps_wise",
+  testDocumentProcessContentWise: "test_document_processing_content_wise",
+  startDocumentProcessingWorkflowWise: "start_document_processing_wf_wise",
   startDocumentProcessingWorkflowStepWise:
-    'start_document_processing_wf_steps_wise',
-  startDocumentProcessingContentWise: 'start_document_processing_content_wise',
-  closeProcessingAndMarkCompleted: 'close_processing_and_mark_as_completed',
+    "start_document_processing_wf_steps_wise",
+  startDocumentProcessingContentWise: "start_document_processing_content_wise",
+  closeProcessingAndMarkCompleted: "close_processing_and_mark_as_completed",
 };
 
 export const processActionOptionsWithLinkReturned = [
-  'test_document_processing_wf_wise',
-  'test_document_processing_wf_steps_wise',
-  'test_document_processing_content_wise',
-  'start_document_processing_wf_wise',
-  'start_document_processing_wf_steps_wise',
-  'start_document_processing_content_wise',
+  "test_document_processing_wf_wise",
+  "test_document_processing_wf_steps_wise",
+  "test_document_processing_content_wise",
+  "start_document_processing_wf_wise",
+  "start_document_processing_wf_steps_wise",
+  "start_document_processing_content_wise",
 ];

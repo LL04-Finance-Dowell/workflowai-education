@@ -1,36 +1,34 @@
-import styles from './selectDoc.module.css';
-import { useMediaQuery } from 'react-responsive';
+/* eslint-disable react-hooks/exhaustive-deps */
 import { useAppContext } from '../../../../contexts/AppContext';
+import styles from './selectDoc.module.css';
 
-import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation } from 'swiper';
+import { Swiper, SwiperSlide } from 'swiper/react';
 
 import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/pagination';
 
-import './swiper.css';
 import { useEffect, useState } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
+import './swiper.css';
 
 import { LoadingSpinner } from '../../../LoadingSpinner/LoadingSpinner';
 
-import SelectedDocuments from './selectedDocuments/SelectedDocuments';
-import { useTranslation } from 'react-i18next';
-import { productName } from '../../../../utils/helpers';
-import { DocumentServices } from '../../../../services/documentServices';
-import { setOriginalDocuments, setOriginalDocumentsLoaded } from '../../../../features/document/documentSlice';
 import axios from 'axios';
+import { useTranslation } from 'react-i18next';
+import { setOriginalDocuments, setOriginalDocumentsLoaded } from '../../../../features/document/documentSlice';
+import { DocumentServices } from '../../../../services/documentServices';
+import { productName } from '../../../../utils/helpers';
+import SelectedDocuments from './selectedDocuments/SelectedDocuments';
 
-import { contentDocument } from '../../../../features/document/asyncThunks';
 
-import { setContentOfDocument } from '../../../../features/document/documentSlice';
 
 import { startCopyingDocument } from '../../../../features/processCopyReducer';
 import { TemplateServices } from '../../../../services/templateServices';
 
 const SelectDoc = ({ savedDoc, addWorkflowStep }) => {
-  // console.log("saved Document", savedDoc)
+  // ("saved Document", savedDoc)
   const dispatch = useDispatch();
   const { t } = useTranslation();
   const { isMobile } = useAppContext();
@@ -64,7 +62,7 @@ const SelectDoc = ({ savedDoc, addWorkflowStep }) => {
   const copiedWorkflow = useSelector((state) => state.copyProcess.workflow);
 
   useEffect(() => {
-    // console.log('the copied doc and workflow are , ', copiedDocument, copiedWorkflow)
+    // ('the copied doc and workflow are , ', copiedDocument, copiedWorkflow)
     if (copiedDocument !== null) {
       setCurrentSelectedDocument(copiedDocument)
       setSelectedDocuments((prev) => [copiedDocument]);
@@ -75,7 +73,7 @@ const SelectDoc = ({ savedDoc, addWorkflowStep }) => {
     }
   }, [copiedDocument, copiedWorkflow])
 
-  // console.log('the picked approval is ', whichApproval)
+  // ('the picked approval is ', whichApproval)
 
   const data = {
     company_id: userDetail?.portfolio_info?.length > 1 ? userDetail?.portfolio_info.find(portfolio => portfolio.product === productName)?.org_id : userDetail?.portfolio_info[0].org_id,
@@ -87,28 +85,28 @@ const SelectDoc = ({ savedDoc, addWorkflowStep }) => {
 
     dispatch(setOriginalDocumentsLoaded(false));
 
-    if (whichApproval == 'new-set-workflow-document' || whichApprovalStep == 'new-set-workflow-document-step') {
+    if (whichApproval === 'new-set-workflow-document' || whichApprovalStep === 'new-set-workflow-document-step') {
       const documentServices = new DocumentServices();
       documentServices.getAllOriginalDocuments(data.company_id, data.data_type)
         .then(res => {
-          // console.log('the doc data are ', res.data)
+          // ('the doc data are ', res.data)
           dispatch(setOriginalDocuments(res.data.documents?.reverse()));
           dispatch(setOriginalDocumentsLoaded(true));
         })
         .catch(err => {
-          // console.log('Failed to load original documents: ', err.response ? err.response.data : err.message);
+          // ('Failed to load original documents: ', err.response ? err.response.data : err.message);
           dispatch(setOriginalDocumentsLoaded(true));
         })
     } else {
       const templateServices = new TemplateServices()
       templateServices.allTemplates(data.company_id, data.data_type)
         .then(res => {
-          // console.log('the template data are ', res.data)
+          // ('the template data are ', res.data)
           dispatch(setOriginalDocuments(res.data.templates?.reverse()))
           dispatch(setOriginalDocumentsLoaded(true));
         })
         .catch(err => {
-          // console.log('Failed to load original documents: ', err.response ? err.response.data : err.message);
+          // ('Failed to load original documents: ', err.response ? err.response.data : err.message);
           dispatch(setOriginalDocumentsLoaded(true));
         })
     }
@@ -120,19 +118,19 @@ const SelectDoc = ({ savedDoc, addWorkflowStep }) => {
 
 
   const handleAddSelectedDocuments = (document) => {
-    // console.log("documentmubeen", document)
-    if (whichApproval == 'new-set-workflow-document') {
+    // ("documentmubeen", document)
+    if (whichApproval === 'new-set-workflow-document') {
       axios
         .get(`https://workflowai.uxlivinglab.online/v1/companies/${data.company_id}/documents/${document._id}/clones/?data_type=${data.data_type}`)
         .then((response) => {
-          // // console.log('the response for document detail is ',response.data)
+          // // ('the response for document detail is ',response.data)
           setSelectedDocumentCopies(
             response.data
           );
 
         })
         .catch((error) => {
-          // console.log(error)
+
         });
     }
     else {
@@ -140,7 +138,7 @@ const SelectDoc = ({ savedDoc, addWorkflowStep }) => {
     }
     setCurrentSelectedDocument(document);
     Array.isArray(allDocumentsArray)
-    // // console.log(selectedDocumentCopies)
+
 
     const isInclude = selectedDocuments.find(
       (item) => item._id === document._id
@@ -163,12 +161,11 @@ const SelectDoc = ({ savedDoc, addWorkflowStep }) => {
     try {
       const url = `https://100094.pythonanywhere.com/v2/documents/${documentId}/?document_type=clone`;
       const response = await axios.get(url);
-      // console.log("response", response)
+      // ("response", response)
       setStepDocument(response.data);
     } catch (error) {
       // Handle any errors here
-      console.error('Error fetching document:', error);
-      throw error;
+      console.error('Error fetching document:', error); 
     }
   };
 
@@ -180,56 +177,6 @@ const SelectDoc = ({ savedDoc, addWorkflowStep }) => {
       }
     }
   }, [DocumentId]);
-
-  const dummyStep = [
-    {
-      "permitInternalWorkflow": true,
-      "stepCloneCount": 1,
-      "stepTaskType": "assign_task",
-      "stepRights": "add_edit",
-      "stepProcessingOrder": "team_user_public",
-      "stepTaskLimitation": "portfolios_assigned_on_or_before_step_start_date_and_time",
-      "stepActivityType": "individual_task",
-      "stepDisplay": "before_this_step",
-      "stepName": "Manish",
-      "stepRole": "Project lead",
-      "stepPublicMembers": [],
-      "stepTeamMembers": [
-        {
-          "member": "couzy",
-          "portfolio": "Workflow Tester"
-        },
-        {
-          "member": "GhassanOmran",
-          "portfolio": "created"
-        }
-      ],
-      "stepUserMembers": [],
-      "stepDocumentCloneMap": [
-        {
-          "couzy": "65b8c61de29116fd5c08f769"
-        }
-      ],
-      "stepNumber": 1,
-      "stepDocumentMap": [
-        {
-          "content": "t1",
-          "required": false,
-          "page": 1
-        }
-      ],
-      "skipStep": false,
-      "stepLocation": "any"
-    }
-  ]
-  // const document_key = Object.values(DocumentId.stepDocumentCloneMap[0])[0]
-  // let stepDocument = allDocumentsArray?.filter((item) => item._id === document_key);
-
-  // if(stepDocument){
-  //   stepDocument = originalDocuments[1];
-  // }
-
-  // console.log("addWorkflowStep",stepDocument,addWorkflowStep, dummyStep, DocumentId, selectedDocuments, ProcessDetail, allDocumentsArray, originalDocuments)
 
   return (
     <div
@@ -289,7 +236,7 @@ const SelectDoc = ({ savedDoc, addWorkflowStep }) => {
                             className={`${styles.swiper__slide__features} animate`}
                           >
                             <p className={styles.features__title}>
-                              {whichApproval == 'new-set-workflow-document' ? item.document_name : item.template_name}
+                              {whichApproval === 'new-set-workflow-document' ? item.document_name : item.template_name}
                             </p>
                             <button
                               onClick={() => handleAddSelectedDocuments(item)}
@@ -378,7 +325,7 @@ const SelectDoc = ({ savedDoc, addWorkflowStep }) => {
                           className={`${styles.swiper__slide__features} animate`}
                         >
                           <p className={styles.features__title}>
-                            {whichApprovalStep == 'new-set-workflow-document-step' ? stepDocument?.document_name : stepDocument?.template_name}
+                            {whichApprovalStep === 'new-set-workflow-document-step' ? stepDocument?.document_name : stepDocument?.template_name}
                           </p>
                           <button
                             onClick={() => handleAddSelectedDocuments(stepDocument)}
@@ -438,7 +385,7 @@ const SelectDoc = ({ savedDoc, addWorkflowStep }) => {
                               className={`${styles.swiper__slide__features} animate`}
                             >
                               <p className={styles.features__title}>
-                                {whichApproval == 'new-set-workflow-document' ? item.document_name : item.template_name}
+                                {whichApproval === 'new-set-workflow-document' ? item.document_name : item.template_name}
                               </p>
                               <button
                                 onClick={() => handleAddSelectedDocuments(item)}

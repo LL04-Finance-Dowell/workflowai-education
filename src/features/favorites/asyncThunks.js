@@ -8,20 +8,16 @@ export const getFavorites = createAsyncThunk("favorites/get", async () => {
     const res = favoriteServices.getFavorites();
 
     return res.data;
-  } catch (error) {
-    console.log(error);
-  }
+  } catch (_error) {}
 });
 
 export const handleFavorites = createAsyncThunk(
   "favorites/handle",
   async (data) => {
     try {
-      const res =  favoriteServices.addFavorite(data);
+      const res = favoriteServices.addFavorite(data);
 
       return res.data;
-    } catch (error) {
-      console.log(error);
-    }
+    } catch (_error) {}
   }
 );

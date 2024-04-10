@@ -1,14 +1,14 @@
-import { useEffect } from "react";
-import globalStyles from "../../connectWorkFlowToDoc.module.css";
-import { v4 as uuidv4 } from "uuid";
+/* eslint-disable react-hooks/exhaustive-deps */
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
+import { useDispatch, useSelector } from "react-redux";
+import { v4 as uuidv4 } from "uuid";
+import { LoadingSpinner } from "../../../../../LoadingSpinner/LoadingSpinner";
 import AssignButton from "../../../../assignButton/AssignButton";
-import { useState } from "react";
+import Contents from "../../../../contents/Contents";
 import FormLayout from "../../../../formLayout/FormLayout";
 import Select from "../../../../select/Select";
-import { useDispatch, useSelector } from "react-redux";
-import Contents from "../../../../contents/Contents";
-import { LoadingSpinner } from "../../../../../LoadingSpinner/LoadingSpinner";
+import globalStyles from "../../connectWorkFlowToDoc.module.css";
 
 import { useTranslation } from 'react-i18next';
 import { removeFromTableOfContentForStep, setTableOfContentForStep } from "../../../../../../features/processes/processesSlice";
@@ -35,7 +35,7 @@ const AssignDocumentMap = ({ currentStepIndex, stepsPopulated }) => {
     if (copiedProcess == null) {
       return;
     }
-    // // console.log('entered the pick document phase', copiedProcess.process_steps);
+    // // ('entered the pick document phase', copiedProcess.process_steps);
   
     // Create a temporary array to accumulate the changes
     const newTableOfContentArr = [];
@@ -46,7 +46,7 @@ const AssignDocumentMap = ({ currentStepIndex, stepsPopulated }) => {
           "id": `${copiedProcess.process_steps[i].stepDocumentMap[y].content}`,
           "pageNum": copiedProcess.process_steps[i].stepDocumentMap[y].page
         };
-        const jsonContent = JSON.stringify(content);
+       
         const newTableOfContentObj = {
           ...content,
           workflow: docCurrentWorkflow._id,
@@ -54,7 +54,7 @@ const AssignDocumentMap = ({ currentStepIndex, stepsPopulated }) => {
           required: false,
           page: copiedProcess.process_steps[i].stepDocumentMap[y].page,
         };
-        // // console.log('the step copy doc is ', newTableOfContentObj);
+        // // ('the step copy doc is ', newTableOfContentObj);
         const contentStepAlreadyAdded = newTableOfContentArr.find(
           (step) =>
             step.workflow === docCurrentWorkflow._id &&
@@ -63,7 +63,7 @@ const AssignDocumentMap = ({ currentStepIndex, stepsPopulated }) => {
         );
   
         if (!contentStepAlreadyAdded) {
-          // // console.log('content added')
+          // // ('content added')
           newTableOfContentArr.push(newTableOfContentObj);
         }
       }
@@ -77,16 +77,12 @@ const AssignDocumentMap = ({ currentStepIndex, stepsPopulated }) => {
       });
     }
   
-    // // console.log('finished the pick document phase');
-  
   }, []);
   
         
 
   const onSubmit = (data) => {
     setLoading(true);
-
-    // setTimeout(() => setLoading(false), 2000);
 
     if (data.document) {
       const addNewTableOfContentStep = (stepContent) => {
@@ -95,7 +91,7 @@ const AssignDocumentMap = ({ currentStepIndex, stepsPopulated }) => {
           workflow: docCurrentWorkflow._id,
           stepIndex: currentStepIndex,
         };
-        // // console.log('the newTableOfContentObj is ',newTableOfContentObj)
+        // // ('the newTableOfContentObj is ',newTableOfContentObj)
         dispatch(setTableOfContentForStep(newTableOfContentObj));
       };
 
@@ -106,10 +102,9 @@ const AssignDocumentMap = ({ currentStepIndex, stepsPopulated }) => {
         tableOfContentForStep.filter(
           (content) => content.stepIndex === currentStepIndex - 1
         );
-// // console.log('the tableOfContentForStep is ', tableOfContentForStep)
       switch (data.document) {
         case "Current Selection":
-          // // console.log('content on current selection', data);
+          // // ('content on current selection', data);
           return setLoading(false);
         case "All Document":
           contentOfDocument.forEach((content) => {
@@ -121,7 +116,7 @@ const AssignDocumentMap = ({ currentStepIndex, stepsPopulated }) => {
             );
 
             if (contentStepAlreadyAdded) return;
-              // // console.log('the content of document is ', content)
+              // // ('the content of document is ', content)
             addNewTableOfContentStep(content);
           });
           return setLoading(false);
@@ -144,7 +139,7 @@ const AssignDocumentMap = ({ currentStepIndex, stepsPopulated }) => {
             );
 
             if (contentStepAlreadyAdded) return;
-            // // console.log('the content of document is ', content)
+            // // ('the content of document is ', content)
             addNewTableOfContentStep(content);
           });
           return setLoading(false);
@@ -163,7 +158,7 @@ const AssignDocumentMap = ({ currentStepIndex, stepsPopulated }) => {
             (tableOfContentStep) => {
               const copyOfTableOfContentStep = { ...tableOfContentStep };
               copyOfTableOfContentStep.stepIndex = currentStepIndex;
-              // // console.log('the content of document is ', copyOfTableOfContentStep)
+              // // ('the content of document is ', copyOfTableOfContentStep)
               addNewTableOfContentStep(copyOfTableOfContentStep);
             }
           );
@@ -173,7 +168,7 @@ const AssignDocumentMap = ({ currentStepIndex, stepsPopulated }) => {
       }
     }
   };
-  // // console.log("the process steps are ", processSteps);
+  // // ("the process steps are ", processSteps);
 
   return (
     <>

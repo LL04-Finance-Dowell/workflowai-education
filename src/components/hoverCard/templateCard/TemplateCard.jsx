@@ -2,26 +2,26 @@ import React, { useState } from 'react';
 
 import { BsBookmark, BsFillBookmarkFill } from 'react-icons/bs';
 
+import { useTranslation } from 'react-i18next';
+import { IoIosRefresh } from 'react-icons/io';
+import { MdOutlineFiberNew } from 'react-icons/md';
 import { RiDeleteBin6Line } from 'react-icons/ri';
 import { useDispatch, useSelector } from 'react-redux';
 import { toast } from 'react-toastify';
+import { Tooltip } from 'react-tooltip';
 import { useAppContext } from '../../../contexts/AppContext';
 import { detailTemplate } from '../../../features/template/asyncThunks';
 import { setAllTemplates } from '../../../features/template/templateSlice';
 import { moveItemToArchive } from '../../../services/archiveServices';
 import {
-  addNewFavoriteForUser,
-  deleteFavoriteForUser,
+    addNewFavoriteForUser,
+    deleteFavoriteForUser,
 } from '../../../services/favoritesServices';
+import { TemplateServices } from '../../../services/templateServices';
+import { LoadingSpinner } from '../../LoadingSpinner/LoadingSpinner';
+import AddRemoveBtn from '../AddRemoveBtn';
 import HoverCard from '../HoverCard';
 import { Button } from '../styledComponents';
-import { useTranslation } from 'react-i18next';
-import { MdOutlineFiberNew } from 'react-icons/md';
-import { Tooltip } from 'react-tooltip';
-import { IoIosRefresh } from 'react-icons/io';
-import { LoadingSpinner } from '../../LoadingSpinner/LoadingSpinner';
-import { TemplateServices } from '../../../services/templateServices';
-import AddRemoveBtn from '../AddRemoveBtn';
 
 const TemplateCard = ({ cardItem, isFolder, folderId }) => {
   const dispatch = useDispatch();
@@ -116,7 +116,7 @@ const TemplateCard = ({ cardItem, isFolder, folderId }) => {
       ).data;
       toast.success(response);
     } catch (error) {
-      // console.log(error.response ? error.response.data : error.message);
+      // (error.response ? error.response.data : error.message);
       toast.info(error.response ? error.response.data : error.message);
       copyOfTemplateToUpdate.data_type = 'Real_Data';
       copyOfAllTemplates[foundTemplateIndex] = copyOfTemplateToUpdate;
@@ -146,7 +146,7 @@ const TemplateCard = ({ cardItem, isFolder, folderId }) => {
 
       setTemplateLoading(false);
     } catch (error) {
-      // console.log(error.response ? error.response.data : error.message);
+      // (error.response ? error.response.data : error.message);
       toast.info('Refresh for template failed');
       setTemplateLoading(false);
     }

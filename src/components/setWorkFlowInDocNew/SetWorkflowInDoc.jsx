@@ -1,39 +1,41 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import { useState } from 'react';
-import ConnectWorkFlowToDoc from './steps/connectWebflowToDoc/ConnectWorkFlowToDoc';
-import SelectDoc from './steps/selectDoc/SelectDoc';
-import SelectWorkflow from './steps/selectWorkflow/SelectWorkflow';
 import styles from './setWorkflowInDoc.module.css';
 import CheckErrors from './steps/checkErrors/CheckErrors';
+import ConnectWorkFlowToDoc from './steps/connectWebflowToDoc/ConnectWorkFlowToDoc';
 import ProcessDocument from './steps/processDocument/ProcessDocument';
+import SelectDoc from './steps/selectDoc/SelectDoc';
+import SelectWorkflow from './steps/selectWorkflow/SelectWorkflow';
 
 import ContentMapOfDoc from './contentMapOfDoc/ContentMapOfDoc';
 
-import WorkflowLayout from '../../layouts/WorkflowLayout/WorkflowLayout';
 import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import WorkflowLayout from '../../layouts/WorkflowLayout/WorkflowLayout';
 
+import { useSearchParams } from 'react-router-dom';
+import { contentDocument } from '../../features/document/asyncThunks';
 import { setContentOfDocument } from '../../features/document/documentSlice';
 import { getContinents } from '../../services/locationServices';
-import { useSearchParams } from 'react-router-dom';
 import { getSingleProcessV2 } from '../../services/processServices';
 import Spinner from '../spinner/Spinner';
-import { contentDocument } from '../../features/document/asyncThunks';
 
-import ProcessName from './steps/setProcessName/ProcessName';
 import { useTranslation } from 'react-i18next';
 import Tabs from './Tabs';
+import ProcessName from './steps/setProcessName/ProcessName';
 
 //driver js for showing the steps
 import { driver } from 'driver.js';
 import "driver.js/dist/driver.css";
-import ImgOne from '../../assets/sec1.gif'
+import ImgOne from '../../assets/sec1.gif';
 import ImgTwo from '../../assets/sec2.gif';
 import ImgThree from '../../assets/sec3.gif';
 import ImgFour from '../../assets/sec4.gif';
 import ImgFive from '../../assets/sec5.gif';
 import ImgSix from '../../assets/sec6.gif';
 import { toggleHighlight } from '../../features/processCopyReducer';
-import {    resetSetWorkflows,
+import {
+  resetSetWorkflows,
   setContinents,
   setContinentsLoaded,
   setCurrentDocToWfs,
@@ -43,14 +45,15 @@ import {    resetSetWorkflows,
   setTableOfContentForStep,
   setTeamMembersSelectedForProcess,
   setUserMembersSelectedForProcess,
-  setWfToDocument, } from '../../features/processes/processesSlice';
+  setWfToDocument,
+} from '../../features/processes/processesSlice';
 
 const SetWorkflowInDoc = ({addWorkflowStep}) => {
   const dispatch = useDispatch();
   const { t } = useTranslation();
   const { userDetail, session_id } = useSelector((state) => state.auth);
   const { continentsLoaded, allProcesses } = useSelector((state) => state.processes);
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const [draftProcessLoading, setDraftProcessLoading] = useState(false);
   const { allDocuments } = useSelector((state) => state.document);
   const { allWorkflows } = useSelector((state) => state.workflow);
@@ -71,7 +74,7 @@ const SetWorkflowInDoc = ({addWorkflowStep}) => {
   // useEffect(()=>{
   //   dispatch(resetSetWorkflows());
   //   dispatch(setContentOfDocument(null));
-  //   // console.log('form reset')
+  //   // ('form reset')
   // },[])
   useEffect(() => {
     const processId = searchParams.get('id');
@@ -100,7 +103,7 @@ const SetWorkflowInDoc = ({addWorkflowStep}) => {
         dispatch(setContinentsLoaded(true));
       })
       .catch((err) => {
-        // console.log('Failed to fetch continents');
+        // ('Failed to fetch continents');
         dispatch(setContinentsLoaded(true));
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -159,7 +162,7 @@ const SetWorkflowInDoc = ({addWorkflowStep}) => {
         setDraftProcessLoaded(true);
       })
       .catch((err) => {
-        // console.log(err.response ? err.response.data : err.message);
+        // (err.response ? err.response.data : err.message);
         setDraftProcessLoading(false);
         setDraftProcessLoaded(true);
       });
@@ -310,14 +313,14 @@ useEffect(()=>{
       driverObj.destroy();
     },
   });
-  if(showHighlight == true){
+  if(showHighlight === true){
     driverObj.drive();
   }
   else {}
  
 },[showHighlight])
   
-// console.log("props.addWorkflowStep Mubeen", addWorkflowStep)
+// ("props.addWorkflowStep Mubeen", addWorkflowStep)
 
   return (
     <WorkflowLayout>
@@ -338,7 +341,7 @@ useEffect(()=>{
         <h2 className={`${styles.title} h2-large `}>
           {draftProcess
             ? draftProcess?.process_title
-            : t(`Set WorkFlows in ${whichApproval == 'new-set-workflow-document' ? 'Documents' : 'Templates'}`)}
+            : t(`Set WorkFlows in ${whichApproval === 'new-set-workflow-document' ? 'Documents' : 'Templates'}`)}
         </h2>
         {isDraftProcess ? (
           !draftProcessLoading && draftProcess && draftProcessDOc ? (
@@ -394,7 +397,7 @@ useEffect(()=>{
           <>
           <div style={{ position: 'relative' }}>
             <div id='hidenImg'  style={{ display: 'none', position: 'absolute', top: 0, left: 0, zIndex: 100000 }}>
-              <img id='selectDocOne' src={ImgOne} width={'100%'} height={'100%'} />
+              <img id='selectDocOne' src={ImgOne} width={'100%'} height={'100%'} alt='' />
             </div>
             <SelectDoc driverCounter={driverCounter} setDriverCounter={setDriverCounter} addWorkflowStep={addWorkflowStep}/>
           </div>
@@ -404,28 +407,28 @@ useEffect(()=>{
             <div style={{ position: 'relative' }}>
               <div className={styles.diveder}></div>
               <div id='hidenImgTwo'  style={{ display: 'none', position: 'absolute', top: 0, left: 0, zIndex: 100000 }}>
-                <img id='selectWfOne' src={ImgTwo} width={'100%'} height={'100%'} />
+                <img id='selectWfOne' src={ImgTwo} width={'100%'} height={'100%'} alt='' />
               </div>
               <SelectWorkflow driverCounter={driverCounter} setDriverCounter={setDriverCounter}/>
             </div>
             <div style={{ position: 'relative' }}>
               <div className={styles.diveder}></div>
               <div id='hidenImgThree'  style={{ display: 'none', position: 'absolute', top: 150, left: 0, zIndex: 100000 }}>
-                <img id='connectWftoDocOne' src={ImgThree} width={'100%'} height={'100%'} />
+                <img id='connectWftoDocOne' src={ImgThree} width={'100%'} height={'100%'} alt='' />
               </div>
               <ConnectWorkFlowToDoc driverCounter={driverCounter} setDriverCounter={setDriverCounter} addWorkflowStep={addWorkflowStep}/>
             </div>
             <div style={{ position: 'relative' }}>
               <div className={styles.diveder}></div>
               <div id='hidenImgFour'  style={{ display: 'none', position: 'absolute', top: 400, left: 0, zIndex: 100000 }}>
-                <img id='checkError' src={ImgFour} width={'100%'} height={'100%'} />
+                <img id='checkError' src={ImgFour} width={'100%'} height={'100%'} alt=''/>
               </div>
               <CheckErrors driverCounter={driverCounter} setDriverCounter={setDriverCounter}/>
             </div>
             <div style={{ position: 'relative' }}>
               <div className={styles.diveder}></div>
               <div id='hidenImgFive'  style={{ display: 'none', position: 'absolute', top: 450, left: 0, zIndex: 100000 }}>
-                <img id='addName' src={ImgFive} width={'100%'} height={'100%'} />
+                <img id='addName' src={ImgFive} width={'100%'} height={'100%'} alt=''/>
               </div>
            
               <ProcessName
@@ -437,7 +440,7 @@ useEffect(()=>{
             <div style={{ position: 'relative' }}>
               <div className={styles.diveder}></div>
               <div id='hidenImgSix'  style={{ display: 'none', position: 'absolute', top: 430, left: 0, zIndex: 100000 }}>
-                <img id='createProcess' src={ImgSix} width={'100%'} height={'100%'}/>
+                <img id='createProcess' src={ImgSix} width={'100%'} height={'100%'} alt=''/>
               </div>
               <ProcessDocument
                 Process_title={Process_title}

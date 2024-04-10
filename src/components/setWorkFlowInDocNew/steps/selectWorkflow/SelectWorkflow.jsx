@@ -1,26 +1,27 @@
-import React, {useEffect} from 'react';
+/* eslint-disable react-hooks/exhaustive-deps */
+import React, { useEffect } from 'react';
+import { useAppContext } from '../../../../contexts/AppContext';
 import styles from './selectWorkflow.module.css';
 import SelectWorkflowBoxes from './selectWorkflowBoxes/SelectWorkflowBoxes';
-import { useAppContext } from '../../../../contexts/AppContext';
 
 import { useDispatch, useSelector } from 'react-redux';
-import SelectedWorkflows from './selectedWorkflow/SelectedWorkflows';
 import { PrimaryButton } from '../../../styledComponents/styledComponents';
+import SelectedWorkflows from './selectedWorkflow/SelectedWorkflows';
 
 
 import { startConnecting } from '../../../../features/processCopyReducer';
 
 import { useTranslation } from 'react-i18next';
 import { toast } from 'react-toastify';
-import { setWfToDocument } from '../../../../features/processes/processesSlice';
 import { removeFromSelectedWorkflowsToDocGroup } from '../../../../features/app/appSlice';
+import { setWfToDocument } from '../../../../features/processes/processesSlice';
 
 const SelectWorkflow = ({ savedDoc }) => {
   const dispatch = useDispatch();
   const { t } = useTranslation();
   const { isMobile } = useAppContext();
 
-  const { currentDocToWfs, selectedWorkflowsToDoc, docCurrentWorkflow, } = useSelector((state) => state.processes);
+  const { currentDocToWfs, selectedWorkflowsToDoc} = useSelector((state) => state.processes);
   const { contentOfDocument } = useSelector((state) => state.document);
 
   ////copied workflow
@@ -30,21 +31,13 @@ const SelectWorkflow = ({ savedDoc }) => {
   useEffect(() => {
     if (!copiedWorkflow) return;
 
-    // console.log('start useEffect in step 2. select workflow',startCopyingWF ,selectedWorkflowsToDoc?.length)
+    // ('start useEffect in step 2. select workflow',startCopyingWF ,selectedWorkflowsToDoc?.length)
     const timerId = setTimeout(() => {
     if (selectedWorkflowsToDoc?.length >= 1 && copiedWorkflow !==null && startCopyingWF) {
-    //  // console.log('entered to stpe 2. slect workflow')
-      // const contentPageWise = contentOfDocument.reduce((r, a) => {
-      //   r[a.pageNum] = r[a.pageNum] || [];
-      //   r[a.pageNum].push(a);
-      //   return r;
-      // }, Object.create(null))
-   
-      // if (Object.keys(contentPageWise || {}).length < 1) return toast.info("The document selected for processing cannot be empty.");
       dispatch(setWfToDocument());
-      // // console.log('middle of step 2')
+      // // ('middle of step 2')
       dispatch(startConnecting())
-      // // console.log('finished useEffect in step 2. select workflow')
+      // // ('finished useEffect in step 2. select workflow')
     }}, 2000);
     return () => clearTimeout(timerId);
   },[copiedWorkflow, selectedWorkflowsToDoc, startCopyingWF])
@@ -57,7 +50,7 @@ const SelectWorkflow = ({ savedDoc }) => {
   };
 
   const handleConnectWfToDoc = () => {
-    // console.log(selectedWorkflowsToDoc)
+    // (selectedWorkflowsToDoc)
     if ( selectedWorkflowsToDoc?.length < 1) {
       return toast.info('Please Select a Workflow to Continue');
     }

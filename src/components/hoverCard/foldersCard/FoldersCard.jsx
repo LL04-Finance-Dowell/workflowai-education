@@ -69,7 +69,7 @@
 //       .then(response => {
 //         // Handle the API response here
 //         dispatch(SetKnowledgeFoldersTemplates(response.data));
-//         console.log('API Response:', response.data);
+//         ('API Response:', response.data);
 //       })
 //       .catch(error => {
 //         // Handle any errors that occur during the request
@@ -77,7 +77,7 @@
 //       });
 //   }, [knowledgeCenter]);
 
-//   console.log("cardItemcardItemmubeen", cardItem)
+//   ("cardItemcardItemmubeen", cardItem)
 
 //   const FrontSide = () => {
 //     return (
@@ -165,17 +165,17 @@
 
 // export default FoldersCard;
 
-import React, { useState, useEffect } from 'react';
-import { FaEdit } from 'react-icons/fa';
-import { Button } from '../styledComponents';
+import axios from 'axios';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { FaEdit } from 'react-icons/fa';
 import { RiDeleteBin6Line } from 'react-icons/ri';
-import HoverCard from '../HoverCard';
+import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { useAppContext } from '../../../contexts/AppContext';
-import { useDispatch } from 'react-redux';
-import axios from 'axios';
 import { SetKnowledgeFoldersTemplates } from '../../../features/app/appSlice';
+import HoverCard from '../HoverCard';
+import { Button } from '../styledComponents';
 
 const FoldersCard = ({ cardItem, knowledgeCenter }) => {
   const { t } = useTranslation();
@@ -236,7 +236,7 @@ const FoldersCard = ({ cardItem, knowledgeCenter }) => {
       .then(response => {
         // Handle the API response here
         dispatch(SetKnowledgeFoldersTemplates(response.data));
-        // console.log('API Response:', response.data);
+        // ('API Response:', response.data);
       })
       .catch(error => {
         // Handle any errors that occur during the request
@@ -244,7 +244,7 @@ const FoldersCard = ({ cardItem, knowledgeCenter }) => {
       });
   }, [knowledgeCenter]);
 
-  // console.log("cardItemcardItemmubeen", cardItem)
+  // ("cardItemcardItemmubeen", cardItem)
 
   const FrontSide = () => {
     return (
