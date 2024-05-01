@@ -6,7 +6,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from education.serializers import CreateCollectionSerializer
 import threading
-from app.helpers import register_finalized, validate_id
+from app.helpers import validate_id
 from app import processing
 from app.mongo_db_connection import single_query_process_collection, update_process
 from app.views_v2 import FinalizeOrReject
@@ -23,9 +23,7 @@ from education.serializers import *
 
 from education.helpers import *
 from education.datacube_connection import (
-    authorize,
     datacube_collection_retrieval,
-    finalize_item,
     get_data_from_collection,
     get_process_from_collection,
     post_data_to_collection,
@@ -34,7 +32,6 @@ from education.datacube_connection import (
     save_to_metadata,
     post_to_data_service,
     save_to_process_collection,
-    update_metadata,
     update_process_collection,
     # save_to_template_metadata,
     get_clones_from_collection,
@@ -47,7 +44,6 @@ from education.datacube_connection import (
     get_folders_from_collection,
     get_folder_from_collection,
     save_to_folder_collection,
-    update_process_education,
 )
 
 from django.core.cache import cache
@@ -295,9 +291,10 @@ class NewTemplate(APIView):
         except InvalidTokenException as e:
             return CustomResponse(False, str(e), None, status.HTTP_401_UNAUTHORIZED)
         workspace_id = request.GET.get("workspace_id")
+        template_id = request.GET.get("template_id")
         db_name = f"{workspace_id}_DB_0"
-        collection_name = f"{workspace_id}_template_metadata_collection_0"
-        filters = {}
+        collection_name = f"{workspace_id}_template_collection_0"
+        filters = {"_id":template_id}
         res = get_template_from_collection(api_key, db_name, collection_name, filters)
         if res["success"]:
             return Response(res)
@@ -675,7 +672,7 @@ class ItemProcessing(APIView):
         )
         # print("collection:::", collection)
         collection_name = collection["name"]
-        # return Response({f"collection: {collection_name}", f"data : {collection}"})
+        return Response({f"collection: {collection_name}", f"data : {collection}"})
 
         if collection["success"] and collection["status"] == "New":
             new_process_collection = add_collection_to_database(
@@ -909,6 +906,8 @@ class NewDocument(APIView):
         organization_id = request.data.get("company_id")
         created_by = request.data.get("created_by")
         data_type = request.data.get("data_type")
+        template_id = request.data.get("template_id")
+
 
         db_name_0 = f"{workspace_id}_DB_0"
         db_name_1 = f"{workspace_id}_TEMPLATE_DB_1"
@@ -939,6 +938,7 @@ class NewDocument(APIView):
             api_key, collection_name, db_name_0
         )
 
+
         if not collection["success"]:
             return CustomResponse(
                 False, "No collection with found", None, status.HTTP_404_NOT_FOUND
@@ -947,15 +947,15 @@ class NewDocument(APIView):
         collection_name = collection["name"]
 
         template = get_template_from_collection(
-            api_key, db_name_0, collection_name, {"collection_name": collection_name}
+            api_key, db_name_0, collection_name, {"_id": template_id}
         )
 
         if not template["success"]:
             return CustomResponse(
                 False, "No template found", None, status.HTTP_404_NOT_FOUND
             )
-
-        isapproved = template["data"][0]["approved"]
+      
+        isapproved = template["data"][0]["approval"]
 
         if not isapproved:
             return CustomResponse(
@@ -1089,7 +1089,7 @@ class Document(APIView):
                 db_name,
                 collection_name,
                 {
-                    "company_id": company_id,
+                    "company_id":company_id,
                     "data_type": data_type,
                     "document_state": document_state,
                     "auth_viewers": auth_viewers,
@@ -1106,14 +1106,14 @@ class Document(APIView):
                     db_name,
                     collection_name,
                     {
-                        "company_id": company_id,
+                        "company_id":company_id,
                         "data_type": data_type,
                         "document_state": document_state,
                     },
                 )
                 return Response({"documents": documents}, status=status.HTTP_200_OK)
             if document_type == "clone":
-                cache_key = f"clones_{company_id}"
+                cache_key = f"clones_{workspace_id}"
                 clones_list = cache.get(cache_key)
                 if clones_list is None:
                     clones_list = get_clones_from_collection(
@@ -1121,7 +1121,7 @@ class Document(APIView):
                         db_name,
                         collection_name,
                         {
-                            "company_id": company_id,
+                            "company_id":company_id,
                             "data_type": data_type,
                             "document_state": document_state,
                         },
@@ -1240,218 +1240,6 @@ class DocumentDetail(APIView):
             return Response(document["data"], status.HTTP_200_OK)
         return Response("Document could not be accessed!", status.HTTP_404_NOT_FOUND)
 
-class FinalizeOrRejectEducation_v2(APIView):
-    def post(self, request, process_id, *args, **kwargs):
-        """After access is granted and the user has made changes on a document."""
-        payload_dict = kwargs.get("payload")
-        if payload_dict:
-            request_data = payload_dict
-        else:
-            request_data = request.data
-            
-        if not request_data:
-            return Response("you are missing something", status.HTTP_400_BAD_REQUEST)
-        
-        api_key = request.data["api_key"]
-        collection_name = request.data["coll_name"]
-        db_name = request.data["db_name"]
-        
-        item_id = request_data["item_id"]
-        item_type = request_data["item_type"]
-        role = request_data["role"]
-        user = request_data["authorized"]
-        user_type = request_data["user_type"]
-        state = request_data["action"]
-        message = ""
-        if state == "rejected":
-            message = request_data.get("message", None)
-            if not message:
-                return Response(
-                    "provide a reason for rejecting the document",
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-        check, current_state = is_finalized(api_key, db_name, collection_name, item_id, item_type)
-        if item_type == "document" or item_type == "clone":
-            if check and current_state != "processing":
-                return Response(
-                    f"document already processed as `{current_state}`!",
-                    status.HTTP_200_OK,
-                )
-        elif item_type == "template":
-            if check and current_state != "draft":
-                return Response(
-                    f"template already processed as `{current_state}`!",
-                    status.HTTP_200_OK,
-                )
-        if item_type == "clone":
-            signers_list = get_clone_from_collection(
-                api_key, db_name, collection_name, {"_id": item_id}
-            ).get(
-                "signed_by"
-            )
-            updated_signers_true = update_signed(signers_list, member=user, status=True)
-        res = json.loads(
-            finalize_item(
-                item_id, state, item_type, message, api_key, db_name, collection_name, signers=updated_signers_true
-            )
-        )
-        if res["isSuccess"]:
-            # Check the finalize action, no need to check document state since the finalize_item() call was successful
-            if state == "rejected":
-                try:
-                    process_steps = get_process_from_collection(
-                        api_key, db_name, collection_name, {"_id": process_id}
-                    ).get("process_steps")
-                    update_process_education(
-                        api_key, db_name, collection_name, process_id=process_id, steps=process_steps, state=state
-                    )
-                    return Response(
-                        "document rejected successfully", status.HTTP_200_OK
-                    )
-                except Exception as e:
-                    # Revert document and process states back to "processing"
-                    json.loads(
-                        finalize_item(
-                            item_id, "processing", item_type, message, api_key, db_name, collection_name, signers=None
-                        )
-                    )
-                    update_process(
-                        process_id=process_id, steps=process_steps, state="processing"
-                    )
-                    return Response(
-                        f"an error occurred while rejecting the process {e}",
-                        status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    )
-
-            else:
-                # Process item normally
-                try:
-                    process = get_process_from_collection(
-                        api_key, db_name, collection_name, {"_id": process_id}
-                    )
-                    background = processing.Background(
-                        process, item_type, item_id, role, user, message
-                    )
-                    if user_type == "public":
-                        link_id = request_data.get("link_id")
-                        register_finalized(link_id)
-                    if item_type == "document" or item_type == "clone":
-                        background.document_processing()
-                        item = get_clone_from_collection(
-                        api_key, db_name, collection_name, {"_id": item_id}
-                    )
-                        if item:
-                            if item.get("document_state") == "finalized":
-                                meta_id = get_metadata_id(api_key, db_name, collection_name, item_id, item_type)
-                                updated_process = get_process_from_collection(
-                                    api_key, db_name, collection_name, {"_id": process_id}
-                                )
-                                process_state = updated_process.get("processing_state")
-                                if (
-                                    process.get("process_type") == "internal"
-                                    and process_state == "finalized"
-                                ):
-                                    process_creator = process.get("created_by")
-                                    process_creator_portfolio = process.get(
-                                        "creator_portfolio"
-                                    )
-                                    parent_process = process.get("parent_process")
-
-                                    user_dict = {
-                                        "member": process_creator,
-                                        "portfolio": process_creator_portfolio,
-                                    }
-                                    authorize(
-                                        api_key, db_name, collection_name, item_id, user_dict, parent_process, "document"
-                                    )
-                                    # authorize_metadata(
-                                    #     meta_id, user_dict, parent_process, "document"
-                                    # )
-
-                                else:
-                                    # update_metadata(
-                                    #     meta_id,
-                                    #     "finalized",
-                                    #     item_type,
-                                    #     signers=updated_signers_true,
-                                    # )
-                                    update_metadata(
-                                        meta_id,
-                                        api_key,
-                                        db_name,
-                                        collection_name,
-                                        {"processing_state": "finalized"},
-                                    )
-                            elif item.get("document_state") == "processing":
-                                meta_id = get_metadata_id(api_key, db_name, collection_name, item_id, item_type)
-                        # if check_last_finalizer(user, user_type, process):
-                        #     subject = (
-                        #         f"Completion of {process['process_title']} Processing"
-                        #     )
-                        #     email = process.get("email", None)
-
-                        #     if email:
-                        #         dowell_email_sender(
-                        #             process["created_by"],
-                        #             email,
-                        #             subject,
-                        #             email_content=PROCESS_COMPLETION_MAIL,
-                        #         )
-
-                        # # Remove Reminder after finalization
-                        # remove_finalized_reminder(user, process_id)
-
-                        return Response(
-                            "document processed successfully", status.HTTP_200_OK
-                        )
-                    elif item_type == "template":
-                        background.template_processing()
-                        item = get_template_from_collection(
-                            api_key, db_name, collection_name, {"_id": item_id}
-                        )
-                        if item:
-                            if item.get("template_state") == "saved":
-                                meta_id = get_metadata_id(api_key, db_name, collection_name, item_id, item_type)
-                                updated_signers_true = update_signed(
-                                    signers_list, member=user, status=True
-                                )
-                                update_metadata(
-                                    meta_id,
-                                    "saved",
-                                    item_type,
-                                    signers=updated_signers_true,
-                                )
-                            elif item.get("template_state") == "draft":
-                                meta_id = get_metadata_id(item_id, item_type)
-                                update_metadata(meta_id, "draft", item_type)
-
-                        # if check_last_finalizer(user, user_type, process):
-                        #     subject = (
-                        #         f"Completion of {process['process_title']} Processing"
-                        #     )
-                        #     email = process.get("email", None)
-
-                        #     if email:
-                        #         dowell_email_sender(
-                        #             process["created_by"],
-                        #             email,
-                        #             subject,
-                        #             email_content=PROCESS_COMPLETION_MAIL,
-                        #         )
-
-                        # # Remove Reminder after finalization
-                        # remove_finalized_reminder(user, process_id)
-
-                        return Response(
-                            "template processed successfully", status.HTTP_200_OK
-                        )
-                except Exception as err:
-                    print(err)
-                    return Response(
-                        "An error occured during processing",
-                        status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    )
-                    
 
 
 
@@ -1471,25 +1259,16 @@ class ItemContent(APIView):
 
         if not validate_id(item_id):
             return Response("Something went wrong!", status.HTTP_400_BAD_REQUEST)
+        content = []
+        item_type = request.query_params.get("item_type")
         if item_type == "template":
-            try:
-                to_parse = get_template_from_collection(api_key, db_name, collection_name, {"_id": item_id})["data"][0]["content"]
-                my_dict = ast.literal_eval(to_parse)[0][0]
-            except Exception as e:
-                my_dict = json.loads(to_parse)[0][0]
-        if item_type == "document":
-            try:
-                to_parse = get_document_from_collection(api_key, db_name, collection_name, {"_id": item_id})["data"][0]["content"]
-                my_dict = ast.literal_eval(to_parse)[0][0]
-            except Exception as e:
-                my_dict = json.loads(to_parse)[0][0]
-        if item_type == "clone":
-            try:
-                to_parse = get_clone_from_collection({"_id": item_id})["content"]
-                my_dict = ast.literal_eval(to_parse)[0][0]
-            except Exception as e:
-                my_dict = json.loads(to_parse)[0][0]
-
+            my_dict = ast.literal_eval(
+                get_template_from_collection(api_key, db_name, collection_name, {"_id": item_id})["data"][0]["content"]
+            )[0][0]
+        else:
+            my_dict = ast.literal_eval(
+                get_document_from_collection(api_key, db_name, collection_name, {"_id": item_id})["data"][0]["content"]
+            )[0][0]
         all_keys = [i for i in my_dict.keys()]
         for i in all_keys:
             temp_list = []
@@ -1498,9 +1277,7 @@ class ItemContent(APIView):
                     if j["type"] == "CONTAINER_INPUT":
                         container_list = []
                         for item in j["data"]:
-                            container_list.append(
-                                {"id": item["id"], "data": item["data"]}
-                            )
+                            container_list.append({"id": item["id"], "data": item["data"]})
                         temp_list.append({"id": j["id"], "data": container_list})
                     else:
                         temp_list.append({"id": j["id"], "data": j["data"]})
@@ -1518,9 +1295,7 @@ class ItemContent(APIView):
                     {
                         key: sorted(
                             dicts[key],
-                            key=lambda x: int(
-                                [a for a in re.findall("\d+", x["id"])][-1]
-                            ),
+                            key=lambda x: int([a for a in re.findall("\d+", x["id"])][-1]),
                         )
                     }
                 )

@@ -1,0 +1,103 @@
+{
+	"info": {
+		"_postman_id": "e089bb49-b81c-4436-8b79-f4c0536e4bf5",
+		"name": "editor backend",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "14666556"
+	},
+	"item": [
+		{
+			"name": "link generation for template",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"product_name\": \"workflowai\",\r\n  \"details\":{\r\n    \"_id\":\"638b53f893b6a6cf47c10100\",\r\n    \"action\":\"template\",\r\n    \"field\":\"template_name\",\r\n    \"cluster\": \"Documents\",\r\n    \"database\": \"Documentation\",\r\n    \"collection\": \"editor\",\r\n    \"document\": \"editor\",\r\n    \"team_member_ID\": \"100084006\",\r\n    \"function_ID\": \"ABCDE\",\r\n    \"command\": \"update\",\r\n    \"update_field\": {\r\n      \"template_name\":\"\",\r\n      \"content\":\"\"\r\n    }\r\n  }\r\n}\r\n\r\n\r\n\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://100058.pythonanywhere.com/api/generate-editor-link/",
+					"protocol": "https",
+					"host": [
+						"100058",
+						"pythonanywhere",
+						"com"
+					],
+					"path": [
+						"api",
+						"generate-editor-link",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "link generation for documentation",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"product_name\": \"workflowai\",\r\n  \"details\":{\r\n    \"_id\":\"638873885e907e22559b4ad6\", \r\n    \"action\":\"document\",\r\n    \"field\":\"document_name\",\r\n    \"cluster\": \"Documents\",\r\n    \"database\": \"Documentation\",\r\n    \"collection\": \"editor\",\r\n    \"document\": \"editor\",\r\n    \"team_member_ID\": \"100084006\",\r\n    \"function_ID\": \"ABCDE\",\r\n    \"command\": \"update\",\r\n    \"update_field\": {\r\n      \"document_name\":\"\",\r\n      \"content\":\"\"\r\n    }\r\n  }\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://100058.pythonanywhere.com/api/generate-editor-link/",
+					"protocol": "https",
+					"host": [
+						"100058",
+						"pythonanywhere",
+						"com"
+					],
+					"path": [
+						"api",
+						"generate-editor-link",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get data from db",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"database\":\"Documentation\",\r\n    \"collection\":\"editor\",\r\n    \"fields\":\"template_name\",\r\n    \"id\":\"63897cd73226da681df4bcd5\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://100058.pythonanywhere.com/api/get-data-by-collection/",
+					"protocol": "https",
+					"host": [
+						"100058",
+						"pythonanywhere",
+						"com"
+					],
+					"path": [
+						"api",
+						"get-data-by-collection",
+						""
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

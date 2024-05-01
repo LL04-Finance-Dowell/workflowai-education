@@ -1,0 +1,9 @@
+# Trigger auto deploy
+
+# To make it exec
+# chmod +x .git/hooks/post-merge
+
+
+#!/bin/sh
+touch /var/www/100058_pythonanywhere_com_wsgi.py
+
