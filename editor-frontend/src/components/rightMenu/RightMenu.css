@@ -1,0 +1,143 @@
+
+.select {
+  box-shadow: 1px 1px 4px #99999988;
+  outline: 0;
+}
+
+.select option {
+  padding: 1rem !important;
+  border: none !important;
+}
+select option {
+  color: #555;
+  /* background-color: #ff0404 !important; */
+  font-size: 18px !important;
+  font-family: Arial, sans-serif;
+  border: none;
+  display: flex !important;
+  gap: 8px !important;
+  padding: 100px !important;
+  margin: 10px !important;
+}
+.calendar {
+  box-shadow: 1px 1px 4px #99999988;
+}
+.disable_button {
+  opacity: 0.5;
+  pointer-events: none;
+}
+.copyBtn {
+  background: transparent;
+  border: none;
+}
+/* Calendar */
+.datePicker {
+  visibility: hidden !important;
+  height: 0 !important;
+  padding: 0 !important;
+  /* width: 0 !important; */
+  /* position: absolute !important; */
+}
+.react-datepicker {
+  width: 100% !important;
+  border: none !important;
+  box-shadow: 1px 1px 4px #9999998c;
+}
+.react-datepicker-popper {
+  position: relative !important;
+  transform: translate(0) !important;
+}
+.react-datepicker__header {
+  background-color: #fff !important;
+  padding: 1rem 0 !important;
+  /* width: 100% !important; */
+}
+.react-datepicker__navigation {
+  /* box-shadow: 1px 1px 4px #99999944; */
+  margin-top: 0.8rem;
+}
+.react-datepicker__month-container {
+  width: 100% !important;
+}
+.react-datepicker__day {
+  font-weight: 600 !important;
+}
+.react-datepicker__day:hover {
+  background-color: #0092fd !important;
+  color: #fff;
+}
+.react-datepicker__day--selected {
+  background-color: #0092fd !important;
+}
+
+.react-datepicker-popper[data-placement^='bottom'] .react-datepicker__triangle {
+  display: none !important;
+}
+
+#move_icon {
+  position: sticky;
+  top: 0;
+  margin-left: calc(100% - 20px);
+  color: #000;
+  background-color: #fff;
+  padding: 5px;
+  border-radius: 5px;
+  font-size: 1.3rem;
+  z-index: 10;
+  cursor: grab;
+}
+
+#move_icon:active {
+  cursor: grabbing;
+}
+
+#move_icon svg {
+  pointer-events: none;
+  width: initial !important;
+  height: initial;
+  color: initial;
+  margin-right: 0;
+}
+
+.gen_btn_right_side {
+  /* background-color: red; */
+  min-height: 30vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 20px;
+}
+
+.sel_label {
+  margin-bottom: 5px;
+}
+
+.gen_btn_sel {
+  width: 100%;
+  padding: 0.5rem;
+  border-radius: 3px;
+  outline: none;
+  box-shadow: 0 0 3px 1px #9696962c;
+  border: none;
+  cursor: pointer;
+}
+
+.ques_sel {
+  padding: 0.5rem;
+  cursor: pointer;
+}
+
+.gen_rem_btn {
+  padding: 6px 12px;
+  background-color: #0d6ffd;
+  transition: all ease 0.3s;
+  outline: none;
+  border: none;
+  color: #ffffff;
+  border-radius: 3px;
+}
+
+.gen_rem_btn:hover {
+  background-color: #0b56c7;
+}

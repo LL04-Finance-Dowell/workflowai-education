@@ -1,0 +1,40 @@
+.range-color {
+  background: #d3d3d3;
+  outline: none;
+  opacity: 0.7;
+  -webkit-transition: 0.2s;
+  transition: opacity 0.2s;
+  /* transform: rotateY(180deg); */
+}
+.range-color:hover {
+  opacity: 1;
+}
+.range-color::-webkit-slider-thumb {
+  background: rgb(84, 236, 247);
+  cursor: pointer;
+}
+
+.font-sizing {
+  width: 60px;
+  padding: 3px;
+}
+
+.size-btn {
+  padding: 3px;
+}
+
+.text_formatting_btn{
+    margin: 0;
+    padding: 0;
+    margin: 0 -5px;
+}
+.text_color_formatting> img,
+svg{
+  width: 3.5rem !important;
+}
+
+.font_size_formatting> img,
+svg {
+  width: 1.5rem !important;
+}
+
