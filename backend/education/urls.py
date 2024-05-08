@@ -9,7 +9,7 @@ urlpatterns = [
     path("education/templates/approved", views.ApprovedTemplates.as_view()),
     path("education/workflows/", views.Workflow.as_view()),
     path("education/collections/", views.CollectionData.as_view()),
-    path("education/processes/", views.ItemProcessing.as_view()),
+    path("education/processes/", views.DocumentOrTemplateProcessing.as_view()),
     path(
         "education/processes/<str:collection_id>/finalize-or-reject/",
         views.FinalizeOrRejectEducation.as_view(),
@@ -21,5 +21,11 @@ urlpatterns = [
     path("education/folders/", views.Folders.as_view()),
     path("education/folders/<str:folder_id>/detail", views.FolderDetail.as_view()),
     path("education/content/<str:item_id>/", views.ItemContent.as_view()),
-
+    path(
+        "education/processes/<str:company_id>/organisations/",
+        views.Process.as_view(),
+        name="process",
+    ),
+    path("education/processes/<str:process_id>/", views.ProcessDetail.as_view()),
+    
 ]

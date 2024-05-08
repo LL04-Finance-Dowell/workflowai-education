@@ -74,7 +74,7 @@ def get_data_from_collection(
 
     payload = {
         "api_key": api_key,
-        "db_name": database,
+        "db_name": database.lower(),
         "coll_name": collection,
         "operation": "fetch",
         "filters": filters,
@@ -97,7 +97,7 @@ def post_data_to_collection(
 ):
     payload_dict = {
         "api_key": api_key,
-        "db_name": database,
+        "db_name": database.lower(),
         "coll_name": collection,
         "operation": operation,
     }
@@ -131,7 +131,7 @@ def datacube_collection_retrieval(api_key, db_name):
     :return: The response text from the server.
     """
     url = "https://datacube.uxlivinglab.online/db_api/collections/"
-    payload = {"api_key": api_key, "db_name": db_name, "payment": False}
+    payload = {"api_key": api_key, "db_name": db_name.lower(), "payment": False}
     response = requests.get(url, json=payload)
     res = json.loads(response.content)
     print("payload: ", payload)
@@ -163,6 +163,16 @@ def save_to_workflow_collection(
         operation="insert",
     )
 
+def save_to_clone_collection(
+    api_key: str, collection_id: str, db_name: str, data: dict
+):
+    return post_data_to_collection(
+        api_key,
+        database=db_name,
+        collection=collection_id,
+        data=data,
+        operation="insert",
+    )
 
 def get_workflow_from_collection(
     api_key: str,
@@ -171,6 +181,17 @@ def get_workflow_from_collection(
     filters={},
 ):
     return get_data_from_collection(api_key, database, collection, filters, limit=1)
+
+
+def save_to_qrcode_collection(
+    api_key: str, database: str, collection: str, data: dict
+):
+    return post_data_to_collection(api_key, database, collection, data, "insert")
+
+def save_to_clone_metadata_collection(
+    api_key: str, database: str, collection: str, data: dict
+):
+    return post_data_to_collection(api_key, database, collection, data, "insert")
 
 
 def save_to_process_collection(
@@ -185,12 +206,27 @@ def update_process_collection(process_id: str, api_key: str, database: str, coll
         api_key, database, collection, data, "update", query
     )
 
+def update_document_collection(document_id: str, api_key: str, database: str, collection: str, data: dict):
+    query = {"_id": document_id}
+    return post_data_to_collection(
+        api_key, database, collection, data, "update", query
+    )
+
 
 def get_process_from_collection(
     api_key: str, database: str, collection: str, filters: dict
 ):
     return get_data_from_collection(api_key, database, collection, filters, limit=1)
 
+def get_processes_from_collection(
+    api_key: str, database: str, collection: str, filters: dict
+):
+    return get_data_from_collection(api_key, database, collection, filters)
+
+def get_link_from_collection(
+    api_key: str, database: str, collection: str, filters: dict
+):
+    return get_data_from_collection(api_key, database, collection, filters, limit=1)
 
 def save_to_document_collection(
     api_key: str, database: str, collection: str, data: dict
@@ -247,3 +283,55 @@ def save_to_folder_collection(
     api_key: str, database: str, collection: str, data: dict
 ):
     return post_data_to_collection(api_key, database, collection, data, "insert")
+
+def save_to_links_collection(
+    api_key: str, database: str, collection: str, data: dict
+):
+    return post_data_to_collection(api_key, database, collection, data, "insert")
+
+def authorize(document_id, viewers, process_id, item_type, workspace_id, api_key: str, database: str):
+    clone_collection = f"{workspace_id}_clone_collection_0"
+    clone_metadata_collection = f"{workspace_id}_clones_metadata_collection_0"
+    payload = None
+    metadata_payload = None
+    if item_type == "document":
+        if isinstance(viewers, list):
+            payload = {
+                "auth_viewers": viewers,
+                "document_state": "processing",
+                "process_id": process_id,
+            }
+            metadata_payload = {
+                "auth_viewers": viewers,
+                "document_state": "processing",
+                "process_id": process_id,
+            }
+        else:
+            payload = {
+                "auth_viewers": [viewers],
+                "document_state": "processing",
+                "process_id": process_id,
+            }
+            metadata_payload = {
+                "auth_viewers": [viewers],
+                "document_state": "processing",
+                "process_id": process_id,
+            }
+    if item_type == "template":
+        payload = {
+            "auth_viewers": [viewers],
+            "template_state": "draft",
+            "process_id": process_id,
+        }
+    if payload is not None:
+        if metadata_payload is not None:
+            query = {"_id": document_id}
+            metadata_clone_res = post_data_to_collection(
+                api_key, database, clone_metadata_collection, metadata_payload, "update", query
+            )
+        clone_res = post_data_to_collection(
+            api_key, database, clone_collection, metadata_payload, "update", query
+        )
+        return clone_res
+
+    return

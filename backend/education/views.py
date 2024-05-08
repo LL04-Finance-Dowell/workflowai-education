@@ -4,9 +4,10 @@ import ast
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+from education import datacube_processing
 from education.serializers import CreateCollectionSerializer
 import threading
-from app.helpers import validate_id
+from app.helpers import paginate, validate_id
 from app import processing
 from app.mongo_db_connection import single_query_process_collection, update_process
 from app.views_v2 import FinalizeOrReject
@@ -17,6 +18,7 @@ from education.helpers import (
     generate_unique_collection_name,
     access_editor,
     CustomResponse,
+    check_progress
 )
 
 from education.serializers import *
@@ -25,7 +27,9 @@ from education.helpers import *
 from education.datacube_connection import (
     datacube_collection_retrieval,
     get_data_from_collection,
+    get_link_from_collection,
     get_process_from_collection,
+    get_processes_from_collection,
     post_data_to_collection,
     add_collection_to_database,
     Template_database,
@@ -523,7 +527,7 @@ class Workflow(APIView):
             )
 
         else:
-            CustomResponse(
+            return CustomResponse(
                 False,
                 "Couldn't fetch workflow collection",
                 None,
@@ -1241,8 +1245,6 @@ class DocumentDetail(APIView):
         return Response("Document could not be accessed!", status.HTTP_404_NOT_FOUND)
 
 
-
-
 class ItemContent(APIView):
     def get(self, request, item_id):
         """Content map of a given document or a template or a clone"""
@@ -1442,3 +1444,315 @@ class FolderDetail(APIView):
     #     item_type = request.query_params.get("item_type")
     #     delete_items_in_folder(item_id, folder_id, item_type)
     #     return Response(status.HTTP_204_NO_CONTENT)
+
+class DocumentOrTemplateProcessing(APIView):
+    def post(self, request, *args, **kwargs):
+        """processing is determined by action picked by user."""
+        try:
+            api_key = authorization_check(request.headers.get("Authorization"))
+
+        except InvalidTokenException as e:
+            return CustomResponse(False, str(e), None, status.HTTP_401_UNAUTHORIZED)
+
+        workspace_id = request.query_params.get("workspace_id")
+        payload_dict = kwargs.get("payload")
+        if payload_dict:
+            request_data = payload_dict
+        else:
+            request_data = request.data
+
+        if not request_data:
+            return Response("You are missing something!", status.HTTP_400_BAD_REQUEST)
+
+        organization_id = request_data["company_id"]
+        database = f"{workspace_id}_DB_0"
+        collection = f"{workspace_id}_process_collection"
+        process = datacube_processing.DataCubeProcess(
+            request_data["workflows"],
+            request_data["created_by"],
+            request_data["creator_portfolio"],
+            organization_id,
+            request_data["process_type"],
+            request_data["org_name"],
+            request_data["workflows_ids"],
+            request_data["parent_id"],
+            request_data["data_type"],
+            request_data["process_title"],
+            request.data.get("email", None),
+            api_key=api_key,
+            database=database,
+            collection=collection
+        )
+        action = request_data["action"]
+        data = None
+        process_id = request_data.get("process_id")
+        if action == "save_workflow_to_document_and_save_to_drafts":
+            process.normal_process(action)
+            return Response("Process Saved in drafts.", status.HTTP_201_CREATED)
+        elif action == "start_document_processing_content_wise":
+            if process_id is not None:
+                process = get_process_from_collection(
+                    api_key=api_key,
+                    database=database,
+                    collection=collection,
+                    filters={"_id": process_id}
+                )
+            else:
+                data = process.normal_process(action)
+        elif action == "start_document_processing_wf_steps_wise":
+            if process_id is not None:
+                process = get_process_from_collection(
+                    api_key=api_key,
+                    database=database,
+                    collection=collection,
+                    filters={"_id": process_id}
+                )
+            else:
+                data = process.normal_process(action)
+        elif action == "start_document_processing_wf_wise":
+            if process_id is not None:
+                process = get_process_from_collection(
+                    api_key=api_key,
+                    database=database,
+                    collection=collection,
+                    filters={"_id": process_id}
+                )
+            else:
+                data = process.normal_process(action)
+        elif action == "test_document_processing_content_wise":
+            if process_id is not None:
+                process = get_process_from_collection(
+                    api_key=api_key,
+                    database=database,
+                    collection=collection,
+                    filters={"_id": process_id}
+                )
+            else:
+                data = process.test_process(action)
+        elif action == "test_document_processing_wf_steps_wise":
+            if process_id is not None:
+                process = get_process_from_collection(
+                    api_key=api_key,
+                    database=database,
+                    collection=collection,
+                    filters={"_id": process_id}
+                )
+            else:
+                data = process.test_process(action)
+        elif action == "test_document_processing_wf_wise":
+            if process_id is not None:
+                process = get_process_from_collection(
+                    api_key=api_key,
+                    database=database,
+                    collection=collection,
+                    filters={"_id": process_id}
+                )
+            else:
+                data = process.test_process(action)
+        elif action == "close_processing_and_mark_as_completed":
+            process = get_process_from_collection(
+                    api_key=api_key,
+                    database=database,
+                    collection=collection,
+                    filters={"_id": process_id}
+                )
+            # TODO this will throw an error
+            if process["processing_state"] == "completed":
+                return Response(
+                    "This Workflow process is already complete", status.HTTP_200_OK
+                )
+            res = update_process_collection(
+                    process_id=process["process_id"],
+                    api_key=api_key,
+                    database=database,
+                    collection=collection,
+                    data={"process_steps": process["processing_steps"], "processing_state": "completed"}
+                )
+            if res["success"]:
+                return Response(
+                    "Process closed and marked as complete!", status.HTTP_200_OK
+                )
+            return Response(status.HTTP_500_INTERNAL_SERVER_ERROR)
+        elif action == "cancel_process_before_completion":
+            process = get_process_from_collection(
+                    api_key=api_key,
+                    database=database,
+                    collection=collection,
+                    filters={"_id": process_id}
+                )
+            if process["processing_state"] == "cancelled":
+                return Response(
+                    "This Workflow process is Cancelled!", status.HTTP_200_OK
+                )
+            res = update_process_collection(
+                    process_id=process["process_id"],
+                    api_key=api_key,
+                    database=database,
+                    collection=collection,
+                    data={"process_steps": process["processing_steps"], "processing_state": "cancelled"}
+                )
+            if res["success"]:
+                return Response(
+                    "Process closed and marked as canalled!", status.HTTP_200_OK
+                )
+            return Response(status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
+        elif action == "pause_processing_after_completing_ongoing_step":
+            return Response(
+                "This Option is currently in development",
+                status.HTTP_501_NOT_IMPLEMENTED,
+            )
+        if data:
+            verification_links = datacube_processing.DataCubeHandleProcess(data, api_key=api_key, database=database, workspace_id=workspace_id).start()
+            return Response(verification_links, status.HTTP_200_OK)
+class Process(APIView):
+    def get(self, request, company_id):
+        workspace_id = request.query_params.get("workspace_id")
+        data_type = request.query_params.get("data_type")
+
+        try:
+            api_key = authorization_check(request.headers.get("Authorization"))
+
+        except InvalidTokenException as e:
+            return CustomResponse(False, str(e), None, status.HTTP_401_UNAUTHORIZED)
+
+        if not validate_id(company_id) or data_type is None:
+            return Response("Invalid Request!", status.HTTP_400_BAD_REQUEST)
+        
+        collection_name = f"{workspace_id}_process_collection"
+        db_name = f"{workspace_id}_DB_0"
+
+        process_state = request.query_params.get("process_state")
+        if process_state:
+            completed = get_processes_from_collection(
+                api_key=api_key,
+                database=db_name,
+                collection=collection_name,
+                filters={
+                    "company_id": company_id,
+                    "data_type": data_type,
+                    "processing_state": process_state,
+                }
+            )
+            page = int(request.GET.get("page", 1))
+            data = paginate(completed["data"], page, 50)
+            completed["data"] = data
+            return Response(completed, status.HTTP_200_OK)
+        else:
+            """By Company"""
+            cache_key = f"processes_{company_id}"
+            process_list = None
+            if process_list is None:
+                process_list = get_processes_from_collection(
+                    api_key=api_key,
+                    database=db_name,
+                    collection=collection_name,
+                    filters={"company_id": company_id, "data_type": data_type}
+                )
+                cache.set(cache_key, process_list, timeout=60)
+            return Response(process_list, status.HTTP_200_OK)
+
+
+class ProcessDetail(APIView):
+
+    def get(self, request, process_id):
+        """get process by process id"""
+        workspace_id = request.query_params.get("workspace_id")
+        data_type = request.query_params.get("data_type")
+
+        # TODO Method 1
+        db_name = f"{workspace_id}_DB_0"
+        collection_name = f"{workspace_id}_process_collection"
+
+        try:
+            api_key = authorization_check(request.headers.get("Authorization"))
+
+        except InvalidTokenException as e:
+            return CustomResponse(False, str(e), None, status.HTTP_401_UNAUTHORIZED)
+
+        if not validate_id(process_id) or data_type is None:
+            return Response("Something went wrong!", status.HTTP_400_BAD_REQUEST)
+
+        process = get_processes_from_collection(
+            api_key=api_key,
+            database=db_name,
+            collection=collection_name,
+            filters={"_id": process_id},
+        )
+        progress = check_progress(process_id, api_key=api_key, database=db_name, collection=collection_name)
+        parent_id = process["data"][0]["parent_item_id"]
+        if parent_id:
+            # TODO confirm
+            document = get_document_from_collection(
+                api_key, db_name, f"{workspace_id}_template_collection_0", {"_id": parent_id}
+            )
+            if document:
+                document_name = document["data"][0]["document_name"]
+                process.update({"document_name": document_name})
+            links = get_link_from_collection(
+                api_key=api_key,
+                database=db_name,
+                # TODO confirm
+                collection=f"{workspace_id}_document_collection_0",
+                filters={"process_id": process["data"][0]["_id"]},
+            )
+            if links:
+                # TODO confirm
+                links_object = links["data"][0]
+                process.update({"links": links_object["link"]})
+        process["progress"] = progress
+        return Response(process, status.HTTP_200_OK)
+
+    def put(self, request, process_id):
+        """_summary_
+        Args:
+            request (req): _description_
+            process_id (str): _description_
+        """
+
+        workspace_id = request.query_params.get("workspace_id")
+        data_type = request.query_params.get("data_type")
+
+        # Method 1
+        db_name = f"{workspace_id}_DB_0"
+        collection_name = f"{workspace_id}_template_collection_0"
+
+        try:
+            api_key = authorization_check(request.headers.get("Authorization"))
+
+        except InvalidTokenException as e:
+            return CustomResponse(False, str(e), None, status.HTTP_401_UNAUTHORIZED)
+        
+        if not validate_id(process_id):
+            return Response("Something went wrong!", status.HTTP_400_BAD_REQUEST)
+
+        if not request.data:
+            return Response("Some parameters are missing", status.HTTP_400_BAD_REQUEST)
+
+        workflow = request.data.get("workflows")
+        step_id = request.data.get("step_id")
+        step_id -= 1
+        process = get_processes_from_collection(
+            api_key=api_key,
+            database=db_name,
+            collection=collection_name,
+            filters={"_id": process_id},
+        )
+        steps = process.get("process_steps")
+        state = "processing_state"
+        step_content = steps[step_id]
+        if step_content.get("permitInternalWorkflow") == True:
+            step_content.update({"workflows": workflow})
+            update_process_collection(
+                process_id=process_id,
+                api_key=api_key,
+                database=PROCESS_DB_0,
+                collection=collection_name,
+                data={"process_steps": steps, "processing_state": state},
+            )
+            return Response(process, status.HTTP_200_OK)
+        else:
+            return Response(
+                "Internal workflow is not permitted in this step",
+                status.HTTP_403_FORBIDDEN,
+            )
