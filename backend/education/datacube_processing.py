@@ -670,8 +670,8 @@ class DataCubeHandleProcess:
                     )
                 return editor_link
 
-    # Verify_Access V2
-    def verify_access_v2(
+    # Verify_Access V3
+    def verify_access_v3(
         self,
         auth_role,
         user_name,
@@ -702,6 +702,7 @@ class DataCubeHandleProcess:
                             if collection_id is not None:
                                 if d_map.get(user_name) == collection_id:
                                     clone_id = d_map.get(user_name)
+                                    clone_id
                             else:
                                 clone_id = d_map.get(user_name)
                     doc_map = step["stepDocumentMap"]
@@ -713,10 +714,28 @@ class DataCubeHandleProcess:
                 document = "CloneReports"
                 field = "document_name"
                 team_member_id = "1212001"
-                document_object = single_query_clones_collection({"_id": clone_id})
-                metadata = single_query_clones_metadata_collection(
-                    {"collection_id": clone_id}
-                )
+                document_object = dc_con.get_clone_from_collection(
+                    api_key=self.api_key,
+                    database=self.database,
+                    collection=f"{self.workspace_id}_clone_collection_0",
+                    filters={"_id": clone_id}
+                )["data"]
+                # TODO confirm
+                if not document_object:
+                    return
+                
+                metadata = dc_con.get_clone_from_collection(
+                    api_key=self.api_key,
+                    database=self.database,
+                    collection=f"{self.workspace_id}_clones_metadata_collection_0",
+                    filters={"collection_id": clone_id}
+                )["data"]
+                # TODO confirm
+                if not metadata:
+                    return
+                
+                document_object = document_object[0]
+                metadata = metadata[0]
                 item_flag = document_object["document_state"]
                 document_name = document_object["document_name"]
                 metadata_id = metadata.get("_id")
@@ -725,10 +744,29 @@ class DataCubeHandleProcess:
                 document = "templatereports"
                 team_member_id = "22689044433"
                 field = "template_name"
-                template_object = single_query_template_collection({"_id": clone_id})
-                metadata = single_query_template_metadata_collection(
-                    {"collection_id": clone_id}
-                )
+                template_object = dc_con.get_template_from_collection(
+                    api_key=self.api_key,
+                    database=self.database,
+                    collection=f"{self.workspace_id}_template_collection_0",
+                    filters={"_id": clone_id}
+                )["data"]
+                # TODO confirm
+                if not template_object:
+                    return
+                
+                metadata = dc_con.get_template_from_collection(
+                    api_key=self.api_key,
+                    database=self.database,
+                    collection=f"{self.workspace_id}_template_metadata_collection_0",
+                    filters={"collection_id": clone_id}
+                )["data"]
+                # TODO confirm
+                if not metadata:
+                    return
+
+                template_object = template_object[0]
+                metadata = metadata[0]
+
                 item_flag = template_object["template_state"]
                 document_name = template_object["template_name"]
                 metadata_id = metadata.get("_id")
@@ -767,9 +805,12 @@ class DataCubeHandleProcess:
                 }
             )
             if user_type == "public" and editor_link:
+                # TODO confirm
+                if isinstance(user_name, list):
+                   user_name = user_name[0] 
                 Thread(
                     target=lambda: register_public_login(
-                        user_name[0], self.process["org_name"]
+                        user_name, self.process["org_name"]
                     )
                 )
             return editor_link

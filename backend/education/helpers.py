@@ -3,11 +3,14 @@ from app import processing
 from education.datacube_connection import (
     datacube_collection_retrieval,
     get_clone_from_collection,
+    get_clones_from_collection,
     get_document_from_collection,
+    get_documents_from_collection,
     get_process_from_collection,
     get_template_from_collection,
     save_to_clone_collection,
-    save_to_clone_metadata_collection
+    save_to_clone_metadata_collection,
+    save_to_process_collection
 )
 from app.constants import EDITOR_API
 import json
@@ -354,3 +357,113 @@ def check_progress(process_id, api_key, database, collection):
 
     percentage_progress = round((accessed / steps_count * 100), 2)
     return percentage_progress
+
+
+def access_editor_metadata(item_id, item_type, metadata_id, email, **kwargs):
+    api_key = kwargs.get("api_key")
+    database = kwargs.get("database")
+    workspace_id = kwargs.get("workspace_id")
+    
+    team_member_id = (
+        "11689044433"
+        if item_type == "document"
+        else "1212001" if item_type == "clone" else "22689044433"
+    )
+    if item_type == "document":
+        # collection = "DocumentReports"
+        collection = f"{workspace_id}_documents_metadata_collection_0"
+        document = "documentreports"
+        field = "document_name"
+    if item_type == "clone":
+        # collection = "CloneReports"
+        collection = f"{workspace_id}_clones_metadata_collection_0"
+        document = "CloneReports"
+        field = "document_name"
+    elif item_type == "template":
+        # collection = "TemplateReports"
+        collection = f"{workspace_id}_templates_metadata_collection_0"
+        document = "templatereports"
+        field = "template_name"
+    if item_type == "document":
+        item_name = get_documents_from_collection(api_key, database, collection, {"_id": item_id})
+    elif item_type == "clone":
+        item_name = get_clones_from_collection(api_key, database, collection, {"_id": item_id})
+    else:
+        item_name = get_template_from_collection(api_key, database, collection, {"_id": item_id})
+    
+    # TODO confirm
+    if not item_name["data"]:
+        return
+
+    item_name = item_name["data"][0]
+    name = item_name.get(field, "")
+    payload = {
+        "product_name": "Workflow AI",
+        "details": {
+            "cluster": "Documents",
+            "database": "Documentation",
+            "collection": collection,
+            "document": document,
+            "team_member_ID": team_member_id,
+            "email": email,
+            "function_ID": "ABCDE",
+            "_id": item_id,
+            "metadata_id": metadata_id,
+            "field": field,
+            "type": item_type,
+            "action": (
+                "document"
+                if item_type == "document"
+                else "clone" if item_type == "clone" else "template"
+            ),
+            "flag": "editing",
+            "name": name,
+            "command": "update",
+            "update_field": {field: "", "content": "", "page": ""},
+        },
+    }
+    try:
+        response = requests.post(
+            EDITOR_API,
+            data=json.dumps(payload),
+            headers={"Content-Type": "application/json"},
+        )
+        return response.json()
+    except Exception as e:
+        print(e)
+        return
+
+
+def cloning_process(process_id, created_by, creator_portfolio, **kwargs):
+    api_key = kwargs.get("api_key")
+    database = kwargs.get("database")
+    workspace_id = kwargs.get("workspace_id")
+    collection = f"{workspace_id}_process_collection"
+
+    try:
+        process = get_process_from_collection(api_key, database, collection, {"_id": process_id})["data"]
+        process = process[0]
+        save_res = save_to_process_collection(
+            api_key,
+            database,
+            collection,
+            {
+                "process_title": process["process_title"],
+                "process_steps": process["process_steps"],
+                "created_by": created_by,
+                "company_id": process["company_id"],
+                "data_type": process["data_type"],
+                "parent_item_id": "no_parent_id",
+                "processing_action": process["processing_action"],
+                "creator_portfolio": creator_portfolio,
+                "workflow_construct_ids": process["workflow_construct_ids"],
+                "process_type": process["process_type"],
+                "process_kind": "clone",
+                "processing_state": "draft",
+            }
+        )
+
+        return save_res["data"]["inserted_id"]
+    except Exception as e:
+        print(e)
+        return

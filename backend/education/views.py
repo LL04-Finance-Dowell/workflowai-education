@@ -1,58 +1,41 @@
-import json
-import requests
 import ast
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
-from education import datacube_processing
-from education.serializers import CreateCollectionSerializer
+import json
 import threading
-from app.helpers import paginate, validate_id
-from app import processing
-from app.mongo_db_connection import single_query_process_collection, update_process
-from app.views_v2 import FinalizeOrReject
-from education.constants import PROCESS_DB_0
 
-from education.helpers import (
-    check_if_name_exists_collection,
-    generate_unique_collection_name,
-    access_editor,
-    CustomResponse,
-    check_progress
-)
-
-from education.serializers import *
-
-from education.helpers import *
-from education.datacube_connection import (
-    datacube_collection_retrieval,
-    get_data_from_collection,
-    get_link_from_collection,
-    get_process_from_collection,
-    get_processes_from_collection,
-    post_data_to_collection,
-    add_collection_to_database,
-    Template_database,
-    save_to_metadata,
-    post_to_data_service,
-    save_to_process_collection,
-    update_process_collection,
-    # save_to_template_metadata,
-    get_clones_from_collection,
-    get_clone_from_collection,
-    get_documents_from_collection,
-    get_document_from_collection,
-    get_template_from_collection,
-    save_to_workflow_collection,
-    get_workflow_from_collection,
-    get_folders_from_collection,
-    get_folder_from_collection,
-    save_to_folder_collection,
-)
-
+import requests
 from django.core.cache import cache
+from rest_framework import status
+from rest_framework.response import Response
+from rest_framework.views import APIView
+
+from app import processing
 from app.constants import EDITOR_API
-from app.mongo_db_connection import process_folders_to_item
+from app.helpers import (get_link, get_prev_and_next_users, paginate, remove_members_from_steps,
+                         validate_id)
+from app.mongo_db_connection import (process_folders_to_item,
+                                     single_query_process_collection,
+                                     update_process)
+from app.views_v2 import FinalizeOrReject
+from education import datacube_processing
+from education.constants import PROCESS_DB_0
+from education.datacube_connection import (  # save_to_template_metadata,
+    Template_database, add_collection_to_database,
+    datacube_collection_retrieval, get_clone_from_collection,
+    get_clones_from_collection, get_data_from_collection,
+    get_document_from_collection, get_documents_from_collection,
+    get_folder_from_collection, get_folders_from_collection,
+    get_link_from_collection, get_process_from_collection,
+    get_processes_from_collection, get_qrcode_from_collection,
+    get_template_from_collection, get_workflow_from_collection, get_workflows_from_collection,
+    post_data_to_collection, post_to_data_service, save_to_folder_collection,
+    save_to_metadata, save_to_process_collection, save_to_workflow_collection,
+    update_process_collection, save_to_document_collection)
+from education.helpers import *
+from education.helpers import (CustomResponse, access_editor,
+                               check_if_name_exists_collection, check_progress,
+                               generate_unique_collection_name)
+from education.serializers import *
+from education.serializers import CreateCollectionSerializer
 
 # Create your views here.
 # Education views are created here
@@ -1670,7 +1653,7 @@ class ProcessDetail(APIView):
         except InvalidTokenException as e:
             return CustomResponse(False, str(e), None, status.HTTP_401_UNAUTHORIZED)
 
-        if not validate_id(process_id) or data_type is None:
+        if not validate_id(process_id):
             return Response("Something went wrong!", status.HTTP_400_BAD_REQUEST)
 
         process = get_processes_from_collection(
@@ -1713,16 +1696,15 @@ class ProcessDetail(APIView):
         workspace_id = request.query_params.get("workspace_id")
         data_type = request.query_params.get("data_type")
 
-        # Method 1
         db_name = f"{workspace_id}_DB_0"
-        collection_name = f"{workspace_id}_template_collection_0"
+        collection_name = f"{workspace_id}_process_collection"
 
         try:
             api_key = authorization_check(request.headers.get("Authorization"))
 
         except InvalidTokenException as e:
             return CustomResponse(False, str(e), None, status.HTTP_401_UNAUTHORIZED)
-        
+
         if not validate_id(process_id):
             return Response("Something went wrong!", status.HTTP_400_BAD_REQUEST)
 
@@ -1736,9 +1718,18 @@ class ProcessDetail(APIView):
             api_key=api_key,
             database=db_name,
             collection=collection_name,
-            filters={"_id": process_id},
+            filters={
+                "_id": process_id,
+                # "data_type": data_type,
+            },
         )
-        steps = process.get("process_steps")
+        data = process["data"]
+        if not data:
+            return CustomResponse(
+                False, process["message"], None, status.HTTP_404_NOT_FOUND
+            )
+
+        steps = data[0].get("process_steps")
         state = "processing_state"
         step_content = steps[step_id]
         if step_content.get("permitInternalWorkflow") == True:
@@ -1746,9 +1737,13 @@ class ProcessDetail(APIView):
             update_process_collection(
                 process_id=process_id,
                 api_key=api_key,
-                database=PROCESS_DB_0,
+                database=db_name,
                 collection=collection_name,
-                data={"process_steps": steps, "processing_state": state},
+                data={
+                    "process_steps": steps,
+                    "processing_state": state,
+                    # "data_type": data_type,
+                },
             )
             return Response(process, status.HTTP_200_OK)
         else:
@@ -1756,3 +1751,452 @@ class ProcessDetail(APIView):
                 "Internal workflow is not permitted in this step",
                 status.HTTP_403_FORBIDDEN,
             )
+
+class ProcessLink(APIView):
+    def post(self, request, process_id):
+        """get a link process for person having notifications"""
+
+        workspace_id = request.query_params.get("workspace_id")
+        data_type = request.query_params.get("data_type")
+
+        db_name = f"{workspace_id}_DB_0"
+        collection_name = f"{workspace_id}_process_collection"
+
+        try:
+            api_key = authorization_check(request.headers.get("Authorization"))
+
+        except InvalidTokenException as e:
+            return CustomResponse(False, str(e), None, status.HTTP_401_UNAUTHORIZED)
+
+        if not validate_id(process_id):
+            return Response("Something went wrong!", status.HTTP_400_BAD_REQUEST)
+        
+        # only one link as opposed to links in views_v2
+        link_object = get_link_from_collection(
+                api_key=api_key,
+                database=db_name,
+                # TODO confirm
+                collection=f"{workspace_id}_document_collection_0",
+                filters={"process_id": process_id},
+            )["data"]
+        if not link_object:
+            return Response(
+                "Verification link unavailable", status.HTTP_400_BAD_REQUEST
+            )
+        user = request.data["user_name"]
+        process = get_processes_from_collection(
+            api_key=api_key,
+            database=db_name,
+            collection=collection_name,
+            filters={
+                "_id": process_id,
+                # "data_type": data_type,
+            },
+        )
+        # TODO confirm
+        process_steps = process["data"][0].get("process_steps")
+        for step in process_steps:
+            step_clone_map = step.get("stepDocumentCloneMap")
+            step_role = step.get("stepRole")
+            state = check_all_accessed(step_clone_map)
+            if state:
+                pass
+            else:
+                link = link_object[0]["link"]
+                return Response(link, status.HTTP_200_OK)
+        return Response(
+            "user is not part of this process", status.HTTP_401_UNAUTHORIZED
+        )
+
+class ProcessVerification(APIView):
+    def post(self, request, process_id):
+        """verification of a process step access and checks that duplicate document based on a step."""
+
+        workspace_id = request.query_params.get("workspace_id")
+        data_type = request.query_params.get("data_type")
+
+        db_name = f"{workspace_id}_DB_0"
+        collection_name = f"{workspace_id}_process_collection"
+
+        try:
+            api_key = authorization_check(request.headers.get("Authorization"))
+
+        except InvalidTokenException as e:
+            return CustomResponse(False, str(e), None, status.HTTP_401_UNAUTHORIZED)
+
+        if not validate_id(process_id):
+            return Response("Something went wrong!", status.HTTP_400_BAD_REQUEST)
+        
+        user_type = request.data["user_type"]
+        auth_user = request.data["auth_username"]
+        auth_role = request.data["auth_role"]
+        auth_portfolio = request.data["auth_portfolio"]
+        token = request.data["token"]
+        org_name = request.data["org_name"]
+        collection_id = None
+        # only one link as opposed to links in views_v2
+        link_object = get_qrcode_from_collection(
+                api_key=api_key,
+                database=db_name,
+                # TODO confirm
+                collection=f"{workspace_id}_document_collection_0",
+                filters={"unique_hash": token},
+            )["data"]
+        if not link_object:
+            return Response(
+                "Some link error here", status.HTTP_400_BAD_REQUEST
+            )
+        link_object = link_object[0]
+        if user_type == "team" or user_type == "user":
+            collection_id = (
+                request.data["collection_id"]
+                if request.data.get("collection_id")
+                else None
+            )
+            if (
+                link_object["user_name"] != auth_user
+                or link_object["auth_portfolio"] != auth_portfolio
+            ):
+                return Response(
+                    "User Logged in is not part of this process",
+                    status.HTTP_401_UNAUTHORIZED,
+                )
+        # TODO if process_id is gotten from link object why are we passing process_id in the url path?
+        process = get_processes_from_collection(
+            api_key=api_key,
+            database=db_name,
+            collection=collection_name,
+            filters={
+                "_id": link_object["process_id"],
+                # "data_type": data_type,
+            },
+        )["data"]
+
+        if not process:
+            return Response(
+                "Some process error here", status.HTTP_400_BAD_REQUEST
+            )
+        process = process[0]
+        if user_type == "public":
+            for step in process["process_steps"]:
+                if step.get("stepRole") == auth_role:
+                    for item in step["stepDocumentCloneMap"]:
+                        if item.get(auth_user[0]):
+                            # Assign Collection ID
+                            # TODO why is it over writing the one gotten from request.data?
+                            # TODO Do we break after getting a collection_id?
+                            collection_id = item.get(auth_user[0])
+                            collection_id
+
+        # Get previous and next users/viewers
+        prev_viewers, next_viewers = get_prev_and_next_users(
+            process, auth_user, auth_role, user_type
+        )
+        user_email = (
+            request.data.get("user_email") if request.data.get("user_email") else ""
+        )
+        process["org_name"] = org_name
+        handler = datacube_processing.DataCubeHandleProcess(process, api_key=api_key, database=db_name, workspace_id=workspace_id)
+        location = handler.verify_location(
+            auth_role,
+            {
+                "city": request.data["city"],
+                "country": request.data["country"],
+                "continent": request.data["continent"],
+            },
+        )
+        if not location:
+            return Response(
+                "access to this document not allowed from this location",
+                status.HTTP_400_BAD_REQUEST,
+            )
+        if not handler.verify_display(auth_role):
+            return Response(
+                "display rights set do not allow access to this document",
+                status.HTTP_400_BAD_REQUEST,
+            )
+        if not handler.verify_time(auth_role):
+            return Response(
+                "time limit for access to this document has elapsed",
+                status.HTTP_400_BAD_REQUEST,
+            )
+        editor_link = handler.verify_access_v3(
+            auth_role,
+            auth_user,
+            user_type,
+            collection_id,
+            prev_viewers,
+            next_viewers,
+            user_email,
+        )
+        if editor_link:
+            return Response(editor_link, status.HTTP_200_OK)
+        else:
+            return Response(
+                "Error accessing the requested document, Retry opening the document again :)",
+                status.HTTP_400_BAD_REQUEST,
+            )
+
+class TriggerProcess(APIView):
+    def post(self, request, process_id):
+        """Get process and begin processing it."""
+
+        workspace_id = request.query_params.get("workspace_id")
+        data_type = request.query_params.get("data_type")
+
+        db_name = f"{workspace_id}_DB_0"
+        collection_name = f"{workspace_id}_process_collection"
+
+        try:
+            api_key = authorization_check(request.headers.get("Authorization"))
+
+        except InvalidTokenException as e:
+            return CustomResponse(False, str(e), None, status.HTTP_401_UNAUTHORIZED)
+
+        if not validate_id(process_id):
+            return Response("Something went wrong!", status.HTTP_400_BAD_REQUEST)
+
+        process = get_processes_from_collection(
+            api_key=api_key,
+            database=db_name,
+            collection=collection_name,
+            filters={
+                "_id": process_id,
+                # "data_type": data_type,
+            },
+        )["data"]
+
+        if not process:
+            return Response(
+                "Some process error here", status.HTTP_400_BAD_REQUEST
+            )
+        process = process[0]
+        action = request.data["action"]
+        state = process["processing_state"]
+        if request.data["user_name"] != process["created_by"]:
+            return Response("User Unauthorized", status.HTTP_403_FORBIDDEN)
+        if action == "halt_process" and state != "paused":
+            res = update_process_collection(
+                process_id=process_id,
+                api_key=api_key,
+                database=db_name,
+                collection=collection_name,
+                data={
+                    "process_steps": process["process_steps"],
+                    "processing_state": "paused",
+                    # "data_type": data_type,
+                },
+            )
+            if res["success"]:
+                return Response(
+                    "Process has been paused until manually resumed!",
+                    status.HTTP_200_OK,
+                )
+        if action == "process_draft" and state != "processing":
+            verification_links = datacube_processing.DataCubeHandleProcess(
+                process, api_key=api_key, database=db_name, workspace_id=workspace_id
+            ).start()
+            if verification_links:
+                return Response(verification_links, status.HTTP_200_OK)
+            else:
+                return Response(
+                f"The process is already in {state} state",
+                status.HTTP_200_OK,
+                )
+
+
+class ProcessImport(APIView):
+    def post(self, request, process_id):
+        workspace_id = request.query_params.get("workspace_id")
+        data_type = request.query_params.get("data_type")
+
+        db_name = f"{workspace_id}_DB_0"
+        collection_name = f"{workspace_id}_process_collection"
+
+        try:
+            api_key = authorization_check(request.headers.get("Authorization"))
+
+        except InvalidTokenException as e:
+            return CustomResponse(False, str(e), None, status.HTTP_401_UNAUTHORIZED)
+
+        data = request.data
+        company_id = data.get("company_id")
+        portfolio = data.get("portfolio")
+        member = data.get("member")
+        data_type = data.get("data_type")
+
+        if not validate_id(process_id) or not validate_id(company_id):
+            return Response("Invalid_ID!", status.HTTP_400_BAD_REQUEST)
+
+        old_process = get_processes_from_collection(
+            api_key=api_key,
+            database=db_name,
+            collection=collection_name,
+            filters={
+                "_id": process_id,
+                # "data_type": data_type,
+            },
+        )["data"]
+
+        if not old_process:
+            return Response(
+                "Some process error here", status.HTTP_400_BAD_REQUEST
+            )
+        old_process = old_process[0]
+        document_id = old_process.get("parent_item_id")
+        workflow_id = old_process.get("workflow_construct_ids")
+        old_document = get_document_from_collection(
+            api_key, db_name, f"{workspace_id}_document_collection_0", {"_id": document_id},
+        )
+        if not old_document:
+            return Response(
+                "Some document error here", status.HTTP_400_BAD_REQUEST
+            )
+        old_document = old_document[0]
+        viewers = [{"member": member, "portfolio": portfolio}]
+        new_document_data = {
+            "document_name": old_document["document_name"],
+            "content": old_document["content"],
+            "created_by": member,
+            "company_id": company_id,
+            "page": old_document["page"],
+            "data_type": data_type,
+            "document_state": "draft",
+            "auth_viewers": viewers,
+            "document_type": "imports",
+            "parent_id": None,
+            "process_id": "",
+            "folders": [],
+            "message": "",
+        }
+
+        res = save_to_document_collection(
+            api_key,
+            db_name,
+            f"{workspace_id}_document_collection_0",
+            new_document_data,
+        )
+        if not res["success"]:
+            return Response(
+                "Failed to create document", status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+        metadata_data = {
+            "document_name": old_document["document_name"],
+            "collection_id": res["data"]["inserted_id"],
+            "created_by": member,
+            "company_id": company_id,
+            "data_type": data_type,
+            "document_state": "draft",
+            "auth_viewers": viewers,
+            "document_type": "imports",
+        }
+        res_metadata = save_to_document_collection(
+            api_key,
+            db_name,
+            f"{workspace_id}_documents_metadata_collection_0",
+            new_document_data,
+        )
+        if not res_metadata.get("success"):
+            return Response(
+                "Failed to create document metadata",
+                status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+        metadata_id = res_metadata["data"]["inserted_id"]
+        editor_link = access_editor_metadata(
+            res["data"]["inserted_id"], "document", metadata_id
+        )
+        if not editor_link:
+            return Response(
+                "Could not open document editor.", status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+        old_workflow = get_workflows_from_collection(
+            api_key, db_name, f"{workspace_id}_workflow_collection_0", {"_id": workflow_id[0]},
+        )["data"]
+        if not old_workflow:
+            return Response(
+                "Some workflow error here.", status.HTTP_400_BAD_REQUEST
+            )
+        old_workflow = old_workflow[0]
+        new_wf_title = old_workflow["workflows"]["workflow_title"]
+        new_wf_steps = old_workflow["workflows"]["steps"]
+        workflow_data = {
+            "workflows": {
+                "workflow_title": new_wf_title,
+                "steps": new_wf_steps,
+            },
+            "company_id": company_id,
+            "created_by": member,
+            "portfolio": portfolio,
+            "data_type": data_type,
+            "workflow_type": "imports",
+        }
+        res_workflow = save_to_workflow_collection(
+            api_key,
+            f"{workspace_id}_workflow_collection_0",
+            db_name,
+            workflow_data,
+        )
+        if not res_workflow["success"]:
+            return Response(
+                "Failed to create workflow", status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+        remove_members_from_steps(old_process)
+        process_data = {
+            "process_title": old_process["process_title"],
+            "process_steps": old_process["process_steps"],
+            "created_by": member,
+            "company_id": company_id,
+            "data_type": data_type,
+            "parent_item_id": res["inserted_id"],
+            "processing_action": "imports",
+            "creator_portfolio": portfolio,
+            "workflow_construct_ids": [res_workflow["data"]["inserted_id"]],
+            "process_type": old_process["process_type"],
+            "process_kind": "import",
+        }
+
+        res_process = save_to_process_collection(
+            api_key,
+            f"{workspace_id}_process_collection",
+            db_name,
+            process_data,
+        )
+        if not res_process["success"]:
+            return Response(
+                "Failed to create process", status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+        response_data = {
+            "Message": "Workflow, document and process created successfully",
+            "editor_link": editor_link,
+            "document_id": res["data"]["inserted_id"],
+            "workflow_id": res_workflow["data"]["inserted_id"],
+            "process_id": res_process["data"]["inserted_id"],
+        }
+        return Response(response_data, status.HTTP_201_CREATED)
+
+class ProcessCopies(APIView):
+    def post(self, request, process_id):
+        workspace_id = request.query_params.get("workspace_id")
+
+        db_name = f"{workspace_id}_DB_0"
+
+        try:
+            api_key = authorization_check(request.headers.get("Authorization"))
+
+        except InvalidTokenException as e:
+            return CustomResponse(False, str(e), None, status.HTTP_401_UNAUTHORIZED)
+
+        if not validate_id(process_id) or not request.data:
+            return Response("something went wrong!", status.HTTP_400_BAD_REQUEST)
+
+        if not request.data:
+            return Response("something went wrong!", status.HTTP_400_BAD_REQUEST)
+
+        process_id = cloning_process(
+            process_id,
+            request.data["created_by"],
+            request.data["portfolio"],
+            api_key=api_key,
+            database=db_name,
+            workspace_id=workspace_id,
+        )

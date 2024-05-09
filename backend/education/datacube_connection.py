@@ -212,6 +212,10 @@ def update_document_collection(document_id: str, api_key: str, database: str, co
         api_key, database, collection, data, "update", query
     )
 
+def get_qrcode_from_collection(
+    api_key: str, database: str, collection: str, filters: dict
+):
+    return get_data_from_collection(api_key, database, collection, filters, limit=1)
 
 def get_process_from_collection(
     api_key: str, database: str, collection: str, filters: dict

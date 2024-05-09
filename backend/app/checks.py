@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 
 from app.mongo_db_connection import (
     single_query_document_collection,
@@ -96,7 +96,7 @@ def location_right(
 
 
 def time_limit_right(time, select_time_limits, start_time, end_time, creation_time):
-    current_time = datetime.utcnow().strftime("%Y-%m-%dT%H:%M")
+    current_time = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M")
     current_time_object = datetime.strptime(current_time, "%Y-%m-%dT%H:%M") 
     if time == "no_time_limit":
         return True
