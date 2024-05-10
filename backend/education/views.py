@@ -2024,6 +2024,10 @@ class ProcessImport(APIView):
         portfolio = data.get("portfolio")
         member = data.get("member")
         data_type = data.get("data_type")
+        # TODO confirm
+        user_email = (
+            request.data.get("user_email") if request.data.get("user_email") else ""
+        )
 
         if not validate_id(process_id) or not validate_id(company_id):
             return Response("Invalid_ID!", status.HTTP_400_BAD_REQUEST)
@@ -2046,8 +2050,8 @@ class ProcessImport(APIView):
         document_id = old_process.get("parent_item_id")
         workflow_id = old_process.get("workflow_construct_ids")
         old_document = get_document_from_collection(
-            api_key, db_name, f"{workspace_id}_document_collection_0", {"_id": document_id},
-        )
+            api_key, db_name, f"{workspace_id}_template_collection_0", {"_id": document_id},
+        )["data"]
         if not old_document:
             return Response(
                 "Some document error here", status.HTTP_400_BAD_REQUEST
@@ -2073,7 +2077,7 @@ class ProcessImport(APIView):
         res = save_to_document_collection(
             api_key,
             db_name,
-            f"{workspace_id}_document_collection_0",
+            f"{workspace_id}_template_collection_0",
             new_document_data,
         )
         if not res["success"]:
@@ -2093,8 +2097,8 @@ class ProcessImport(APIView):
         res_metadata = save_to_document_collection(
             api_key,
             db_name,
-            f"{workspace_id}_documents_metadata_collection_0",
-            new_document_data,
+            f"{workspace_id}_templates_metadata_collection_0",
+            metadata_data,
         )
         if not res_metadata.get("success"):
             return Response(
@@ -2103,7 +2107,7 @@ class ProcessImport(APIView):
             )
         metadata_id = res_metadata["data"]["inserted_id"]
         editor_link = access_editor_metadata(
-            res["data"]["inserted_id"], "document", metadata_id
+            res["data"]["inserted_id"], "document", metadata_id, user_email, api_key=api_key, database=db_name, workspace_id=workspace_id
         )
         if not editor_link:
             return Response(
@@ -2147,7 +2151,7 @@ class ProcessImport(APIView):
             "created_by": member,
             "company_id": company_id,
             "data_type": data_type,
-            "parent_item_id": res["inserted_id"],
+            "parent_item_id": res["data"]["inserted_id"],
             "processing_action": "imports",
             "creator_portfolio": portfolio,
             "workflow_construct_ids": [res_workflow["data"]["inserted_id"]],
@@ -2157,8 +2161,8 @@ class ProcessImport(APIView):
 
         res_process = save_to_process_collection(
             api_key,
-            f"{workspace_id}_process_collection",
             db_name,
+            f"{workspace_id}_process_collection",
             process_data,
         )
         if not res_process["success"]:
@@ -2186,7 +2190,7 @@ class ProcessCopies(APIView):
         except InvalidTokenException as e:
             return CustomResponse(False, str(e), None, status.HTTP_401_UNAUTHORIZED)
 
-        if not validate_id(process_id) or not request.data:
+        if not validate_id(process_id):
             return Response("something went wrong!", status.HTTP_400_BAD_REQUEST)
 
         if not request.data:
@@ -2200,3 +2204,6 @@ class ProcessCopies(APIView):
             database=db_name,
             workspace_id=workspace_id,
         )
+        if process_id is None:
+                return Response(status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response("success created a process clone", status.HTTP_201_CREATED)

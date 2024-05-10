@@ -371,7 +371,7 @@ def access_editor_metadata(item_id, item_type, metadata_id, email, **kwargs):
     )
     if item_type == "document":
         # collection = "DocumentReports"
-        collection = f"{workspace_id}_documents_metadata_collection_0"
+        collection = f"{workspace_id}_templates_metadata_collection_0"
         document = "documentreports"
         field = "document_name"
     if item_type == "clone":
@@ -385,11 +385,12 @@ def access_editor_metadata(item_id, item_type, metadata_id, email, **kwargs):
         document = "templatereports"
         field = "template_name"
     if item_type == "document":
-        item_name = get_documents_from_collection(api_key, database, collection, {"_id": item_id})
+        # TODO confirm because it was saved to metadata and metadata is usally gotten by collection_id  
+        item_name = get_documents_from_collection(api_key, database, collection, {"collection_id": item_id})
     elif item_type == "clone":
-        item_name = get_clones_from_collection(api_key, database, collection, {"_id": item_id})
+        item_name = get_clones_from_collection(api_key, database, collection, {"collection_id": item_id})
     else:
-        item_name = get_template_from_collection(api_key, database, collection, {"_id": item_id})
+        item_name = get_template_from_collection(api_key, database, collection, {"collection_id": item_id})
     
     # TODO confirm
     if not item_name["data"]:
@@ -441,6 +442,7 @@ def cloning_process(process_id, created_by, creator_portfolio, **kwargs):
     collection = f"{workspace_id}_process_collection"
 
     try:
+        # TODO confirm if correct collection for get and save
         process = get_process_from_collection(api_key, database, collection, {"_id": process_id})["data"]
         process = process[0]
         save_res = save_to_process_collection(

@@ -31,5 +31,6 @@ urlpatterns = [
     path("education/processes/<str:process_id>/verify/", views.ProcessVerification.as_view()),
     path("education/processes/<str:process_id>/trigger/", views.TriggerProcess.as_view()),
     path("education/processes/<str:process_id>/import/", views.ProcessImport.as_view()),
+    path("education/processes/<str:process_id>/copies/", views.ProcessCopies.as_view()),
     
 ]
