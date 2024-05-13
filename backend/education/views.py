@@ -1296,9 +1296,11 @@ class FinalizeOrRejectEducation(APIView):
         if not request.data:
             return Response("you are missing something", status.HTTP_400_BAD_REQUEST)
 
+
         api_key = request.data["api_key"]
         collection_name = request.data["coll_name"]
         api_key = request.data["api_key"]
+        workspace_id = request.data["workspace_id"]
 
         item_id = request.data["item_id"]
         item_type = request.data["item_type"]
@@ -1309,6 +1311,7 @@ class FinalizeOrRejectEducation(APIView):
         message = request.data.get("message", None)
         link_id = request.data.get("link_id", None)
         product = request.data.get("product", "education")
+        database = f"{workspace_id}_DB_0"
 
         payload = {
             "item_id": item_id,
@@ -1332,24 +1335,29 @@ class FinalizeOrRejectEducation(APIView):
         res = FinalizeOrReject().post(request, process_id, payload=payload)
 
         # if res.status_code == 200:
-        process = single_query_process_collection({"_id": process_id})
-
+        process = get_process_from_collection(api_key=api_key, database=database, collection=collection_name, filters={"_id": process_id})["data"]
+        if not process:
+            return CustomResponse(
+                False, "Document could not be accessed!", None, status.HTTP_404_NOT_FOUND
+            )
         update_process_collection(
             process_id=collection_id,
             api_key=api_key,
             database=PROCESS_DB_0,
             collection=collection_name,
-            data={"process": process},
+            data={"process": process[0]},
         )
 
         return Response(res.data, status.HTTP_200_OK)
-        return CustomResponse(
-            False, "Document could not be accessed!", None, status.HTTP_404_NOT_FOUND
-        )
 
 
 class Folders(APIView):
     def get(self, request):
+        try:
+            api_key = authorization_check(request.headers.get("Authorization"))
+        except InvalidTokenException as e:
+            return CustomResponse(False, str(e), None, status.HTTP_401_UNAUTHORIZED)
+        
         data_type = request.query_params.get("data_type")
         company_id = request.query_params.get("company_id")
 
@@ -1368,6 +1376,11 @@ class Folders(APIView):
         return Response(folders_list, status.HTTP_200_OK)
 
     def post(self, request):
+        try:
+            api_key = authorization_check(request.headers.get("Authorization"))
+        except InvalidTokenException as e:
+            return CustomResponse(False, str(e), None, status.HTTP_401_UNAUTHORIZED)
+        
         folder_name = request.data.get("folder_name")
         created_by = request.data.get("created_by")
         company_id = request.data.get("company_id")
@@ -1402,6 +1415,14 @@ class Folders(APIView):
 
 class FolderDetail(APIView):
     def get(self, request, folder_id):
+        try:
+            api_key = authorization_check(request.headers.get("Authorization"))
+        except InvalidTokenException as e:
+            return CustomResponse(False, str(e), None, status.HTTP_401_UNAUTHORIZED)
+
+        if not validate_id(folder_id):
+            return Response("Something went wrong!", status.HTTP_400_BAD_REQUEST)
+        
         folder_details = get_folder_from_collection({"_id": folder_id})
         return Response(folder_details, status.HTTP_200_OK)
 
