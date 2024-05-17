@@ -232,7 +232,9 @@ class DatacubeConnection:
             return self.get_data_from_collection(collection, filters, **kwargs)
 
     def save_to_qrcode_collection(self, data: dict, **kwargs):
-        collection = self.collection_names["qrcode"]
+        # TODO fix
+        # collection = self.collection_names["qrcode"]
+        collection = self.collection_names["document"]
         return self.post_data_to_collection(collection, data, "insert", **kwargs)
 
     def get_qrcodes_from_collection(self, filters: dict, single=False, **kwargs):
@@ -350,7 +352,9 @@ class DatacubeConnection:
             return self.get_data_from_collection(collection, filters, **kwargs)
 
     def save_to_links_collection(self, data: dict, **kwargs):
-        collection = self.collection_names["link"]
+        # TODO fix here
+        # collection = self.collection_names["link"]
+        collection = self.collection_names["document"]
         return self.post_data_to_collection(collection, data, "insert", **kwargs)
 
     def get_link_from_collection(self, filters: dict, single=False, **kwargs):
@@ -405,9 +409,9 @@ class DatacubeConnection:
         else:
             return self.get_data_from_collection(collection, filters, **kwargs)
 
-    def authorize(self, document_id, viewers, process_id, item_type, workspace_id, **kwargs):
-        clone_collection = f"{workspace_id}_clone_collection_0"
-        clone_metadata_collection = f"{workspace_id}_clones_metadata_collection_0"
+    def authorize(self, document_id, viewers, process_id, item_type, workspace_id=None, **kwargs):
+        clone_collection = self.collection_names["clone"]
+        clone_metadata_collection = self.collection_names["clone_metadata"]
         payload = None
         metadata_payload = None
         if item_type == "document":
@@ -562,6 +566,74 @@ class DatacubeConnection:
                 headers={"Content-Type": "application/json"},
             )
             return response.json()
+        except Exception as e:
+            print(e)
+            return
+
+    def cloning_document(self, document_id, auth_viewers, parent_id, process_id, **kwargs):
+        clone_collection = self.collection_names["clone"]
+        clone_metadata_collection = self.collection_names["clone_metadata"]
+        try:
+            viewers = []
+            for m in auth_viewers:
+                viewers.append(m["member"])
+
+            document = self.get_documents_from_collection(filters={"_id": document_id}, single=True,)
+            # Create new "signed" list to track users who have signed the document
+            signed = []
+            for item in auth_viewers:
+                mem = item["member"]
+                signed.append({mem: False})
+
+            for viewer in viewers:
+                doc_name = document["document_name"]
+                if not doc_name:
+                    document_name = "doc - " + viewer
+                else:
+                    if isinstance(viewer, dict):
+                        document_name = doc_name + "_" + viewer["member"]
+                    else:
+                        document_name = doc_name + "_" + viewer
+            
+            save_res = self.save_to_clone_collection(
+                collection_id=clone_collection,
+                data={
+                    "document_name": document_name,
+                    "content": document["content"],
+                    "page": document["page"],
+                    "created_by": document["created_by"],
+                    "company_id": document["company_id"],
+                    "data_type": document["data_type"],
+                    "document_state": "processing",
+                    "auth_viewers": auth_viewers,
+                    "document_type": "clone",
+                    "document_state": "processing",
+                    "parent_id": parent_id,
+                    "process_id": process_id,
+                    "folders": "untitled",
+                    "message": "",
+                    "signed_by": signed,
+                },
+            )
+
+            if save_res["success"]:
+                save_res_metadata = self.save_to_clone_metadata_collection(
+                        data={
+                            "document_name": document_name,
+                            "collection_id": save_res["data"]["inserted_id"],
+                            "created_by": document["created_by"],
+                            "company_id": document["company_id"],
+                            "data_type": document["data_type"],
+                            "auth_viewers": auth_viewers,
+                            "document_type": "clone",
+                            "document_state": "processing",
+                            "process_id": process_id,
+                            "parent_id": parent_id,
+                            "signed_by": signed,
+                        }
+                    )
+                
+            return save_res["data"]["inserted_id"]
         except Exception as e:
             print(e)
             return

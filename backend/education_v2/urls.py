@@ -11,10 +11,10 @@ urlpatterns = [
 
     path("education/collections/", views.CollectionData.as_view()),
     # path("education/processes/", views.DocumentOrTemplateProcessing.as_view()),
-    # path(
-    #     "education/processes/<str:collection_id>/finalize-or-reject/",
-    #     views.FinalizeOrRejectEducation.as_view(),
-    # ),
+    path(
+        "education/processes/<str:collection_id>/finalize-or-reject/",
+        views.FinalizeOrRejectEducation.as_view(),
+    ),
     path("education/documents/", views.NewDocument.as_view()),
     path("education/documents/<str:item_id>/link/", views.DocumentLink.as_view()),
     path("education/documents/<str:item_id>/detail/", views.DocumentDetail.as_view()),

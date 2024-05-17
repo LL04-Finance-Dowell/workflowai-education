@@ -29,7 +29,7 @@ from app.helpers import (
     get_metadata_id,
     set_reminder,
 )
-from education import datacube_connection as dc_con
+from education_v2 import datacube_connection as dc_con
 from app.mongo_db_connection import (
     authorize,
     authorize_metadata,
@@ -82,6 +82,7 @@ class DataCubeProcess:
         self.api_key = kwargs.get("api_key")
         self.database = kwargs.get("database")
         self.collection = kwargs.get("collection")
+        self.dc_connect: dc_con.DatacubeConnection = kwargs.get("dc_connect")
 
         parent_process = kwargs.get("parent_process")
         self.parent_process = parent_process
@@ -103,12 +104,7 @@ class DataCubeProcess:
             "parent_process": self.parent_process,
             "email": self.email,
         }
-        res = dc_con.save_to_process_collection(
-                api_key=self.api_key,
-                database=self.database,
-                collection=self.collection,
-                data=data,
-            )
+        res = self.dc_connect.save_to_process_collection(data=data)
         if res["success"]:
             inserted_id = res["data"]["inserted_id"]
             if inserted_id:
@@ -151,12 +147,7 @@ class DataCubeProcess:
                     "email": self.email
 
                 }
-        res = dc_con.save_to_process_collection(
-                api_key=self.api_key,
-                database=self.database,
-                collection=self.collection,
-                data=data,
-            )
+        res = self.dc_connect.save_to_process_collection(data=data)
         if res["success"]:
             inserted_id = res["data"]["inserted_id"]
             if inserted_id:
@@ -190,9 +181,7 @@ class DataCubeHandleProcess:
         }
 
         self.kwargs  = kwargs
-        self.api_key = kwargs.get("api_key")
-        self.database = kwargs.get("database")
-        self.workspace_id = kwargs.get("workspace_id")
+        self.dc_connect: dc_con.DatacubeConnection = kwargs.get("dc_connect")
 
     def parse_url(params):
         return urllib.parse.urlencode(params)
@@ -253,9 +242,7 @@ class DataCubeHandleProcess:
         params["portfolio"] = portfolio
         encoded_param = DataCubeHandleProcess.parse_url(params)
         utp_link = f"{link}?{encoded_param}"
-        api_key = kwargs.get("api_key")
-        database = kwargs.get("database")
-        workspace_id = kwargs.get("workspace_id")
+        dc_connect: dc_con.DatacubeConnection = kwargs.get("dc_connect")
 
         data = {
                 "link": utp_link,
@@ -268,12 +255,7 @@ class DataCubeHandleProcess:
                 "item_type": item_type,
             }
         kwargs
-        dc_con.save_to_qrcode_collection(
-            api_key=api_key,
-            database=database,
-            collection=f"{workspace_id}_document_collection_0",
-            data=data
-        )
+        dc_connect.save_to_qrcode_collection(data=data)
         # --------- Not used so I will scrap soon - Edwin ------
         # HandleProcess.notify(
         #     auth_name, item_id, portfolio, company_id, utp_link, org_name
@@ -291,45 +273,50 @@ class DataCubeHandleProcess:
         return link.json()
 
     def prepare_document_for_step_one_users(step, parent_item_id, process_id, **kwargs):
-        workspace_id = kwargs.get('collection')
-        process_type = dc_con.get_process_from_collection(
-            api_key=kwargs.get("api_key"),
-            database=kwargs.get("database"),
-            collection=f"{workspace_id}_process_collection",
-            filters={"_id": process_id},
-        ).get("process_type")
+        dc_connect: dc_con.DatacubeConnection = kwargs.get("dc_connect")
+        process = dc_connect.get_processes_from_collection(filters={"_id": process_id}, single=True)["data"]
+        
+        # TODO confirm this flow
+        if not process:
+            return
+        
+        process_type = process[0].get("process_type")
         clones = []
         users = []
+        
         for m in step.get("stepTeamMembers", []) + step.get("stepUserMembers", []):
             users.append(m)
         public = [m for m in step.get("stepPublicMembers", [])]
+        
         if users:
             if process_type == "document":
-                clone_id = edu_helpers.cloning_document(
+                clone_id = dc_connect.cloning_document(
                     parent_item_id, users, parent_item_id, process_id, **kwargs
                 )
             elif process_type == "internal":
-                dc_con.authorize(parent_item_id, users, process_id, "document")
+                dc_connect.authorize(parent_item_id, users, process_id, "document")
                 clone_id = parent_item_id
             elif process_type == "template":
-                dc_con.authorize(parent_item_id, users, process_id, process_type)
+                dc_connect.authorize(parent_item_id, users, process_id, process_type)
                 clone_id = parent_item_id
+            
             clones = [clone_id]
             for u in users:
                 step.get("stepDocumentCloneMap").append({u["member"]: clone_id})
+        
         if public:
             public_clone_ids = []
             pub_users = []
 
             if step.get("stepActivityType") == "team_task":
                 if process_type == "document":
-                    pub_team_clone = edu_helpers.cloning_document(
+                    pub_team_clone = dc_connect.cloning_document(
                         parent_item_id, public, parent_item_id, process_id, **kwargs
                     )
                     for u in public:
                         public_clone_ids.append({u["member"]: pub_team_clone})
                 if process_type == "internal":
-                    dc_con.authorize(parent_item_id, public, process_id, "document")
+                    dc_connect.authorize(parent_item_id, public, process_id, "document")
                     pub_team_clone = parent_item_id
                     for u in public:
                         public_clone_ids.append({u["member"]: pub_team_clone})
@@ -338,7 +325,7 @@ class DataCubeHandleProcess:
                     if process_type == "document":
                         public_clone_ids.append(
                             {
-                                u["member"]: edu_helpers.cloning_document(
+                                u["member"]: dc_connect.cloning_document(
                                     parent_item_id, [u], parent_item_id, process_id
                                 )
                             }
@@ -349,12 +336,13 @@ class DataCubeHandleProcess:
                     elif process_type == "template":
                         pub_users.append(u)
                         public_clone_ids.append({u["member"]: parent_item_id})
+            
             if pub_users != []:
                 # authorize() is only handled for "tdocument" and "template" process_types for now
                 if process_type == "internal":
-                    dc_con.authorize(parent_item_id, pub_users, process_id, "document")
+                    dc_connect.authorize(parent_item_id, pub_users, process_id, "document")
                 else:
-                    dc_con.authorize(parent_item_id, pub_users, process_id, process_type)
+                    dc_connect.authorize(parent_item_id, pub_users, process_id, process_type)
             step.get("stepDocumentCloneMap").extend(public_clone_ids)
             clones.extend(public_clone_ids)
         return clones
@@ -475,12 +463,9 @@ class DataCubeHandleProcess:
 
         if public_links and self.process["process_type"] == "document":
             document_id = self.process["parent_item_id"]
-            res = dc_con.get_document_from_collection(
-                api_key=self.api_key,
-                database=self.database,
-                collection=f"{self.workspace_id}_template_collection_0",
-                filters={"_id": document_id},
-            )
+            # TODO Fix here
+            # res = self.dc_connect.get_documents_from_collection(filters={"_id": document_id},)
+            res = self.dc_connect.get_templates_from_collection(filters={"_id": document_id}, single=True)
             document_name = res["data"][0]["document_name"]
             m_link, m_code = DataCubeHandleProcess.generate_public_qrcode(
                 public_links, self.process["company_id"], document_name
@@ -490,13 +475,8 @@ class DataCubeHandleProcess:
 
         elif public_links and self.process["process_type"] == "internal":
             document_id = self.process["parent_item_id"]
-            res = dc_con.get_clone_from_collection(
-                api_key=self.api_key,
-                database=self.database,
-                collection=f"{self.workspace_id}_clone_collection_0",
-                filters={"_id": document_id},
-            )
-            document_name = res["document_name"]
+            res = self.dc_connect.get_clones_from_collection(filters={"_id": document_id}, single=True)
+            document_name = res["data"][0]["document_name"]
             m_link, m_code = DataCubeHandleProcess.generate_public_qrcode(
                 public_links, self.process["company_id"], document_name
             )
@@ -505,11 +485,9 @@ class DataCubeHandleProcess:
 
         elif public_links and self.process["process_type"] == "template":
             template_id = self.process["parent_item_id"]
-            res = dc_con.get_template_from_collection(
-                api_key=self.api_key,
-                database=self.database,
-                collection=f"{self.workspace_id}_template_collection_0",
+            res = self.dc_connect.get_templates_from_collection(
                 filters={"_id": template_id},
+                single=True
             )
             template_name = res["template_name"]
             m_link, m_code = DataCubeHandleProcess.generate_public_qrcode(
@@ -517,10 +495,8 @@ class DataCubeHandleProcess:
             )
             links.append({"master_link": m_link})
             qrcodes.append({"master_qrcode": m_code})
-        dc_con.save_to_links_collection(
-            api_key=self.api_key,
-            database=self.database,
-            collection=f"{self.workspace_id}_document_collection_0",
+        
+        self.dc_connect.save_to_links_collection(
             data={
                 "links": links,
                 "process_id": process_id,
@@ -528,11 +504,8 @@ class DataCubeHandleProcess:
                 "company_id ": company_id,
             }
         )
-        hhhres = dc_con.update_process_collection(
+        hhhres = self.dc_connect.update_process_collection(
             process_id=process_id,
-            api_key=self.api_key,
-            database=self.database,
-            collection=f"{self.workspace_id}_process_collection",
             data={"process_steps": steps, "processing_state": "processing"}
         )
         # Nobody use this feature so I turn it off - @Edwin
@@ -548,8 +521,10 @@ class DataCubeHandleProcess:
         #         }
         #     )
         # ).start()
+        
         if len(public_links) > 10:
             links = links[:10]
+        
         return {
             "process_id": process_id,
             "links": links,

@@ -1,5 +1,6 @@
 import ast
 import json
+import re
 
 import requests
 from django.core.cache import cache
@@ -17,7 +18,7 @@ from app.views_v2 import FinalizeOrReject
 from education_v2 import datacube_processing
 from education_v2.constants import PROCESS_DB_0
 from education_v2.datacube_connection import DatacubeConnection
-from education_v2.helpers import *
+from education_v2.helpers import authorization_check, InvalidTokenException
 from education_v2.helpers import (CustomResponse, access_editor,
                                check_if_name_exists_collection, check_progress)
 from education_v2.serializers import *
@@ -1041,6 +1042,9 @@ class FinalizeOrRejectEducation(APIView):
         product = request.data.get("product", "education")
         database = f"{workspace_id}_DB_0"
 
+        # TODO Why use PROCESS_DB_0?
+        dc_connect = DatacubeConnection(api_key=api_key, workspace_id=workspace_id, database=PROCESS_DB_0)
+
         payload = {
             "item_id": item_id,
             "item_type": item_type,
@@ -1054,25 +1058,21 @@ class FinalizeOrRejectEducation(APIView):
 
         query = {"_id": collection_id}
         # #print("filter: ", query)
-        data = get_data_from_collection(
-            api_key, PROCESS_DB_0, collection_name, filters=query, limit=1
-        )
+        data = dc_connect.get_data_from_collection(collection_name, filters=query, limit=1)
         process_id = data["data"][0].get("process").get("_id")
 
         # res = FinalizeOrReject().get(request, process_id)
+        # TODO why was this done?
         res = FinalizeOrReject().post(request, process_id, payload=payload)
 
         # if res.status_code == 200:
-        process = get_process_from_collection(api_key=api_key, database=database, collection=collection_name, filters={"_id": process_id})["data"]
+        process = dc_connect.get_processes_from_collection(database=database, filters={"_id": process_id})["data"]
         if not process:
             return CustomResponse(
                 False, "Document could not be accessed!", None, status.HTTP_404_NOT_FOUND
             )
-        update_process_collection(
+        dc_connect.update_process_collection(
             process_id=collection_id,
-            api_key=api_key,
-            database=PROCESS_DB_0,
-            collection=collection_name,
             data={"process": process[0]},
         )
 
@@ -1091,11 +1091,16 @@ class Folders(APIView):
 
         if not validate_id(company_id) or data_type is None:
             return Response("Invalid Request!", status.HTTP_400_BAD_REQUEST)
+
+        # TODO Fix the DB used
+        dc_connect = DatacubeConnection(api_key=api_key, workspace_id=None, database=PROCESS_DB_0)
+        
+
         cache_key = f"folders_{company_id}"
         folders_list = cache.get(cache_key)
         if folders_list is None:
             try:
-                folders_list = get_folders_from_collection(
+                folders_list = dc_connect.get_folders_from_collection(
                     {"company_id": company_id, "data_type": data_type}
                 )
                 cache.set(cache_key, folders_list, timeout=60)
@@ -1108,6 +1113,9 @@ class Folders(APIView):
             api_key = authorization_check(request.headers.get("Authorization"))
         except InvalidTokenException as e:
             return CustomResponse(False, str(e), None, status.HTTP_401_UNAUTHORIZED)
+        
+        # TODO Fix the DB used
+        dc_connect = DatacubeConnection(api_key=api_key, workspace_id=None, database=PROCESS_DB_0)
         
         folder_name = request.data.get("folder_name")
         created_by = request.data.get("created_by")
@@ -1122,7 +1130,8 @@ class Folders(APIView):
         data = []
         if not validate_id(request.data["company_id"]):
             return Response("Invalid company details", status.HTTP_400_BAD_REQUEST)
-        res = save_to_folder_collection(
+        
+        res = dc_connect.save_to_folder_collection(
             {
                 "folder_name": folder_name,
                 "data": data,
@@ -1132,6 +1141,7 @@ class Folders(APIView):
                 "folder_type": "original",
             }
         )
+        
         if res["success"]:
             return CustomResponse(
                 True,
@@ -1151,7 +1161,10 @@ class FolderDetail(APIView):
         if not validate_id(folder_id):
             return Response("Something went wrong!", status.HTTP_400_BAD_REQUEST)
         
-        folder_details = get_folder_from_collection({"_id": folder_id})
+        # TODO Fix the DB used
+        dc_connect = DatacubeConnection(api_key=api_key, workspace_id=None, database=PROCESS_DB_0)
+        
+        folder_details = dc_connect.get_folders_from_collection({"_id": folder_id}, single=True)
         return Response(folder_details, status.HTTP_200_OK)
 
     # def put(self, request, folder_id):
@@ -1187,6 +1200,9 @@ class DocumentOrTemplateProcessing(APIView):
             return CustomResponse(False, str(e), None, status.HTTP_401_UNAUTHORIZED)
 
         workspace_id = request.query_params.get("workspace_id")
+        database = f"{workspace_id}_DB_0"
+        dc_connect = DatacubeConnection(api_key=api_key, workspace_id=None, database=PROCESS_DB_0)
+
         payload_dict = kwargs.get("payload")
         if payload_dict:
             request_data = payload_dict
@@ -1197,8 +1213,7 @@ class DocumentOrTemplateProcessing(APIView):
             return Response("You are missing something!", status.HTTP_400_BAD_REQUEST)
 
         organization_id = request_data["company_id"]
-        database = f"{workspace_id}_DB_0"
-        collection = f"{workspace_id}_process_collection"
+        collection = dc_connect.collection_names["process"]
         process = datacube_processing.DataCubeProcess(
             request_data["workflows"],
             request_data["created_by"],
@@ -1211,9 +1226,7 @@ class DocumentOrTemplateProcessing(APIView):
             request_data["data_type"],
             request_data["process_title"],
             request.data.get("email", None),
-            api_key=api_key,
-            database=database,
-            collection=collection
+            dc_connect=dc_connect,
         )
         action = request_data["action"]
         data = None
@@ -1221,83 +1234,51 @@ class DocumentOrTemplateProcessing(APIView):
         if action == "save_workflow_to_document_and_save_to_drafts":
             process.normal_process(action)
             return Response("Process Saved in drafts.", status.HTTP_201_CREATED)
+        
         elif action == "start_document_processing_content_wise":
             if process_id is not None:
-                process = get_process_from_collection(
-                    api_key=api_key,
-                    database=database,
-                    collection=collection,
-                    filters={"_id": process_id}
-                )
+                process = dc_connect.get_processes_from_collection(filters={"_id": process_id}, single=True,)["data"]
             else:
                 data = process.normal_process(action)
+        
         elif action == "start_document_processing_wf_steps_wise":
             if process_id is not None:
-                process = get_process_from_collection(
-                    api_key=api_key,
-                    database=database,
-                    collection=collection,
-                    filters={"_id": process_id}
-                )
+                process = dc_connect.get_processes_from_collection(filters={"_id": process_id}, single=True,)["data"]
             else:
                 data = process.normal_process(action)
+        
         elif action == "start_document_processing_wf_wise":
             if process_id is not None:
-                process = get_process_from_collection(
-                    api_key=api_key,
-                    database=database,
-                    collection=collection,
-                    filters={"_id": process_id}
-                )
+                process = dc_connect.get_processes_from_collection(filters={"_id": process_id}, single=True,)["data"]
             else:
                 data = process.normal_process(action)
+        
         elif action == "test_document_processing_content_wise":
             if process_id is not None:
-                process = get_process_from_collection(
-                    api_key=api_key,
-                    database=database,
-                    collection=collection,
-                    filters={"_id": process_id}
-                )
+                process = dc_connect.get_processes_from_collection(filters={"_id": process_id}, single=True,)["data"]
             else:
                 data = process.test_process(action)
+        
         elif action == "test_document_processing_wf_steps_wise":
             if process_id is not None:
-                process = get_process_from_collection(
-                    api_key=api_key,
-                    database=database,
-                    collection=collection,
-                    filters={"_id": process_id}
-                )
+                process = dc_connect.get_processes_from_collection(filters={"_id": process_id}, single=True,)["data"]
             else:
                 data = process.test_process(action)
+        
         elif action == "test_document_processing_wf_wise":
             if process_id is not None:
-                process = get_process_from_collection(
-                    api_key=api_key,
-                    database=database,
-                    collection=collection,
-                    filters={"_id": process_id}
-                )
+                process = dc_connect.get_processes_from_collection(filters={"_id": process_id}, single=True,)["data"]
             else:
                 data = process.test_process(action)
+        
         elif action == "close_processing_and_mark_as_completed":
-            process = get_process_from_collection(
-                    api_key=api_key,
-                    database=database,
-                    collection=collection,
-                    filters={"_id": process_id}
-                )
-            # TODO this will throw an error
-            if process["processing_state"] == "completed":
+            process = dc_connect.get_processes_from_collection(filters={"_id": process_id}, single=True,)["data"]
+            if process and process[0]["processing_state"] == "completed":
                 return Response(
                     "This Workflow process is already complete", status.HTTP_200_OK
                 )
-            res = update_process_collection(
+            res = dc_connect.update_process_collection(
                     process_id=process["process_id"],
-                    api_key=api_key,
-                    database=database,
-                    collection=collection,
                     data={"process_steps": process["processing_steps"], "processing_state": "completed"}
                 )
             if res["success"]:
@@ -1305,22 +1286,18 @@ class DocumentOrTemplateProcessing(APIView):
                     "Process closed and marked as complete!", status.HTTP_200_OK
                 )
             return Response(status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
         elif action == "cancel_process_before_completion":
-            process = get_process_from_collection(
-                    api_key=api_key,
-                    database=database,
-                    collection=collection,
-                    filters={"_id": process_id}
-                )
-            if process["processing_state"] == "cancelled":
+            process = dc_connect.get_processes_from_collection(
+                    filters={"_id": process_id},
+                    single=True
+                )["data"]
+            if process and process[0]["processing_state"] == "cancelled":
                 return Response(
                     "This Workflow process is Cancelled!", status.HTTP_200_OK
                 )
-            res = update_process_collection(
+            res = dc_connect.update_process_collection(
                     process_id=process["process_id"],
-                    api_key=api_key,
-                    database=database,
-                    collection=collection,
                     data={"process_steps": process["processing_steps"], "processing_state": "cancelled"}
                 )
             if res["success"]:
@@ -1335,8 +1312,9 @@ class DocumentOrTemplateProcessing(APIView):
                 status.HTTP_501_NOT_IMPLEMENTED,
             )
         if data:
-            verification_links = datacube_processing.DataCubeHandleProcess(data, api_key=api_key, database=database, workspace_id=workspace_id).start()
+            verification_links = datacube_processing.DataCubeHandleProcess(data, dc_connect=dc_connect).start()
             return Response(verification_links, status.HTTP_200_OK)
+
 class Process(APIView):
     def get(self, request, company_id):
         workspace_id = request.query_params.get("workspace_id")
