@@ -173,6 +173,7 @@ def access_editor(
         collection = "TemplateReports"
         document = "templatereports"
         field = "template_name"
+    
     if item_type == "document":
         item_name = get_document_from_collection(
             api_key, database, collection_name, {"_id": item_id}

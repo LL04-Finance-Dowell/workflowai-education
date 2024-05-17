@@ -757,13 +757,17 @@ class Document(APIView):
         portfolio = request.query_params.get("portfolio")
 
         db_name = f"{workspace_id}_DB_0"
-        collection_name = f"{workspace_id}_template_collection_0"
 
         try:
             api_key = authorization_check(request.headers.get("Authorization"))
 
         except InvalidTokenException as e:
             return CustomResponse(False, str(e), None, status.HTTP_401_UNAUTHORIZED)
+
+        dc_connect = DatacubeConnection(api_key=api_key, workspace_id=workspace_id, database=db_name)
+
+        # TODO change this or find out why
+        collection_name = dc_connect.collection_names.get("template")
 
         if not document_type or not document_state or not workspace_id:
             return CustomResponse(
@@ -777,7 +781,7 @@ class Document(APIView):
                 False, "Invalid Request!", None, status.HTTP_400_BAD_REQUEST
             )
 
-        collection = check_if_name_exists_collection(api_key, collection_name, db_name)
+        collection = dc_connect.check_if_name_exists_collection(collection_name)
 
         if not collection["success"]:
             return CustomResponse(
@@ -789,10 +793,9 @@ class Document(APIView):
         if member and portfolio:
             auth_viewers = [{"member": member, "portfolio": portfolio}]
 
-            document_list = get_clones_from_collection(
-                api_key,
-                db_name,
-                collection_name,
+            # TODO Why getting clone from template collection?
+            # document_list = dc_connect.get_clones_from_collection(
+            document_list = dc_connect.get_templates_from_collection(
                 {
                     "company_id":company_id,
                     "data_type": data_type,
@@ -806,10 +809,9 @@ class Document(APIView):
             )
         else:
             if document_type == "document":
-                documents = get_documents_from_collection(
-                    api_key,
-                    db_name,
-                    collection_name,
+                # TODO why getting from templates collection?
+                # documents = dc_connect.get_documents_from_collection(
+                documents = dc_connect.get_templates_from_collection(
                     {
                         "company_id":company_id,
                         "data_type": data_type,
@@ -821,10 +823,9 @@ class Document(APIView):
                 cache_key = f"clones_{workspace_id}"
                 clones_list = cache.get(cache_key)
                 if clones_list is None:
-                    clones_list = get_clones_from_collection(
-                        api_key,
-                        db_name,
-                        collection_name,
+                    # TODO why still getting from templates collection?
+                    # clones_list = get_clones_from_collection(
+                    clones_list = dc_connect.get_templates_from_collection(
                         {
                             "company_id":company_id,
                             "data_type": data_type,
@@ -845,13 +846,16 @@ class DocumentLink(APIView):
         document_type = request.query_params.get("document_type")
 
         db_name = f"{workspace_id}_DB_0"
-        collection_name = f"{workspace_id}_template_collection_0"
 
         try:
             api_key = authorization_check(request.headers.get("Authorization"))
 
         except InvalidTokenException as e:
             return CustomResponse(False, str(e), None, status.HTTP_401_UNAUTHORIZED)
+        
+        dc_connect = DatacubeConnection(api_key=api_key, workspace_id=workspace_id, database=db_name)
+
+        collection_name = dc_connect.collection_names.get("template")
 
         if not document_type or not workspace_id:
             return CustomResponse(
@@ -861,7 +865,7 @@ class DocumentLink(APIView):
                 status.HTTP_400_BAD_REQUEST,
             )
 
-        collection = check_if_name_exists_collection(api_key, collection_name, db_name)
+        collection = dc_connect.check_if_name_exists_collection(collection_name)
 
         if not collection["success"]:
             return CustomResponse(
@@ -872,23 +876,23 @@ class DocumentLink(APIView):
 
         if not validate_id(item_id) or not document_type:
             return Response("Something went wrong!", status.HTTP_400_BAD_REQUEST)
+        
         if document_type == "document":
-            document = get_document_from_collection(
-                api_key, db_name, collection_name, {"_id": item_id}
-            )
+            # TODO why still getting from templates collection?
+            # document = dc_connect.get_document_from_collection(
+            document = dc_connect.get_templates_from_collection( {"_id": item_id}, single=True)
+
         elif document_type == "clone":
-            document = get_clone_from_collection(
-                api_key, db_name, collection_name, {"_id": item_id}
-            )
+            # TODO fix
+            # document = get_clone_from_collection(
+            document = dc_connect.get_templates_from_collection({"_id": item_id}, single=True)
+            
         if document:
             portfolio = request.query_params.get("portfolio", "")
 
-            editor_link = access_editor(
+            editor_link = dc_connect.access_editor(
                 item_id,
                 document_type,
-                api_key,
-                db_name,
-                collection_name,
                 portfolio=portfolio,
             )
             if not editor_link:
@@ -911,6 +915,8 @@ class DocumentDetail(APIView):
 
         except InvalidTokenException as e:
             return CustomResponse(False, str(e), None, status.HTTP_401_UNAUTHORIZED)
+        
+        dc_connect = DatacubeConnection(api_key=api_key, workspace_id=workspace_id, database=db_name)
 
         if not workspace_id or not document_type:
             return CustomResponse(
@@ -920,7 +926,7 @@ class DocumentDetail(APIView):
                 status.HTTP_400_BAD_REQUEST,
             )
 
-        collection = check_if_name_exists_collection(api_key, collection_name, db_name)
+        collection = dc_connect.check_if_name_exists_collection(collection_name)
 
         if not collection["success"]:
             return CustomResponse(
@@ -928,37 +934,40 @@ class DocumentDetail(APIView):
             )
 
         collection_name = collection["name"]
-
+        
         if not validate_id(item_id) or not document_type:
-            return collection_name(
+            return CustomResponse(
                 False, "Something went wrong!", None, status.HTTP_400_BAD_REQUEST
             )
+        
         if document_type == "document":
-            document = get_document_from_collection(
-                api_key, db_name, collection_name, {"_id": item_id}
-            )
+            # document = dc_connect.get_documents_from_collection({"_id": item_id}, single=True)
+            document = dc_connect.get_templates_from_collection({"_id": item_id}, single=True)
             return Response(document["data"], status.HTTP_200_OK)
+        
         if document_type == "clone":
-            document = get_clone_from_collection(
-                api_key, db_name, collection_name, {"_id": item_id}
-            )
+            # document = dc_connect.get_clones_from_collection({"_id": item_id}, single=True)
+            document = dc_connect.get_templates_from_collection({"_id": item_id}, single=True)
             return Response(document["data"], status.HTTP_200_OK)
+        
         return Response("Document could not be accessed!", status.HTTP_404_NOT_FOUND)
 
 
 class ItemContent(APIView):
     def get(self, request, item_id):
         """Content map of a given document or a template or a clone"""
+        # TODO fix. This doesn't work. Unable to get content for the content field
         content = []
         item_type = request.query_params.get("item_type")
         workspace_id = request.query_params.get("workspace_id")
-        collection_name = f"{workspace_id}_template_collection_0"
         db_name = f"{workspace_id}_DB_0"
 
         try:
             api_key = authorization_check(request.headers.get("Authorization"))
         except InvalidTokenException as e:
             return CustomResponse(False, str(e), None, status.HTTP_401_UNAUTHORIZED)
+        
+        dc_connect = DatacubeConnection(api_key=api_key, workspace_id=workspace_id, database=db_name)
 
         if not validate_id(item_id):
             return Response("Something went wrong!", status.HTTP_400_BAD_REQUEST)
@@ -966,11 +975,12 @@ class ItemContent(APIView):
         item_type = request.query_params.get("item_type")
         if item_type == "template":
             my_dict = ast.literal_eval(
-                get_template_from_collection(api_key, db_name, collection_name, {"_id": item_id})["data"][0]["content"]
+                dc_connect.get_templates_from_collection({"_id": item_id}, single=True)["data"][0]["content"]
             )[0][0]
         else:
             my_dict = ast.literal_eval(
-                get_document_from_collection(api_key, db_name, collection_name, {"_id": item_id})["data"][0]["content"]
+                # dc_connect.get_documents_from_collection({"_id": item_id}, single=True)["data"][0]["content"]
+                dc_connect.get_templates_from_collection({"_id": item_id}, single=True)["data"][0]["content"]
             )[0][0]
         all_keys = [i for i in my_dict.keys()]
         for i in all_keys:

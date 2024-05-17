@@ -1,8 +1,10 @@
+from datetime import UTC, datetime
 import json
 import re
 
 import requests
 
+from app.constants import EDITOR_API
 from education.constants import DB_API, DB_API_CRUD
 from education.helpers import generate_unique_collection_name
 
@@ -216,7 +218,9 @@ class DatacubeConnection:
         Returns:
             The selected clone(s) from the collection.
         """
+        # TODO: confirm
         collection = self.collection_names["clone"]
+        # collection = self.collection_names["template"]
         limit = None if single is None else 1 if single else None
 
         if filters is None:
@@ -395,7 +399,7 @@ class DatacubeConnection:
 
         if filters is None:
             filters = {}
-        
+
         if limit is not None:
             return self.get_data_from_collection(collection, filters, limit=limit, **kwargs)
         else:
@@ -458,9 +462,7 @@ class DatacubeConnection:
             #     print("essssss: ", res["data"][0])
             #     new_collection_name = generate_unique_collection_name(res["data"][0], base_name)
             if collection_name not in res["data"][0]:
-                new_collection_name = generate_unique_collection_name(
-                    res["data"][0], base_name
-                )
+                new_collection_name = generate_unique_collection_name(res["data"][0], base_name)
                 return {
                     "name": new_collection_name,
                     "success": True,
@@ -481,3 +483,85 @@ class DatacubeConnection:
                 "Message": res["message"],
                 "Url": "https://datacube.uxlivinglab.online/",
             }
+
+    def access_editor(
+        self,
+        item_id,
+        item_type,
+        username="",
+        portfolio="",
+        email="",
+    ):
+        team_member_id = (
+            "11689044433"
+            if item_type == "document"
+            else "1212001" if item_type == "clone" else "22689044433"
+        )
+        if item_type == "document":
+            collection = "DocumentReports"
+            document = "documentreports"
+            field = "document_name"
+        if item_type == "clone":
+            collection = "CloneReports"
+            document = "CloneReports"
+            field = "document_name"
+        elif item_type == "template":
+            collection = "TemplateReports"
+            document = "templatereports"
+            field = "template_name"
+
+        if item_type == "document":
+            # item_name = self.get_documents_from_collection({"_id": item_id}, single=True)
+            item_name = self.get_templates_from_collection({"_id": item_id}, single=True)
+        elif item_type == "clone":
+            # item_name = self.get_clones_from_collection({"_id": item_id}, single=True)
+            item_name = self.get_templates_from_collection({"_id": item_id}, single=True)
+        else:
+            item_name = self.get_templates_from_collection({"_id": item_id}, single=True)
+
+        name = item_name.get(field, "")
+        now = str(datetime.now(UTC))
+        payload = {
+            "product_name": "Workflow AI",
+            "details": {
+                "cluster": "Documents",
+                "database": "Documentation",
+                "collection": collection,
+                "document": document,
+                "team_member_ID": team_member_id,
+                "function_ID": "ABCDE",
+                "_id": item_id,
+                "field": field,
+                "type": item_type,
+                "action": (
+                    "document"
+                    if item_type == "document"
+                    else "clone" if item_type == "clone" else "template"
+                ),
+                "flag": "editing",
+                "name": name,
+                "username": username,
+                "portfolio": portfolio,
+                "email": email,
+                "time": now,
+                "command": "update",
+                "update_field": {
+                    field: "",
+                    "content": "",
+                    "page": "",
+                    "edited_by": username,
+                    "portfolio": portfolio,
+                    "edited_on": now,
+                },
+            },
+        }
+        try:
+            response = requests.post(
+                EDITOR_API,
+                data=json.dumps(payload),
+                headers={"Content-Type": "application/json"},
+            )
+            return response.json()
+        except Exception as e:
+            print(e)
+            return
