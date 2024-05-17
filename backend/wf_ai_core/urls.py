@@ -42,6 +42,7 @@ urlpatterns = [
     path("v1/", include("app.urls")),
     path("v2/", include("app.urls_v2")),
     path("v3/", include("education.urls")),
+    path("v4/", include("education_v2.urls")),
     # api doc
     re_path(
         r"^swagger(?P<format>\.json|\.yaml)$",
