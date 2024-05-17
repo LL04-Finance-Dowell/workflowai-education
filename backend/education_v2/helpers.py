@@ -1,0 +1,471 @@
+# helper functions
+from app import processing
+from education.datacube_connection import (
+    datacube_collection_retrieval,
+    get_clone_from_collection,
+    get_clones_from_collection,
+    get_document_from_collection,
+    get_documents_from_collection,
+    get_process_from_collection,
+    get_template_from_collection,
+    save_to_clone_collection,
+    save_to_clone_metadata_collection,
+    save_to_process_collection
+)
+from app.constants import EDITOR_API
+import json
+from datetime import datetime
+import requests
+from rest_framework.response import Response
+import re
+
+import concurrent.futures
+
+
+class InvalidTokenException(Exception):
+    pass
+
+
+def CustomResponse(success=True, message=None, response=None, status_code=None):
+    """
+    Create a custom response.
+    :param success: Whether the operation was successful or not.
+    :param message: Any message associated with the response.
+    :param data: Data to be included in the response.
+    :param status_code: HTTP status code for the response.
+    :return: Response object.
+    """
+    response_data = {"success": success}
+    if message is not None:
+        response_data["message"] = message
+    if response is not None:
+        response_data["response"] = response
+
+    return (
+        Response(response_data, status=status_code)
+        if status_code
+        else Response(response_data)
+    )
+
+
+def authorization_check(api_key):
+    """
+    Checks the validity of the API key.
+
+    :param api_key: The API key to be validated.
+    :return: The extracted token if the API key is valid.
+    :raises InvalidTokenException: If the API key is missing, invalid, or has an incorrect format.
+    """
+    if not api_key or not api_key.startswith("Bearer "):
+
+        raise InvalidTokenException("Bearer token is missing or invalid")
+    try:
+        _, token = api_key.split(" ")
+    except ValueError:
+        raise InvalidTokenException("Invalid Authorization header format")
+
+    return token
+
+
+def generate_unique_collection_name(existing_collection_names, base_name):
+    # Extract indices from existing names
+    indices = [
+        int(name.split("_")[-1])
+        for name in existing_collection_names
+        if name.startswith(base_name)
+    ]
+    # If no indices found, start from 1
+    if not indices:
+        return f"{base_name}_1"
+    # Increment the highest index and generate the new name
+    new_index = max(indices) + 1
+    return f"{base_name}_{new_index}"
+
+
+def check_if_name_exists_collection(api_key, collection_name, db_name):
+    res = datacube_collection_retrieval(api_key, db_name)
+    base_name = re.sub(r"_\d+$", "", collection_name)
+    if res["success"]:
+        # THIS SHOULD WORK AS WELL
+        # if not [collection_name in item for item in res["data"][0]]:
+        #     print("essssss: ", res["data"][0])
+        #     new_collection_name = generate_unique_collection_name(res["data"][0], base_name)
+        if collection_name not in res["data"][0]:
+            new_collection_name = generate_unique_collection_name(
+                res["data"][0], base_name
+            )
+            return {
+                "name": new_collection_name,
+                "success": True,
+                "Message": "New_name_generated",
+                "status": "New",
+            }
+        else:
+            return {
+                # "name": [item for item in res["data"][0] if collection_name in item][0],
+                "name": collection_name,
+                "success": True,
+                "Message": "template_generated",
+                "status": "Existing",
+            }
+    else:
+        return {
+            "success": False,
+            "Message": res["message"],
+            "Url": "https://datacube.uxlivinglab.online/",
+        }
+
+
+def create_process_helper(
+    company_id,
+    workflows,
+    created_by,
+    creator_portfolio,
+    process_type,
+    org_name,
+    workflows_ids,
+    parent_id,
+    data_type,
+    process_title,
+    action,
+    email=None,
+):
+    processing.Process(
+        company_id,
+        workflows,
+        created_by,
+        creator_portfolio,
+        process_type,
+        org_name,
+        workflows_ids,
+        parent_id,
+        data_type,
+        process_title,
+        action,
+        email,
+    )
+
+
+def access_editor(
+    item_id,
+    item_type,
+    api_key,
+    database,
+    collection_name,
+    username="",
+    portfolio="",
+    email="",
+):
+    team_member_id = (
+        "11689044433"
+        if item_type == "document"
+        else "1212001" if item_type == "clone" else "22689044433"
+    )
+    if item_type == "document":
+        collection = "DocumentReports"
+        document = "documentreports"
+        field = "document_name"
+    if item_type == "clone":
+        collection = "CloneReports"
+        document = "CloneReports"
+        field = "document_name"
+    elif item_type == "template":
+        collection = "TemplateReports"
+        document = "templatereports"
+        field = "template_name"
+    if item_type == "document":
+        item_name = get_document_from_collection(
+            api_key, database, collection_name, {"_id": item_id}
+        )
+    elif item_type == "clone":
+        item_name = get_clone_from_collection(
+            api_key, database, collection_name, {"_id": item_id}
+        )
+    else:
+        item_name = get_template_from_collection(
+            api_key, database, collection_name, {"_id": item_id}
+        )
+
+    name = item_name.get(field, "")
+    payload = {
+        "product_name": "Workflow AI",
+        "details": {
+            "cluster": "Documents",
+            "database": "Documentation",
+            "collection": collection,
+            "document": document,
+            "team_member_ID": team_member_id,
+            "function_ID": "ABCDE",
+            "_id": item_id,
+            "field": field,
+            "type": item_type,
+            "action": (
+                "document"
+                if item_type == "document"
+                else "clone" if item_type == "clone" else "template"
+            ),
+            "flag": "editing",
+            "name": name,
+            "username": username,
+            "portfolio": portfolio,
+            "email": email,
+            "time": str(datetime.utcnow()),
+            "command": "update",
+            "update_field": {
+                field: "",
+                "content": "",
+                "page": "",
+                "edited_by": username,
+                "portfolio": portfolio,
+                "edited_on": str(datetime.utcnow()),
+            },
+        },
+    }
+    try:
+        response = requests.post(
+            EDITOR_API,
+            data=json.dumps(payload),
+            headers={"Content-Type": "application/json"},
+        )
+        return response.json()
+    except Exception as e:
+        print(e)
+        return
+
+
+# to be used later
+"""collection_names = check_if_name_exists_collection(
+            api_key, collection_name, db_name
+        )
+        if collection_names["success"]:
+            collection_name = f"{collection_names['name']}
+        create_new_collection_for_template = add_collection_to_database(
+                api_key=api_key,
+                database=db_name,
+                collections=collection_name,
+            )
+            print(create_new_collection_for_template)
+        else:
+            return CustomResponse(
+                False,
+                str(collection_names["Message"]),
+                "Create a database",
+                status.HTTP_400_BAD_REQUEST,
+            )
+        ##   create_new_collection_for_template_metadata=
+
+        if create_new_collection_for_template["success"]:"""
+
+def cloning_document(document_id, auth_viewers, parent_id, process_id, **kwargs):
+    api_key=kwargs.get("api_key"),
+    database=kwargs.get("database"),
+    workspace_id=kwargs.get("workspace_id"),
+    clone_collection = f"{workspace_id}_clone_collection_0"
+    clone_metadata_collection = f"{workspace_id}_clones_metadata_collection_0"
+    try:
+        viewers = []
+        for m in auth_viewers:
+            viewers.append(m["member"])
+
+        document = get_document_from_collection(
+            api_key=api_key,
+            database=database,
+            collection=clone_collection,
+            filters={"_id": document_id}
+            )
+        # Create new "signed" list to track users who have signed the document
+        signed = []
+        for item in auth_viewers:
+            mem = item["member"]
+            signed.append({mem: False})
+
+        for viewer in viewers:
+            doc_name = document["document_name"]
+            if not doc_name:
+                document_name = "doc - " + viewer
+            else:
+                if isinstance(viewer, dict):
+                    document_name = doc_name + "_" + viewer["member"]
+                else:
+                    document_name = doc_name + "_" + viewer
+        save_res = json.loads(
+            save_to_clone_collection(
+                api_key=api_key,
+                database=database,
+                collection_id=clone_collection,
+                data={
+                    "document_name": document_name,
+                    "content": document["content"],
+                    "page": document["page"],
+                    "created_by": document["created_by"],
+                    "company_id": document["company_id"],
+                    "data_type": document["data_type"],
+                    "document_state": "processing",
+                    "auth_viewers": auth_viewers,
+                    "document_type": "clone",
+                    "document_state": "processing",
+                    "parent_id": parent_id,
+                    "process_id": process_id,
+                    "folders": "untitled",
+                    "message": "",
+                    "signed_by": signed,
+                }
+            )
+        )
+        if save_res["isSuccess"]:
+            save_res_metadata = json.loads(
+                save_to_clone_metadata_collection(
+                    api_key=api_key,
+                    database=database,
+                    collection=clone_metadata_collection,
+                    data={
+                        "document_name": document_name,
+                        "collection_id": save_res["inserted_id"],
+                        "created_by": document["created_by"],
+                        "company_id": document["company_id"],
+                        "data_type": document["data_type"],
+                        "auth_viewers": auth_viewers,
+                        "document_type": "clone",
+                        "document_state": "processing",
+                        "process_id": process_id,
+                        "parent_id": parent_id,
+                        "signed_by": signed,
+                    }
+                )
+            )
+        return save_res["inserted_id"]
+    except Exception as e:
+        print(e)
+        return
+
+def check_all_accessed(dic):
+    return all([item.get("accessed") for item in dic])
+
+def check_progress(process_id, api_key, database, collection):
+    data = get_process_from_collection(api_key=api_key, database=database, collection=collection, filters={"_id": process_id})["data"]
+    if not data:
+        return
+    
+    steps = data[0]["process_steps"]
+    steps_count = len(steps)
+    accessed = 0
+    for step in steps:
+        step_clone_map = step.get("stepDocumentCloneMap", [])
+        if step_clone_map:
+            if check_all_accessed(step_clone_map):
+                accessed += 1
+
+    percentage_progress = round((accessed / steps_count * 100), 2)
+    return percentage_progress
+
+
+def access_editor_metadata(item_id, item_type, metadata_id, email, **kwargs):
+    api_key = kwargs.get("api_key")
+    database = kwargs.get("database")
+    workspace_id = kwargs.get("workspace_id")
+    
+    team_member_id = (
+        "11689044433"
+        if item_type == "document"
+        else "1212001" if item_type == "clone" else "22689044433"
+    )
+    if item_type == "document":
+        # collection = "DocumentReports"
+        collection = f"{workspace_id}_templates_metadata_collection_0"
+        document = "documentreports"
+        field = "document_name"
+    if item_type == "clone":
+        # collection = "CloneReports"
+        collection = f"{workspace_id}_clones_metadata_collection_0"
+        document = "CloneReports"
+        field = "document_name"
+    elif item_type == "template":
+        # collection = "TemplateReports"
+        collection = f"{workspace_id}_templates_metadata_collection_0"
+        document = "templatereports"
+        field = "template_name"
+    if item_type == "document":
+        # TODO confirm because it was saved to metadata and metadata is usally gotten by collection_id  
+        item_name = get_documents_from_collection(api_key, database, collection, {"collection_id": item_id})
+    elif item_type == "clone":
+        item_name = get_clones_from_collection(api_key, database, collection, {"collection_id": item_id})
+    else:
+        item_name = get_template_from_collection(api_key, database, collection, {"collection_id": item_id})
+    
+    # TODO confirm
+    if not item_name["data"]:
+        return
+
+    item_name = item_name["data"][0]
+    name = item_name.get(field, "")
+    payload = {
+        "product_name": "Workflow AI",
+        "details": {
+            "cluster": "Documents",
+            "database": "Documentation",
+            "collection": collection,
+            "document": document,
+            "team_member_ID": team_member_id,
+            "email": email,
+            "function_ID": "ABCDE",
+            "_id": item_id,
+            "metadata_id": metadata_id,
+            "field": field,
+            "type": item_type,
+            "action": (
+                "document"
+                if item_type == "document"
+                else "clone" if item_type == "clone" else "template"
+            ),
+            "flag": "editing",
+            "name": name,
+            "command": "update",
+            "update_field": {field: "", "content": "", "page": ""},
+        },
+    }
+    try:
+        response = requests.post(
+            EDITOR_API,
+            data=json.dumps(payload),
+            headers={"Content-Type": "application/json"},
+        )
+        return response.json()
+    except Exception as e:
+        print(e)
+        return
+
+
+def cloning_process(process_id, created_by, creator_portfolio, **kwargs):
+    api_key = kwargs.get("api_key")
+    database = kwargs.get("database")
+    workspace_id = kwargs.get("workspace_id")
+    collection = f"{workspace_id}_process_collection"
+
+    try:
+        # TODO confirm if correct collection for get and save
+        process = get_process_from_collection(api_key, database, collection, {"_id": process_id})["data"]
+        process = process[0]
+        save_res = save_to_process_collection(
+            api_key,
+            database,
+            collection,
+            {
+                "process_title": process["process_title"],
+                "process_steps": process["process_steps"],
+                "created_by": created_by,
+                "company_id": process["company_id"],
+                "data_type": process["data_type"],
+                "parent_item_id": "no_parent_id",
+                "processing_action": process["processing_action"],
+                "creator_portfolio": creator_portfolio,
+                "workflow_construct_ids": process["workflow_construct_ids"],
+                "process_type": process["process_type"],
+                "process_kind": "clone",
+                "processing_state": "draft",
+            }
+        )
+
+        return save_res["data"]["inserted_id"]
+    except Exception as e:
+        print(e)
+        return
