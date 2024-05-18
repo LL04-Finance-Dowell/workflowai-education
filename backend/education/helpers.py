@@ -256,6 +256,87 @@ def access_editor(
 
         if create_new_collection_for_template["success"]:"""
 
+def cloning_document(document_id, auth_viewers, parent_id, process_id, **kwargs):
+    api_key=kwargs.get("api_key"),
+    database=kwargs.get("database"),
+    workspace_id=kwargs.get("workspace_id"),
+    clone_collection = f"{workspace_id}_clone_collection_0"
+    clone_metadata_collection = f"{workspace_id}_clones_metadata_collection_0"
+    try:
+        viewers = []
+        for m in auth_viewers:
+            viewers.append(m["member"])
+
+        document = get_document_from_collection(
+            api_key=api_key,
+            database=database,
+            collection=clone_collection,
+            filters={"_id": document_id}
+            )
+        # Create new "signed" list to track users who have signed the document
+        signed = []
+        for item in auth_viewers:
+            mem = item["member"]
+            signed.append({mem: False})
+
+        for viewer in viewers:
+            doc_name = document["document_name"]
+            if not doc_name:
+                document_name = "doc - " + viewer
+            else:
+                if isinstance(viewer, dict):
+                    document_name = doc_name + "_" + viewer["member"]
+                else:
+                    document_name = doc_name + "_" + viewer
+        save_res = json.loads(
+            save_to_clone_collection(
+                api_key=api_key,
+                database=database,
+                collection_id=clone_collection,
+                data={
+                    "document_name": document_name,
+                    "content": document["content"],
+                    "page": document["page"],
+                    "created_by": document["created_by"],
+                    "company_id": document["company_id"],
+                    "data_type": document["data_type"],
+                    "document_state": "processing",
+                    "auth_viewers": auth_viewers,
+                    "document_type": "clone",
+                    "document_state": "processing",
+                    "parent_id": parent_id,
+                    "process_id": process_id,
+                    "folders": "untitled",
+                    "message": "",
+                    "signed_by": signed,
+                }
+            )
+        )
+        if save_res["isSuccess"]:
+            save_res_metadata = json.loads(
+                save_to_clone_metadata_collection(
+                    api_key=api_key,
+                    database=database,
+                    collection=clone_metadata_collection,
+                    data={
+                        "document_name": document_name,
+                        "collection_id": save_res["inserted_id"],
+                        "created_by": document["created_by"],
+                        "company_id": document["company_id"],
+                        "data_type": document["data_type"],
+                        "auth_viewers": auth_viewers,
+                        "document_type": "clone",
+                        "document_state": "processing",
+                        "process_id": process_id,
+                        "parent_id": parent_id,
+                        "signed_by": signed,
+                    }
+                )
+            )
+        return save_res["inserted_id"]
+    except Exception as e:
+        print(e)
+        return
 
 def check_all_accessed(dic):
     return all([item.get("accessed") for item in dic])
