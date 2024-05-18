@@ -1,6 +1,6 @@
-from datetime import UTC, datetime
 import json
 import re
+from datetime import UTC, datetime
 
 import requests
 
@@ -39,9 +39,7 @@ class DatacubeConnection:
     def collection_names(self):
         return {
             "workflow": f"{self.workspace_id}_workflow_collection_0",
-            "workflow_metadata": "",
             "process": f"{self.workspace_id}_process_collection",
-            "process_metadata": "",
             "document": f"{self.workspace_id}_document_collection_0",
             "document_metadata": f"{self.workspace_id}_documents_metadata_collection_0",
             "clone": f"{self.workspace_id}_clone_collection_0",
@@ -51,7 +49,6 @@ class DatacubeConnection:
             "qrcode": f"{self.workspace_id}_document_collection_0",  # TODO Change,
             "link": f"{self.workspace_id}_document_collection_0",
             "folder": f"{self.workspace_id}_folder_collection_0",
-            "folder_metadata": "",
         }
 
     def __init__(self, api_key: str, workspace_id: str, database: str = None) -> None:
@@ -219,8 +216,11 @@ class DatacubeConnection:
             The selected clone(s) from the collection.
         """
         # TODO: confirm
-        collection = self.collection_names["clone"]
-        # collection = self.collection_names["template"]
+        if kwargs.get("metadata") == True:
+            collection = self.collection_names["clone_metadata"]
+        else:
+            collection = self.collection_names["clone"]
+
         limit = None if single is None else 1 if single else None
 
         if filters is None:
@@ -230,6 +230,14 @@ class DatacubeConnection:
             return self.get_data_from_collection(collection, filters, limit=limit, **kwargs)
         else:
             return self.get_data_from_collection(collection, filters, **kwargs)
+
+    def get_clones_metadata_from_collection(self, *args, **kwargs):
+        """
+        Retrieves clone metadata from the clone collection
+        \n This method is a wrapper for `get_clones_from_collection` that ensures metadata 
+        is retrieved for the clones.
+        """
+        return self.get_clones_from_collection(*args, metadata=True, **kwargs)
 
     def save_to_qrcode_collection(self, data: dict, **kwargs):
         # TODO fix
@@ -316,7 +324,11 @@ class DatacubeConnection:
         Returns:
             The selected document(s) from the collection.
         """
-        collection = self.collection_names["document"]
+        if kwargs.get("metadata") == True:
+            collection = self.collection_names["document_metadata"]
+        else:
+            collection = self.collection_names["document"]
+
         limit = None if single is None else 1 if single else None
 
         if filters is None:
@@ -326,6 +338,14 @@ class DatacubeConnection:
             return self.get_data_from_collection(collection, filters, limit=limit, **kwargs)
         else:
             return self.get_data_from_collection(collection, filters, **kwargs)
+
+    def get_documents_metadata_from_collection(self, *args, **kwargs):
+        """
+        Retrieves document metadata from the document collection
+        \n This method is a wrapper for `get_documents_from_collection` that ensures metadata 
+        is retrieved for the documents.
+        """
+        return self.get_documents_from_collection(*args, metadata=True, **kwargs)
 
     def get_templates_from_collection(self, filters: dict, single=False, **kwargs):
         """
@@ -340,7 +360,11 @@ class DatacubeConnection:
         Returns:
             The selected template(s) from the collection.
         """
-        collection = self.collection_names["template"]
+        if kwargs.get("metadata") == True:
+            collection = self.collection_names["template_metadata"]
+        else:
+            collection = self.collection_names["template"]
+
         limit = None if single is None else 1 if single else None
 
         if filters is None:
@@ -350,6 +374,14 @@ class DatacubeConnection:
             return self.get_data_from_collection(collection, filters, limit=limit, **kwargs)
         else:
             return self.get_data_from_collection(collection, filters, **kwargs)
+        
+    def get_templates_metadata_from_collection(self, *args, **kwargs):
+        """
+        Retrieves template metadata from the template collection
+        \n This method is a wrapper for `get_templates_from_collection` that ensures metadata 
+        is retrieved for the templates.
+        """
+        return self.get_templates_from_collection(*args, metadata=True, **kwargs)
 
     def save_to_links_collection(self, data: dict, **kwargs):
         # TODO fix here
@@ -357,7 +389,7 @@ class DatacubeConnection:
         collection = self.collection_names["document"]
         return self.post_data_to_collection(collection, data, "insert", **kwargs)
 
-    def get_link_from_collection(self, filters: dict, single=False, **kwargs):
+    def get_links_from_collection(self, filters: dict, single=False, **kwargs):
         """
         Retrieves links from the link collection.
 
@@ -578,7 +610,10 @@ class DatacubeConnection:
             for m in auth_viewers:
                 viewers.append(m["member"])
 
-            document = self.get_documents_from_collection(filters={"_id": document_id}, single=True,)
+            document = self.get_documents_from_collection(
+                filters={"_id": document_id},
+                single=True,
+            )
             # Create new "signed" list to track users who have signed the document
             signed = []
             for item in auth_viewers:
@@ -594,7 +629,7 @@ class DatacubeConnection:
                         document_name = doc_name + "_" + viewer["member"]
                     else:
                         document_name = doc_name + "_" + viewer
-            
+
             save_res = self.save_to_clone_collection(
                 collection_id=clone_collection,
                 data={
@@ -618,21 +653,21 @@ class DatacubeConnection:
 
             if save_res["success"]:
                 save_res_metadata = self.save_to_clone_metadata_collection(
-                        data={
-                            "document_name": document_name,
-                            "collection_id": save_res["data"]["inserted_id"],
-                            "created_by": document["created_by"],
-                            "company_id": document["company_id"],
-                            "data_type": document["data_type"],
-                            "auth_viewers": auth_viewers,
-                            "document_type": "clone",
-                            "document_state": "processing",
-                            "process_id": process_id,
-                            "parent_id": parent_id,
-                            "signed_by": signed,
-                        }
-                    )
-                
+                    data={
+                        "document_name": document_name,
+                        "collection_id": save_res["data"]["inserted_id"],
+                        "created_by": document["created_by"],
+                        "company_id": document["company_id"],
+                        "data_type": document["data_type"],
+                        "auth_viewers": auth_viewers,
+                        "document_type": "clone",
+                        "document_state": "processing",
+                        "process_id": process_id,
+                        "parent_id": parent_id,
+                        "signed_by": signed,
+                    }
+                )
+
             return save_res["data"]["inserted_id"]
         except Exception as e:
             print(e)

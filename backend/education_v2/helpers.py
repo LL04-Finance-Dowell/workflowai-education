@@ -342,12 +342,8 @@ def cloning_document(document_id, auth_viewers, parent_id, process_id, **kwargs)
 def check_all_accessed(dic):
     return all([item.get("accessed") for item in dic])
 
-def check_progress(process_id, api_key, database, collection):
-    data = get_process_from_collection(api_key=api_key, database=database, collection=collection, filters={"_id": process_id})["data"]
-    if not data:
-        return
-    
-    steps = data[0]["process_steps"]
+def check_progress(process, *args, **kwargs):
+    steps = process["process_steps"]
     steps_count = len(steps)
     accessed = 0
     for step in steps:

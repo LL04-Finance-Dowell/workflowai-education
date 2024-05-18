@@ -689,21 +689,16 @@ class DataCubeHandleProcess:
                 document = "CloneReports"
                 field = "document_name"
                 team_member_id = "1212001"
-                document_object = dc_con.get_clone_from_collection(
-                    api_key=self.api_key,
-                    database=self.database,
-                    collection=f"{self.workspace_id}_clone_collection_0",
-                    filters={"_id": clone_id}
+                # TODO fix
+                document_object = self.dc_connect.get_clones_from_collection(
+                    filters={"_id": clone_id}, single=True
                 )["data"]
                 # TODO confirm
                 if not document_object:
                     return
                 
-                metadata = dc_con.get_clone_from_collection(
-                    api_key=self.api_key,
-                    database=self.database,
-                    collection=f"{self.workspace_id}_clones_metadata_collection_0",
-                    filters={"collection_id": clone_id}
+                metadata = self.dc_connect.get_clones_metadata_from_collection(
+                    filters={"collection_id": clone_id}, single=True
                 )["data"]
                 # TODO confirm
                 if not metadata:
@@ -719,21 +714,15 @@ class DataCubeHandleProcess:
                 document = "templatereports"
                 team_member_id = "22689044433"
                 field = "template_name"
-                template_object = dc_con.get_template_from_collection(
-                    api_key=self.api_key,
-                    database=self.database,
-                    collection=f"{self.workspace_id}_template_collection_0",
-                    filters={"_id": clone_id}
+                template_object = self.dc_connect.get_templates_from_collection(
+                    filters={"_id": clone_id}, single=True
                 )["data"]
                 # TODO confirm
                 if not template_object:
                     return
                 
-                metadata = dc_con.get_template_from_collection(
-                    api_key=self.api_key,
-                    database=self.database,
-                    collection=f"{self.workspace_id}_template_metadata_collection_0",
-                    filters={"collection_id": clone_id}
+                metadata = self.dc_connect.get_templates_metadata_from_collection(
+                    filters={"collection_id": clone_id}, single=True
                 )["data"]
                 # TODO confirm
                 if not metadata:
