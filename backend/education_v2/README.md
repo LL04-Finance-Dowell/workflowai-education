@@ -171,9 +171,10 @@ FolderDetail:
 DocumentOrTemplateProcessing:
 - URL: education/processes/
 - POST (processing is determined by action picked by user):
+    - query_params:
+        - workspace_id
     - request_body:
         - api_key
-        - workspace_id
         - company_id
         - workflows
         - created_by

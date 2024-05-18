@@ -10,7 +10,7 @@ urlpatterns = [
     path("education/workflows/", views.Workflow.as_view()),
 
     path("education/collections/", views.CollectionData.as_view()),
-    # path("education/processes/", views.DocumentOrTemplateProcessing.as_view()),
+    path("education/processes/", views.DocumentOrTemplateProcessing.as_view()),
     path(
         "education/processes/<str:collection_id>/finalize-or-reject/",
         views.FinalizeOrRejectEducation.as_view(),

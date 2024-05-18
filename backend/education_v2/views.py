@@ -1201,7 +1201,7 @@ class DocumentOrTemplateProcessing(APIView):
 
         workspace_id = request.query_params.get("workspace_id")
         database = f"{workspace_id}_DB_0"
-        dc_connect = DatacubeConnection(api_key=api_key, workspace_id=None, database=PROCESS_DB_0)
+        dc_connect = DatacubeConnection(api_key=api_key, workspace_id=workspace_id, database=database)
 
         payload_dict = kwargs.get("payload")
         if payload_dict:
@@ -1273,7 +1273,10 @@ class DocumentOrTemplateProcessing(APIView):
         
         elif action == "close_processing_and_mark_as_completed":
             process = dc_connect.get_processes_from_collection(filters={"_id": process_id}, single=True,)["data"]
-            if process and process[0]["processing_state"] == "completed":
+            if process:
+                process = process[0]
+
+            if process["processing_state"] == "completed":
                 return Response(
                     "This Workflow process is already complete", status.HTTP_200_OK
                 )
@@ -1292,12 +1295,16 @@ class DocumentOrTemplateProcessing(APIView):
                     filters={"_id": process_id},
                     single=True
                 )["data"]
-            if process and process[0]["processing_state"] == "cancelled":
+
+            if process:
+                process = process[0]
+
+            if process["processing_state"] == "cancelled":
                 return Response(
                     "This Workflow process is Cancelled!", status.HTTP_200_OK
                 )
             res = dc_connect.update_process_collection(
-                    process_id=process["process_id"],
+                    process_id=process[0]["process_id"],
                     data={"process_steps": process["processing_steps"], "processing_state": "cancelled"}
                 )
             if res["success"]:
