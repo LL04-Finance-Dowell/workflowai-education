@@ -432,7 +432,7 @@ class DatacubeConnection:
         return self.post_data_to_collection(collection, data, "update", query, **kwargs)
 
     def update_template_metadata_collection(self, metadata_id: str, data: dict, *args, **kwargs):
-        return self.update_template_collection(*args, template_id=metadata_id, data=data, **kwargs)
+        return self.update_template_collection(*args, template_id=metadata_id, data=data, metadata=True, **kwargs)
 
     def get_templates_from_collection(self, filters: dict, single=False, **kwargs):
         """
