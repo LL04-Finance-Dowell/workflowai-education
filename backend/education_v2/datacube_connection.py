@@ -165,8 +165,9 @@ class DatacubeConnection:
         )
 
     def save_to_workflow_collection(self, collection_id: str, data: dict, **kwargs):
+        collection = self.collection_names["workflow"]
         return self.post_data_to_collection(
-            collection=collection_id, data=data, operation="insert", **kwargs
+            collection=collection, data=data, operation="insert", **kwargs
         )
 
     def get_workflows_from_collection(self, filters=None, single=False, **kwargs):
@@ -195,12 +196,12 @@ class DatacubeConnection:
 
     def save_to_clone_collection(self, collection_id: str, data: dict, **kwargs):
         if kwargs.get("metadata") == True:
-            collection = self.collection_names["document_metadata"]
+            collection = self.collection_names["clone_metadata"]
         else:
-            collection = self.collection_names["document"]
-            
+            collection = self.collection_names["clone"]
+
         return self.post_data_to_collection(
-            collection=collection_id, data=data, operation="insert", **kwargs
+            collection=collection, data=data, operation="insert", **kwargs
         )
 
     def save_to_clone_metadata_collection(self, data: dict, **kwargs):
@@ -684,6 +685,110 @@ class DatacubeConnection:
                         "signed_by": signed,
                     }
                 )
+
+            return save_res["data"]["inserted_id"]
+        except Exception as e:
+            print(e)
+            return
+
+    def access_editor_metadata(self, item_id, item_type, metadata_id, email, **kwargs):        
+        team_member_id = (
+            "11689044433"
+            if item_type == "document"
+            else "1212001" if item_type == "clone" else "22689044433"
+        )
+        if item_type == "document":
+            # collection = "DocumentReports"
+            collection = self.collection_names["document_metadata"]
+            document = "documentreports"
+            field = "document_name"
+        
+        if item_type == "clone":
+            # collection = "CloneReports"
+            collection = self.collection_names["clone_metadata"]
+            document = "CloneReports"
+            field = "document_name"
+        
+        elif item_type == "template":
+            # collection = "TemplateReports"
+            collection = self.collection_names["template_metadata"]
+            document = "templatereports"
+            field = "template_name"
+        
+        if item_type == "document":
+            # TODO confirm because it was saved to metadata and metadata is usally gotten by collection_id  
+            item_name = self.get_documents_metadata_from_collection({"collection_id": item_id})
+        
+        elif item_type == "clone":
+            item_name = self.get_clones_metadata_from_collection({"collection_id": item_id})
+        
+        else:
+            item_name = self.get_templates_metadata_from_collection({"collection_id": item_id})
+        
+        # TODO confirm
+        if not item_name["data"]:
+            return
+
+        item_name = item_name["data"][0]
+        name = item_name.get(field, "")
+        payload = {
+            "product_name": "Workflow AI",
+            "details": {
+                "cluster": "Documents",
+                "database": "Documentation",
+                "collection": collection,
+                "document": document,
+                "team_member_ID": team_member_id,
+                "email": email,
+                "function_ID": "ABCDE",
+                "_id": item_id,
+                "metadata_id": metadata_id,
+                "field": field,
+                "type": item_type,
+                "action": (
+                    "document"
+                    if item_type == "document"
+                    else "clone" if item_type == "clone" else "template"
+                ),
+                "flag": "editing",
+                "name": name,
+                "command": "update",
+                "update_field": {field: "", "content": "", "page": ""},
+            },
+        }
+        try:
+            response = requests.post(
+                EDITOR_API,
+                data=json.dumps(payload),
+                headers={"Content-Type": "application/json"},
+            )
+            return response.json()
+        except Exception as e:
+            print(e)
+            return
+
+    
+    def cloning_process(self, process_id, created_by, creator_portfolio, **kwargs):
+        try:
+            # TODO confirm if correct collection for get and save
+            process = self.get_processes_from_collection({"_id": process_id}, single=True)["data"]
+            process = process[0]
+            save_res = self.save_to_process_collection(
+                {
+                    "process_title": process["process_title"],
+                    "process_steps": process["process_steps"],
+                    "created_by": created_by,
+                    "company_id": process["company_id"],
+                    "data_type": process["data_type"],
+                    "parent_item_id": "no_parent_id",
+                    "processing_action": process["processing_action"],
+                    "creator_portfolio": creator_portfolio,
+                    "workflow_construct_ids": process["workflow_construct_ids"],
+                    "process_type": process["process_type"],
+                    "process_kind": "clone",
+                    "processing_state": "draft",
+                }
+            )
 
             return save_res["data"]["inserted_id"]
         except Exception as e:

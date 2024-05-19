@@ -1830,16 +1830,13 @@ class ProcessImport(APIView):
                 status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
         metadata_id = res_metadata["data"]["inserted_id"]
-        editor_link = access_editor_metadata(
-            res["data"]["inserted_id"], "document", metadata_id, user_email, api_key=api_key, database=db_name, workspace_id=workspace_id
-        )
+        editor_link = dc_connect.access_editor_metadata(res["data"]["inserted_id"], "document", metadata_id, user_email)
         if not editor_link:
             return Response(
                 "Could not open document editor.", status.HTTP_500_INTERNAL_SERVER_ERROR
             )
-        old_workflow = get_workflows_from_collection(
-            api_key, db_name, f"{workspace_id}_workflow_collection_0", {"_id": workflow_id[0]},
-        )["data"]
+        
+        old_workflow = dc_connect.get_workflows_from_collection({"_id": workflow_id[0]}, single=True,)["data"]
         if not old_workflow:
             return Response(
                 "Some workflow error here.", status.HTTP_400_BAD_REQUEST
@@ -1858,10 +1855,8 @@ class ProcessImport(APIView):
             "data_type": data_type,
             "workflow_type": "imports",
         }
-        res_workflow = save_to_workflow_collection(
-            api_key,
-            f"{workspace_id}_workflow_collection_0",
-            db_name,
+        res_workflow = dc_connect.save_to_workflow_collection(
+            dc_connect.collection_names["workflow"],
             workflow_data,
         )
         if not res_workflow["success"]:
@@ -1883,10 +1878,7 @@ class ProcessImport(APIView):
             "process_kind": "import",
         }
 
-        res_process = save_to_process_collection(
-            api_key,
-            db_name,
-            f"{workspace_id}_process_collection",
+        res_process = dc_connect.save_to_process_collection(
             process_data,
         )
         if not res_process["success"]:
@@ -1914,19 +1906,18 @@ class ProcessCopies(APIView):
         except InvalidTokenException as e:
             return CustomResponse(False, str(e), None, status.HTTP_401_UNAUTHORIZED)
 
+        dc_connect = DatacubeConnection(api_key=api_key, workspace_id=workspace_id, database=db_name)
+
         if not validate_id(process_id):
             return Response("something went wrong!", status.HTTP_400_BAD_REQUEST)
 
         if not request.data:
             return Response("something went wrong!", status.HTTP_400_BAD_REQUEST)
 
-        process_id = cloning_process(
+        process_id = dc_connect.cloning_process(
             process_id,
             request.data["created_by"],
             request.data["portfolio"],
-            api_key=api_key,
-            database=db_name,
-            workspace_id=workspace_id,
         )
         if process_id is None:
                 return Response(status.HTTP_500_INTERNAL_SERVER_ERROR)
