@@ -273,7 +273,6 @@ class NewTemplate(APIView):
         workspace_id = request.GET.get("workspace_id")
         template_id = request.GET.get("template_id")
         db_name = f"{workspace_id}_DB_0"
-        collection_name = f"{workspace_id}_template_collection_0"
         filters = {"_id": template_id}
         dc_connect = DatacubeConnection(
             api_key=api_key, workspace_id=workspace_id, database=db_name
@@ -333,15 +332,10 @@ class NewTemplate(APIView):
                 "DB_name": db_name,
             }
 
-            res = dc_connect.post_data_to_collection(
-                collection=collection_name,
-                operation="insert",
-                data=template_data,
-            )
+            res = dc_connect.save_to_template_collection(data=template_data)
             if res["success"]:
                 collection_id = res["data"]["inserted_id"]
-                res_metadata = dc_connect.save_to_metadata(
-                    metadata_collection,
+                res_metadata = dc_connect.save_to_template_metadata_collection(
                     {
                         "template_name": "Untitled Template",
                         "created_by": request.data["created_by"],
@@ -431,22 +425,13 @@ class NewTemplate(APIView):
         dc_connect = DatacubeConnection(
             api_key=api_key, workspace_id=workspace_id, database=database
         )
-
-        collection = dc_connect.collection_names.get("template")
-        meta_data_collection = dc_connect.collection_names.get("template_metadata")
-
+        # TODO compare
         update_data = {"approval": True}
         collection_id = form["collection_id"]
         metadata_id = form["metadata_id"]
-        query = {"_id": collection_id}
-        query_metadata = {"_id": metadata_id}
 
-        approval_update = dc_connect.post_data_to_collection(
-            collection, update_data, "update", query
-        )
-        metadata_approval_update = dc_connect.post_data_to_collection(
-            meta_data_collection, update_data, "update", query_metadata
-        )
+        approval_update = dc_connect.update_template_collection(template_id=collection_id, data=update_data)
+        metadata_approval_update = dc_connect.update_template_metadata_collection(template_metadata_id=metadata_id, data=update_data)
 
         if approval_update and metadata_approval_update:
             return CustomResponse(True, "Template approved", None, status.HTTP_200_OK)
@@ -524,14 +509,12 @@ class Workflow(APIView):
             "workflow_title": form["wf_title"],
             "steps": form["steps"],
         }
-        collection_name = dc_connect.collection_names.get("workflow")
         """ workflow_unique_name = generate_unique_collection_name(
             collection_name, "workflow_collection"""
 
         # if workflow_unique_name["success"]:
 
         res = dc_connect.save_to_workflow_collection(
-            collection_name,
             {
                 "workflows": data,
                 "company_id": organization_id,
@@ -1897,7 +1880,6 @@ class ProcessImport(APIView):
             "workflow_type": "imports",
         }
         res_workflow = dc_connect.save_to_workflow_collection(
-            dc_connect.collection_names["workflow"],
             workflow_data,
         )
         if not res_workflow["success"]:

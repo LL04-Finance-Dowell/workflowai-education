@@ -125,17 +125,20 @@ class DatacubeConnection:
         if operation.lower() == "insert":
             payload_dict["data"] = data
             payload = payload_dict
+        
         elif operation.lower() == "update":
             payload_dict["update_data"] = data
             payload_dict["query"] = query
             payload = payload_dict
             response = requests.put(DB_API_CRUD, json=payload)
             return response
+        
         elif operation.lower() == "delete":
             payload_dict["query"] = query
             payload = payload_dict
             response = requests.delete(DB_API_CRUD, json=payload)
             return
+        
         # print(payload)
         response = requests.post(DB_API_CRUD, json=payload)
         res = json.loads(response.text)
@@ -166,7 +169,7 @@ class DatacubeConnection:
             **kwargs,
         )
 
-    def save_to_workflow_collection(self, collection_id: str, data: dict, **kwargs):
+    def save_to_workflow_collection(self, data: dict, **kwargs):
         collection = self.collection_names["workflow"]
         return self.post_data_to_collection(
             collection=collection, data=data, operation="insert", **kwargs
@@ -196,7 +199,7 @@ class DatacubeConnection:
         else:
             return self.get_data_from_collection(collection, filters, **kwargs)
 
-    def save_to_clone_collection(self, collection_id: str, data: dict, **kwargs):
+    def save_to_clone_collection(self, data: dict, **kwargs):
         if kwargs.get("metadata") == True:
             collection = self.collection_names["clone_metadata"]
         else:
@@ -206,9 +209,8 @@ class DatacubeConnection:
             collection=collection, data=data, operation="insert", **kwargs
         )
 
-    def save_to_clone_metadata_collection(self, data: dict, **kwargs):
-        collection = self.collection_names["clone_metadata"]
-        return self.post_data_to_collection(collection, data, "insert", **kwargs)
+    def save_to_clone_metadata_collection(self, *args, **kwargs):
+        return self.save_to_clone_collection(*args, metadata=True, **kwargs)
 
     def get_clones_from_collection(self, filters: dict, single=False, **kwargs):
         """
@@ -276,8 +278,13 @@ class DatacubeConnection:
             return self.get_data_from_collection(collection, filters, **kwargs)
 
     def save_to_process_collection(self, data: dict, **kwargs):
-        collection = self.collection_names["process"]
+        if kwargs.get("metadata") == True:
+            collection = self.collection_names["process_metadata"]
+        else:
+            collection = self.collection_names["process"]
+
         return self.post_data_to_collection(collection, data, "insert", **kwargs)
+
 
     def update_process_collection(self, process_id: str, data: dict, query=None, **kwargs):
         query = {"_id": process_id}
@@ -364,6 +371,34 @@ class DatacubeConnection:
         is retrieved for the documents.
         """
         return self.get_documents_from_collection(*args, metadata=True, **kwargs)
+    
+    def save_to_template_collection(self, data: dict, **kwargs):
+        if kwargs.get("metadata") == True:
+            collection = self.collection_names["template_metadata"]
+        else:
+            collection = self.collection_names["template"]
+
+        return self.post_data_to_collection(collection, data, "insert", **kwargs)
+    
+    def save_to_template_metadata_collection(self, *args, **kwargs):
+        """
+        Saves to template metadata collection
+        \n This method is a wrapper for `save_to_template_collection` that ensures template 
+        is saved to the metadata collection.
+        """
+        return self.save_to_template_collection(*args, metadata=True, **kwargs)
+    
+    def update_template_collection(self, template_id: str, data: dict, **kwargs):
+        query = {"_id": template_id}
+        if kwargs.get("metadata") == True:
+            collection = self.collection_names["template_metadata"]
+        else:
+            collection = self.collection_names["template"]
+            
+        return self.post_data_to_collection(collection, data, "update", query, **kwargs)
+    
+    def update_template_metadata_collection(self, template_metadata_id: str, data: dict, *args, **kwargs):
+        return self.update_template_collection(*args, template_id=template_metadata_id, **kwargs)
 
     def get_templates_from_collection(self, filters: dict, single=False, **kwargs):
         """
@@ -620,8 +655,6 @@ class DatacubeConnection:
             return
 
     def cloning_document(self, document_id, auth_viewers, parent_id, process_id, **kwargs):
-        clone_collection = self.collection_names["clone"]
-        clone_metadata_collection = self.collection_names["clone_metadata"]
         try:
             viewers = []
             for m in auth_viewers:
@@ -648,7 +681,6 @@ class DatacubeConnection:
                         document_name = doc_name + "_" + viewer
 
             save_res = self.save_to_clone_collection(
-                collection_id=clone_collection,
                 data={
                     "document_name": document_name,
                     "content": document["content"],
