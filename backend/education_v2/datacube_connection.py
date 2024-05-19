@@ -125,20 +125,20 @@ class DatacubeConnection:
         if operation.lower() == "insert":
             payload_dict["data"] = data
             payload = payload_dict
-        
+
         elif operation.lower() == "update":
             payload_dict["update_data"] = data
             payload_dict["query"] = query
             payload = payload_dict
             response = requests.put(DB_API_CRUD, json=payload)
             return response
-        
+
         elif operation.lower() == "delete":
             payload_dict["query"] = query
             payload = payload_dict
             response = requests.delete(DB_API_CRUD, json=payload)
             return
-        
+
         # print(payload)
         response = requests.post(DB_API_CRUD, json=payload)
         res = json.loads(response.text)
@@ -175,13 +175,18 @@ class DatacubeConnection:
             collection=collection, data=data, operation="insert", **kwargs
         )
 
+    def update_workflow_collection(self, workflow_id: str, data: dict, **kwargs):
+        query = {"_id": workflow_id}
+        collection = self.collection_names["workflow"]
+        return self.post_data_to_collection(collection, data, "update", query, **kwargs)
+
     def get_workflows_from_collection(self, filters=None, single=False, **kwargs):
         """
         Retrieves workflows from the workflow collection.
 
         Args:
             filters (dict): _description.
-            single (bool, optional): Determines the number of results to return.
+            single (bool, optional): Determines the number of results to return.\
             If True, returns only one result. If False, returns the max default limit. Defaults to False.
             **kwargs: Additional keyword arguments to be passed to the `get_data_from_collection` method.
 
@@ -212,13 +217,29 @@ class DatacubeConnection:
     def save_to_clone_metadata_collection(self, *args, **kwargs):
         return self.save_to_clone_collection(*args, metadata=True, **kwargs)
 
+    def update_clone_collection(self, clone_id: str, data: dict, query=None, **kwargs):
+        if query is None:
+            query = {"_id": clone_id}
+
+        if kwargs.get("metadata") == True:
+            collection = self.collection_names["clone_metadata"]
+        else:
+            collection = self.collection_names["clone"]
+
+        return self.post_data_to_collection(collection, data, "update", query, **kwargs)
+
+    def update_clone_metadata_collection(self, metadata_id: str, data: dict, *args, **kwargs):
+        return self.update_clone_collection(
+            *args, clone_id=metadata_id, data=data, metadata=True, **kwargs
+        )
+
     def get_clones_from_collection(self, filters: dict, single=False, **kwargs):
         """
         Retrieves clones from the clone collection.
 
         Args:
             filters (dict): _description.
-            single (bool, optional): Determines the number of results to return.
+            single (bool, optional): Determines the number of results to return.\
             If True, returns only one result. If False, returns the max default limit. Defaults to False.
             **kwargs: Additional keyword arguments to be passed to the `get_data_from_collection` method.
 
@@ -244,7 +265,7 @@ class DatacubeConnection:
     def get_clones_metadata_from_collection(self, *args, **kwargs):
         """
         Retrieves clone metadata from the clone collection
-        \n This method is a wrapper for `get_clones_from_collection` that ensures metadata 
+        \n This method is a wrapper for `get_clones_from_collection` that ensures metadata
         is retrieved for the clones.
         """
         return self.get_clones_from_collection(*args, metadata=True, **kwargs)
@@ -259,7 +280,7 @@ class DatacubeConnection:
 
         Args:
             filters (dict): _description.
-            single (bool, optional): Determines the number of results to return.
+            single (bool, optional): Determines the number of results to return.\
             If True, returns only one result. If False, returns the max default limit. Defaults to False.
             **kwargs: Additional keyword arguments to be passed to the `get_data_from_collection` method.
 
@@ -285,9 +306,9 @@ class DatacubeConnection:
 
         return self.post_data_to_collection(collection, data, "insert", **kwargs)
 
-
     def update_process_collection(self, process_id: str, data: dict, query=None, **kwargs):
-        query = {"_id": process_id}
+        if query is None:
+            query = {"_id": process_id}
         collection = self.collection_names["process"]
         return self.post_data_to_collection(collection, data, "update", query, **kwargs)
 
@@ -297,7 +318,7 @@ class DatacubeConnection:
 
         Args:
             filters (dict): _description.
-            single (bool, optional): Determines the number of results to return.
+            single (bool, optional): Determines the number of results to return.\
             If True, returns only one result. If False, returns the max default limit. Defaults to False.
             **kwargs: Additional keyword arguments to be passed to the `get_data_from_collection` method.
 
@@ -322,19 +343,30 @@ class DatacubeConnection:
             collection = self.collection_names["document"]
 
         return self.post_data_to_collection(collection, data, "insert", **kwargs)
-    
+
     def save_to_document_metadata_collection(self, *args, **kwargs):
         """
         Saves to document metadata collection
-        \n This method is a wrapper for `save_to_document_collection` that ensures document 
+        \n This method is a wrapper for `save_to_document_collection` that ensures document
         is saved to the metadata collection.
         """
         return self.save_to_document_collection(*args, metadata=True, **kwargs)
 
-    def update_document_collection(self, document_id: str, data: dict, **kwargs):
-        query = {"_id": document_id}
-        collection = self.collection_names["document"]
+    def update_document_collection(self, document_id: str, data: dict, query=None, **kwargs):
+        if query is None:
+            query = {"_id": document_id}
+
+        if kwargs.get("metadata") == True:
+            collection = self.collection_names["document_metadata"]
+        else:
+            collection = self.collection_names["document"]
+
         return self.post_data_to_collection(collection, data, "update", query, **kwargs)
+
+    def update_document_metadata_collection(self, metadata_id: str, data: dict, *args, **kwargs):
+        return self.update_document_collection(
+            *args, document_id=metadata_id, data=data, metadata=True, **kwargs
+        )
 
     def get_documents_from_collection(self, filters: dict, single=False, **kwargs):
         """
@@ -342,7 +374,7 @@ class DatacubeConnection:
 
         Args:
             filters (dict): _description.
-            single (bool, optional): Determines the number of results to return.
+            single (bool, optional): Determines the number of results to return.\
             If True, returns only one result. If False, returns the max default limit. Defaults to False.
             **kwargs: Additional keyword arguments to be passed to the `get_data_from_collection` method.
 
@@ -367,11 +399,11 @@ class DatacubeConnection:
     def get_documents_metadata_from_collection(self, *args, **kwargs):
         """
         Retrieves document metadata from the document collection
-        \n This method is a wrapper for `get_documents_from_collection` that ensures metadata 
+        \n This method is a wrapper for `get_documents_from_collection` that ensures metadata
         is retrieved for the documents.
         """
         return self.get_documents_from_collection(*args, metadata=True, **kwargs)
-    
+
     def save_to_template_collection(self, data: dict, **kwargs):
         if kwargs.get("metadata") == True:
             collection = self.collection_names["template_metadata"]
@@ -379,26 +411,28 @@ class DatacubeConnection:
             collection = self.collection_names["template"]
 
         return self.post_data_to_collection(collection, data, "insert", **kwargs)
-    
+
     def save_to_template_metadata_collection(self, *args, **kwargs):
         """
         Saves to template metadata collection
-        \n This method is a wrapper for `save_to_template_collection` that ensures template 
+        \n This method is a wrapper for `save_to_template_collection` that ensures template
         is saved to the metadata collection.
         """
         return self.save_to_template_collection(*args, metadata=True, **kwargs)
-    
-    def update_template_collection(self, template_id: str, data: dict, **kwargs):
-        query = {"_id": template_id}
+
+    def update_template_collection(self, template_id: str, data: dict, query=None, **kwargs):
+        if query is None:
+            query = {"_id": template_id}
+
         if kwargs.get("metadata") == True:
             collection = self.collection_names["template_metadata"]
         else:
             collection = self.collection_names["template"]
-            
+
         return self.post_data_to_collection(collection, data, "update", query, **kwargs)
-    
-    def update_template_metadata_collection(self, template_metadata_id: str, data: dict, *args, **kwargs):
-        return self.update_template_collection(*args, template_id=template_metadata_id, **kwargs)
+
+    def update_template_metadata_collection(self, metadata_id: str, data: dict, *args, **kwargs):
+        return self.update_template_collection(*args, template_id=metadata_id, data=data, **kwargs)
 
     def get_templates_from_collection(self, filters: dict, single=False, **kwargs):
         """
@@ -406,7 +440,7 @@ class DatacubeConnection:
 
         Args:
             filters (dict): _description.
-            single (bool, optional): Determines the number of results to return.
+            single (bool, optional): Determines the number of results to return.\
             If True, returns only one result. If False, returns the max default limit. Defaults to False.
             **kwargs: Additional keyword arguments to be passed to the `get_data_from_collection` method.
 
@@ -427,11 +461,11 @@ class DatacubeConnection:
             return self.get_data_from_collection(collection, filters, limit=limit, **kwargs)
         else:
             return self.get_data_from_collection(collection, filters, **kwargs)
-        
+
     def get_templates_metadata_from_collection(self, *args, **kwargs):
         """
         Retrieves template metadata from the template collection
-        \n This method is a wrapper for `get_templates_from_collection` that ensures metadata 
+        \n This method is a wrapper for `get_templates_from_collection` that ensures metadata
         is retrieved for the templates.
         """
         return self.get_templates_from_collection(*args, metadata=True, **kwargs)
@@ -446,7 +480,7 @@ class DatacubeConnection:
 
         Args:
             filters (dict): _description.
-            single (bool, optional): Determines the number of results to return.
+            single (bool, optional): Determines the number of results to return.\
             If True, returns only one result. If False, returns the max default limit. Defaults to False.
             **kwargs: Additional keyword arguments to be passed to the `get_data_from_collection` method.
 
@@ -475,7 +509,7 @@ class DatacubeConnection:
 
         Args:
             filters (dict): _description.
-            single (bool, optional): Determines the number of results to return.
+            single (bool, optional): Determines the number of results to return.\
             If True, returns only one result. If False, returns the max default limit. Defaults to False.
             **kwargs: Additional keyword arguments to be passed to the `get_data_from_collection` method.
 
@@ -572,14 +606,7 @@ class DatacubeConnection:
                 "Url": "https://datacube.uxlivinglab.online/",
             }
 
-    def access_editor(
-        self,
-        item_id,
-        item_type,
-        username="",
-        portfolio="",
-        email="",
-    ):
+    def access_editor(self, item_id, item_type, username="", portfolio="", email="", **kwargs):
         team_member_id = (
             "11689044433"
             if item_type == "document"
@@ -599,13 +626,11 @@ class DatacubeConnection:
             field = "template_name"
 
         if item_type == "document":
-            # item_name = self.get_documents_from_collection({"_id": item_id}, single=True)
-            item_name = self.get_templates_from_collection({"_id": item_id}, single=True)
+            item_name = self.get_documents_from_collection({"_id": item_id}, single=True, **kwargs)
         elif item_type == "clone":
-            # item_name = self.get_clones_from_collection({"_id": item_id}, single=True)
-            item_name = self.get_templates_from_collection({"_id": item_id}, single=True)
+            item_name = self.get_clones_from_collection({"_id": item_id}, single=True, **kwargs)
         else:
-            item_name = self.get_templates_from_collection({"_id": item_id}, single=True)
+            item_name = self.get_templates_from_collection({"_id": item_id}, single=True, **kwargs)
 
         name = item_name.get(field, "")
         now = str(datetime.now(UTC))
@@ -661,8 +686,7 @@ class DatacubeConnection:
                 viewers.append(m["member"])
 
             document = self.get_documents_from_collection(
-                filters={"_id": document_id},
-                single=True,
+                filters={"_id": document_id}, single=True, **kwargs
             )
             # Create new "signed" list to track users who have signed the document
             signed = []
@@ -698,6 +722,7 @@ class DatacubeConnection:
                     "message": "",
                     "signed_by": signed,
                 },
+                **kwargs,
             )
 
             if save_res["success"]:
@@ -714,7 +739,8 @@ class DatacubeConnection:
                         "process_id": process_id,
                         "parent_id": parent_id,
                         "signed_by": signed,
-                    }
+                    },
+                    **kwargs,
                 )
 
             return save_res["data"]["inserted_id"]
@@ -722,7 +748,68 @@ class DatacubeConnection:
             print(e)
             return
 
-    def access_editor_metadata(self, item_id, item_type, metadata_id, email, **kwargs):        
+    def cloning_clone(self, clone_id, auth_viewers, parent_id, process_id, **kwargs):
+        try:
+            viewers = []
+            for m in auth_viewers:
+                viewers.append(m["member"])
+            document = self.get_documents_from_collection(
+                {"_id": clone_id}, single=True, **kwargs
+            )["data"][0]
+            for viewer in viewers:
+                doc_name = document["document_name"]
+                if not doc_name:
+                    document_name = "doc - " + viewer
+                else:
+                    if isinstance(viewer, dict):
+                        document_name = doc_name + "_" + viewer["member"]
+                    else:
+                        document_name = doc_name + "_" + viewer
+
+            clone_dict = {
+                "document_name": document_name,
+                "content": document["content"],
+                "page": document["page"],
+                "created_by": document["created_by"],
+                "company_id": document["company_id"],
+                "data_type": document["data_type"],
+                "document_state": "processing",
+                "auth_viewers": auth_viewers,
+                "document_type": "clone",
+                "document_state": "processing",
+                "parent_id": parent_id,
+                "process_id": process_id,
+                "folders": "untitled",
+                "message": "",
+            }
+            if document.get("signed_by"):
+                clone_dict["signed_by"] = document["signed_by"]
+
+            save_res = self.save_to_clone_collection(clone_dict, **kwargs)
+
+            if save_res["success"]:
+                metadata_dict = {
+                    "document_name": document_name,
+                    "collection_id": save_res["inserted_id"],
+                    "created_by": document["created_by"],
+                    "company_id": document["company_id"],
+                    "data_type": document["data_type"],
+                    "auth_viewers": auth_viewers,
+                    "document_type": "clone",
+                    "document_state": "processing",
+                    "parent_id": parent_id,
+                    "process_id": process_id,
+                }
+                if document.get("signed_by"):
+                    metadata_dict["signed_by"] = document["signed_by"]
+
+                save_res_metadata = self.save_to_clone_metadata_collection(metadata_dict, **kwargs)
+            return save_res["inserted_id"]
+        except Exception as e:
+            print(e)
+            return
+
+    def access_editor_metadata(self, item_id, item_type, metadata_id, email, **kwargs):
         team_member_id = (
             "11689044433"
             if item_type == "document"
@@ -733,29 +820,35 @@ class DatacubeConnection:
             collection = self.collection_names["document_metadata"]
             document = "documentreports"
             field = "document_name"
-        
+
         if item_type == "clone":
             # collection = "CloneReports"
             collection = self.collection_names["clone_metadata"]
             document = "CloneReports"
             field = "document_name"
-        
+
         elif item_type == "template":
             # collection = "TemplateReports"
             collection = self.collection_names["template_metadata"]
             document = "templatereports"
             field = "template_name"
-        
+
         if item_type == "document":
-            # TODO compare  
-            item_name = self.get_documents_metadata_from_collection({"collection_id": item_id})
-        
+            # TODO compare
+            item_name = self.get_documents_metadata_from_collection(
+                {"collection_id": item_id}, **kwargs
+            )
+
         elif item_type == "clone":
-            item_name = self.get_clones_metadata_from_collection({"collection_id": item_id})
-        
+            item_name = self.get_clones_metadata_from_collection(
+                {"collection_id": item_id}, **kwargs
+            )
+
         else:
-            item_name = self.get_templates_metadata_from_collection({"collection_id": item_id})
-        
+            item_name = self.get_templates_metadata_from_collection(
+                {"collection_id": item_id}, **kwargs
+            )
+
         # TODO confirm
         if not item_name["data"]:
             return
@@ -798,11 +891,12 @@ class DatacubeConnection:
             print(e)
             return
 
-    
     def cloning_process(self, process_id, created_by, creator_portfolio, **kwargs):
         try:
             # TODO confirm if correct collection for get and save
-            process = self.get_processes_from_collection({"_id": process_id}, single=True)["data"]
+            process = self.get_processes_from_collection(
+                {"_id": process_id}, single=True, **kwargs
+            )["data"]
             process = process[0]
             save_res = self.save_to_process_collection(
                 {
@@ -818,10 +912,181 @@ class DatacubeConnection:
                     "process_type": process["process_type"],
                     "process_kind": "clone",
                     "processing_state": "draft",
-                }
+                },
+                **kwargs,
             )
 
             return save_res["data"]["inserted_id"]
         except Exception as e:
             print(e)
             return
+
+    def finalize_item(
+        self, item_id: str, state: str, item_type: str, message: str, signers=None, **kwargs
+    ):
+        def check_signers(data):
+            if signers is not None:
+                data["signed_by"] = signers
+            return data
+
+        if item_type == "document":
+            update_data = {"document_state": state, "message": message}
+            return self.update_document_collection(item_id, check_signers(update_data), **kwargs)
+
+        elif item_type == "clone":
+            update_data = {"document_state": state, "message": message}
+            return self.update_clone_collection(item_id, check_signers(update_data), **kwargs)
+
+        elif item_type == "template":
+            update_data = {"template_state": state, "message": message}
+            return self.update_template_collection(item_id, check_signers(update_data), **kwargs)
+
+        elif item_type == "workflow":
+            update_data = {"document_state": state}
+            return self.update_workflow_collection(item_id, check_signers(update_data), **kwargs)
+
+        return
+
+    def check_user_in_auth_viewers(self, user, item, item_type, **kwargs) -> bool:
+        auth_viewers = []
+        if item_type == "document":
+            viewers = self.get_clones_from_collection({"_id": item}, single=True, **kwargs)[
+                "data"
+            ][0].get("auth_viewers")
+
+        elif item_type == "template":
+            viewers = self.get_templates_from_collection({"_id": item}, single=True, **kwargs)[
+                "data"
+            ][0].get("auth_viewers")
+            viewers = viewers[0]
+
+        for i in viewers:
+            if isinstance(i, list):
+                # if item comes as a list, get the first item
+                i = i[0]
+
+            for k, v in i.items():
+                if k != "portfolio":
+                    auth_viewers.append(v)
+
+        if user in auth_viewers:
+            return True
+        else:
+            return False
+
+    def check_step_items_state(self, items, **kwargs) -> bool:
+        doc_states = []
+        for i in items:
+            doc_state = self.get_clones_from_collection({"_id": i}, single=True, **kwargs)["data"][
+                0
+            ].get("document_state")
+            if doc_state == "finalized":
+                doc_states.append(True)
+            elif doc_state == "processing":
+                doc_states.append(False)
+            else:
+                doc_states.append(False)
+        if not all(doc_states):
+            return False
+        return True
+
+    def get_metadata_id(self, item_id, item_type, **kwargs):
+        if item_type == "document":
+            try:
+                coll_id = self.get_documents_metadata_from_collection(
+                    {"collection_id": item_id}, single=True, **kwargs
+                )["data"][0]["_id"]
+                return coll_id
+            except Exception as err:
+                print(err)
+        elif item_type == "clone":
+            try:
+                coll_id = self.get_clones_metadata_from_collection(
+                    {"collection_id": item_id}, single=True, **kwargs
+                )["data"][0]["_id"]
+                return coll_id
+            except Exception as err:
+                print(err)
+
+        elif item_type == "template":
+            try:
+                coll_id = self.get_templates_metadata_from_collection(
+                    {"collection_id": item_id}, **kwargs
+                )["data"][0]["_id"]
+                return coll_id
+            except Exception as err:
+                print(err)
+
+    def authorize_metadata(self, metadata_id, viewers, process_id, item_type, **kwargs):
+        query = {"_id": metadata_id}
+        update_data = {
+            "auth_viewers": [viewers],
+            "document_state": "processing",
+            "process_id": process_id,
+        }
+        if item_type == "document":  # document here is process_type
+            return self.update_clone_metadata_collection(
+                metadata_id, update_data, query=query, **kwargs
+            )
+        if item_type == "template":
+            return self.update_template_metadata_collection(
+                metadata_id, update_data, query=query, **kwargs
+            )
+
+        return
+
+    def check_all_finalized_true(self, data, process_type, **kwargs) -> bool:
+        for item in data:
+            step_document_clone_map = item.get("stepDocumentCloneMap", [])
+            doc_states = []
+            for doc in step_document_clone_map:
+                for key, value in doc.items():
+                    if key != "accessed":
+                        if process_type == "document" or process_type == "internal":
+                            doc_state = self.get_clones_from_collection(
+                                {"_id": value}, single=True, **kwargs
+                            )["data"][0].get("document_state")
+
+                            if doc_state == "finalized":
+                                doc_states.append(True)
+                            elif doc_state == "processing":
+                                doc_states.append(False)
+                            else:
+                                doc_states.append(False)
+
+                        elif process_type == "template":
+                            doc_state = self.get_templates_from_collection(
+                                {"_id": value}, single=True, **kwargs
+                            )["data"][0].get("template_state")
+                            
+                            if doc_state == "saved":
+                                doc_states.append(True)
+                            elif doc_state == "draft":
+                                doc_states.append(False)
+                            else:
+                                doc_states.append(False)
+
+            if not all(doc_states):
+                return False
+
+        return True
+
+    def update_metadata(self, item_id, state, item_type, signers=None, **kwargs):
+        def check_signers(data):
+            if signers is not None:
+                data["signed_by"] = signers
+            return data
+        
+        if item_type == "document":
+            data = {"document_state": state}
+            return self.update_document_metadata_collection(item_id, check_signers(data), **kwargs)
+        
+        elif item_type == "clone":
+            data = {"document_state": state}
+            return self.update_clone_metadata_collection(item_id, check_signers(data), **kwargs)
+          
+        elif item_type == "template":
+            data = {"template_state": state}
+            return self.update_template_metadata_collection(item_id, check_signers(data), **kwargs)
+        
+        return
