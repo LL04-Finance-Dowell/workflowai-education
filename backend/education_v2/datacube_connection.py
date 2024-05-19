@@ -194,6 +194,11 @@ class DatacubeConnection:
             return self.get_data_from_collection(collection, filters, **kwargs)
 
     def save_to_clone_collection(self, collection_id: str, data: dict, **kwargs):
+        if kwargs.get("metadata") == True:
+            collection = self.collection_names["document_metadata"]
+        else:
+            collection = self.collection_names["document"]
+            
         return self.post_data_to_collection(
             collection=collection_id, data=data, operation="insert", **kwargs
         )
@@ -303,8 +308,20 @@ class DatacubeConnection:
             return self.get_data_from_collection(collection, filters, **kwargs)
 
     def save_to_document_collection(self, data: dict, **kwargs):
-        collection = self.collection_names["document"]
+        if kwargs.get("metadata") == True:
+            collection = self.collection_names["document_metadata"]
+        else:
+            collection = self.collection_names["document"]
+
         return self.post_data_to_collection(collection, data, "insert", **kwargs)
+    
+    def save_to_document_metadata_collection(self, *args, **kwargs):
+        """
+        Saves to document metadata collection
+        \n This method is a wrapper for `save_to_document_collection` that ensures document 
+        is saved to the metadata collection.
+        """
+        return self.save_to_document_collection(*args, metadata=True, **kwargs)
 
     def update_document_collection(self, document_id: str, data: dict, **kwargs):
         query = {"_id": document_id}

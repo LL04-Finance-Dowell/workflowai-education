@@ -1676,7 +1676,6 @@ class TriggerProcess(APIView):
         data_type = request.query_params.get("data_type")
 
         db_name = f"{workspace_id}_DB_0"
-        collection_name = f"{workspace_id}_process_collection"
 
         try:
             api_key = authorization_check(request.headers.get("Authorization"))
@@ -1686,15 +1685,15 @@ class TriggerProcess(APIView):
 
         if not validate_id(process_id):
             return Response("Something went wrong!", status.HTTP_400_BAD_REQUEST)
+        
+        dc_connect = DatacubeConnection(api_key=api_key, workspace_id=workspace_id, database=db_name)
 
-        process = get_processes_from_collection(
-            api_key=api_key,
-            database=db_name,
-            collection=collection_name,
+        process = dc_connect.get_processes_from_collection(
             filters={
                 "_id": process_id,
                 # "data_type": data_type,
             },
+            single=True
         )["data"]
 
         if not process:
@@ -1707,11 +1706,8 @@ class TriggerProcess(APIView):
         if request.data["user_name"] != process["created_by"]:
             return Response("User Unauthorized", status.HTTP_403_FORBIDDEN)
         if action == "halt_process" and state != "paused":
-            res = update_process_collection(
+            res = dc_connect.update_process_collection(
                 process_id=process_id,
-                api_key=api_key,
-                database=db_name,
-                collection=collection_name,
                 data={
                     "process_steps": process["process_steps"],
                     "processing_state": "paused",
@@ -1734,7 +1730,7 @@ class TriggerProcess(APIView):
                 f"The process is already in {state} state",
                 status.HTTP_200_OK,
                 )
-
+        # TODO what happens in neither conditions are met
 
 class ProcessImport(APIView):
     def post(self, request, process_id):
@@ -1742,13 +1738,14 @@ class ProcessImport(APIView):
         data_type = request.query_params.get("data_type")
 
         db_name = f"{workspace_id}_DB_0"
-        collection_name = f"{workspace_id}_process_collection"
 
         try:
             api_key = authorization_check(request.headers.get("Authorization"))
 
         except InvalidTokenException as e:
             return CustomResponse(False, str(e), None, status.HTTP_401_UNAUTHORIZED)
+
+        dc_connect = DatacubeConnection(api_key=api_key, workspace_id=workspace_id, database=db_name)
 
         data = request.data
         company_id = data.get("company_id")
@@ -1763,14 +1760,12 @@ class ProcessImport(APIView):
         if not validate_id(process_id) or not validate_id(company_id):
             return Response("Invalid_ID!", status.HTTP_400_BAD_REQUEST)
 
-        old_process = get_processes_from_collection(
-            api_key=api_key,
-            database=db_name,
-            collection=collection_name,
+        old_process = dc_connect.get_processes_from_collection(
             filters={
                 "_id": process_id,
                 # "data_type": data_type,
             },
+            single=True
         )["data"]
 
         if not old_process:
@@ -1780,8 +1775,9 @@ class ProcessImport(APIView):
         old_process = old_process[0]
         document_id = old_process.get("parent_item_id")
         workflow_id = old_process.get("workflow_construct_ids")
-        old_document = get_document_from_collection(
-            api_key, db_name, f"{workspace_id}_template_collection_0", {"_id": document_id},
+        old_document = dc_connect.get_documents_from_collection(
+            {"_id": document_id},
+            single=True,
         )["data"]
         if not old_document:
             return Response(
@@ -1805,10 +1801,7 @@ class ProcessImport(APIView):
             "message": "",
         }
 
-        res = save_to_document_collection(
-            api_key,
-            db_name,
-            f"{workspace_id}_template_collection_0",
+        res = dc_connect.save_to_document_collection(
             new_document_data,
         )
         if not res["success"]:
@@ -1825,7 +1818,7 @@ class ProcessImport(APIView):
             "auth_viewers": viewers,
             "document_type": "imports",
         }
-        res_metadata = save_to_document_collection(
+        res_metadata = dc_connect.save_to_document_metadata_collection(
             api_key,
             db_name,
             f"{workspace_id}_templates_metadata_collection_0",
