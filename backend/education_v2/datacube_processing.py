@@ -20,7 +20,6 @@ from app.constants import (
     PRODUCTION_VERIFICATION_LINK,
 )
 from app.helpers import (
-    cloning_document,
     cloning_clone,
     register_public_login,
     check_all_finalized_true,
@@ -34,18 +33,11 @@ from app.mongo_db_connection import (
     authorize,
     authorize_metadata,
     finalize_item,
-    save_to_links_collection,
-    save_to_process_collection,
-    save_to_qrcode_collection,
-    single_query_clones_metadata_collection,
-    single_query_document_collection,
     single_query_template_collection,
     single_query_clones_collection,
     single_query_process_collection,
-    single_query_template_metadata_collection,
     update_process,
 )
-from education import helpers as edu_helpers
 
 
 class DataCubeProcess:
@@ -463,10 +455,13 @@ class DataCubeHandleProcess:
 
         if public_links and self.process["process_type"] == "document":
             document_id = self.process["parent_item_id"]
-            # TODO Fix here
-            # res = self.dc_connect.get_documents_from_collection(filters={"_id": document_id},)
-            res = self.dc_connect.get_templates_from_collection(filters={"_id": document_id}, single=True)
-            document_name = res["data"][0]["document_name"]
+            # TODO compare
+            res = self.dc_connect.get_documents_from_collection(filters={"_id": document_id}, single=True)["data"]
+            
+            if not res:
+                return
+            
+            document_name = res[0]["document_name"]
             m_link, m_code = DataCubeHandleProcess.generate_public_qrcode(
                 public_links, self.process["company_id"], document_name
             )
@@ -475,8 +470,12 @@ class DataCubeHandleProcess:
 
         elif public_links and self.process["process_type"] == "internal":
             document_id = self.process["parent_item_id"]
-            res = self.dc_connect.get_clones_from_collection(filters={"_id": document_id}, single=True)
-            document_name = res["data"][0]["document_name"]
+            res = self.dc_connect.get_clones_from_collection(filters={"_id": document_id}, single=True)["data"]
+            
+            if not res:
+                return
+            
+            document_name = res[0]["document_name"]
             m_link, m_code = DataCubeHandleProcess.generate_public_qrcode(
                 public_links, self.process["company_id"], document_name
             )
@@ -488,8 +487,12 @@ class DataCubeHandleProcess:
             res = self.dc_connect.get_templates_from_collection(
                 filters={"_id": template_id},
                 single=True
-            )
-            template_name = res["template_name"]
+            )["data"]
+
+            if not res:
+                return
+            
+            template_name = res[0]["template_name"]
             m_link, m_code = DataCubeHandleProcess.generate_public_qrcode(
                 public_links, self.process["company_id"], template_name
             )
@@ -570,81 +573,6 @@ class DataCubeHandleProcess:
                 else:
                     return True  # If the steptimeLimit key does not exist
 
-    # Verify Access Original
-    def verify_access(self, auth_role, user_name, user_type):
-        clone_id = None
-        doc_map = None
-        right = None
-        role = None
-        item_flag = None
-        field = None
-        collection = None
-        document = None
-        team_member_id = None
-        item_type = self.process["process_type"]
-        for step in self.process["process_steps"]:
-            if step.get("stepRole") == auth_role:
-                if user_type == "public":
-                    user_name = user_name[0]
-                if any(user_name in map for map in step.get("stepDocumentCloneMap")):
-                    for d_map in step["stepDocumentCloneMap"]:
-                        if d_map.get(user_name) is not None:
-                            clone_id = d_map.get(user_name)
-                    doc_map = step["stepDocumentMap"]
-                    right = step["stepRights"]
-                    role = step["stepRole"]
-        if clone_id:
-            if item_type == "document":
-                collection = "CloneReports"
-                document = "CloneReports"
-                field = "document_name"
-                team_member_id = "1212001"
-                document_object = single_query_clones_collection({"_id": clone_id})
-                metadata = single_query_clones_metadata_collection(
-                    {"collection_id": clone_id}
-                )
-                item_flag = document_object["document_state"]
-                document_name = document_object["document_name"]
-                metadata_id = metadata.get("_id")
-                editor_link = DataCubeHandleProcess.get_editor_link(
-                    {
-                        "product_name": "Workflow AI",
-                        "details": {
-                            "field": field,
-                            "cluster": "Documents",
-                            "database": "Documentation",
-                            "collection": collection,
-                            "document": document,
-                            "team_member_ID": team_member_id,
-                            "function_ID": "ABCDE",
-                            "command": "update",
-                            "flag": "signing",
-                            "_id": clone_id,
-                            "action": item_type,
-                            "authorized": user_name,
-                            "user_type": user_type,
-                            "document_map": doc_map,
-                            "document_right": right,
-                            "document_flag": item_flag,
-                            "role": role,
-                            "metadata_id": metadata_id,
-                            "process_id": self.process["_id"],
-                            "update_field": {
-                                "document_name": document_name,
-                                "content": "",
-                                "page": "",
-                            },
-                        },
-                    }
-                )
-                if user_type == "public" and editor_link:
-                    Thread(
-                        target=lambda: register_public_login(
-                            user_name[0], self.process["org_name"]
-                        )
-                    )
-                return editor_link
-
     # Verify_Access V3
     def verify_access_v3(
         self,
@@ -689,7 +617,7 @@ class DataCubeHandleProcess:
                 document = "CloneReports"
                 field = "document_name"
                 team_member_id = "1212001"
-                # TODO fix
+                # TODO comfirm
                 document_object = self.dc_connect.get_clones_from_collection(
                     filters={"_id": clone_id}, single=True
                 )["data"]

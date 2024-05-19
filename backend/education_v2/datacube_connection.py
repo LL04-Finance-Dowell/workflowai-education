@@ -5,8 +5,8 @@ from datetime import UTC, datetime
 import requests
 
 from app.constants import EDITOR_API
-from education.constants import DB_API, DB_API_CRUD
-from education.helpers import generate_unique_collection_name
+from education_v2.constants import DB_API, DB_API_CRUD
+from education_v2.helpers import generate_unique_collection_name
 
 headers = {"Content-Type": "application/json"}
 
@@ -46,7 +46,9 @@ class DatacubeConnection:
             "clone_metadata": f"{self.workspace_id}_clones_metadata_collection_0",
             "template": f"{self.workspace_id}_template_collection_0",
             "template_metadata": f"{self.workspace_id}_templates_metadata_collection_0",
-            "qrcode": f"{self.workspace_id}_document_collection_0",  # TODO Change,
+            # TODO confirm qrcode collection
+            "qrcode": f"{self.workspace_id}_document_collection_0",
+            # TODO confirm links collection
             "link": f"{self.workspace_id}_document_collection_0",
             "folder": f"{self.workspace_id}_folder_collection_0",
         }
@@ -246,9 +248,7 @@ class DatacubeConnection:
         return self.get_clones_from_collection(*args, metadata=True, **kwargs)
 
     def save_to_qrcode_collection(self, data: dict, **kwargs):
-        # TODO fix
-        # collection = self.collection_names["qrcode"]
-        collection = self.collection_names["document"]
+        collection = self.collection_names["qrcode"]
         return self.post_data_to_collection(collection, data, "insert", **kwargs)
 
     def get_qrcodes_from_collection(self, filters: dict, single=False, **kwargs):
@@ -402,9 +402,7 @@ class DatacubeConnection:
         return self.get_templates_from_collection(*args, metadata=True, **kwargs)
 
     def save_to_links_collection(self, data: dict, **kwargs):
-        # TODO fix here
-        # collection = self.collection_names["link"]
-        collection = self.collection_names["document"]
+        collection = self.collection_names["link"]
         return self.post_data_to_collection(collection, data, "insert", **kwargs)
 
     def get_links_from_collection(self, filters: dict, single=False, **kwargs):
@@ -420,6 +418,7 @@ class DatacubeConnection:
         Returns:
             The selected link(s) from the collection.
         """
+        # TODO confirm links collection
         collection = self.collection_names["link"]
         limit = None if single is None else 1 if single else None
 
@@ -716,7 +715,7 @@ class DatacubeConnection:
             field = "template_name"
         
         if item_type == "document":
-            # TODO confirm because it was saved to metadata and metadata is usally gotten by collection_id  
+            # TODO compare  
             item_name = self.get_documents_metadata_from_collection({"collection_id": item_id})
         
         elif item_type == "clone":

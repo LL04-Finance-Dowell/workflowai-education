@@ -8,19 +8,23 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from app import processing
 from app.constants import EDITOR_API
-from app.helpers import (check_all_accessed, get_prev_and_next_users, paginate, remove_members_from_steps,
-                         validate_id)
-from app.mongo_db_connection import (single_query_process_collection,
-                                     update_process)
+from app.helpers import (
+    check_all_accessed,
+    get_prev_and_next_users,
+    paginate,
+    remove_members_from_steps,
+    validate_id,
+)
 from app.views_v2 import FinalizeOrReject
 from education_v2 import datacube_processing
-from education_v2.constants import PROCESS_DB_0
 from education_v2.datacube_connection import DatacubeConnection
-from education_v2.helpers import authorization_check, InvalidTokenException
-from education_v2.helpers import (CustomResponse, access_editor,
-                               check_if_name_exists_collection, check_progress)
+from education_v2.helpers import (
+    CustomResponse,
+    InvalidTokenException,
+    authorization_check,
+    check_progress,
+)
 from education_v2.serializers import *
 from education_v2.serializers import CreateCollectionSerializer
 
@@ -101,13 +105,15 @@ class DatabaseServices(APIView):
                     f"{workspace_id}_workflow_collection_0",
                     f"{workspace_id}_folder_collection_0",
                 ]
-            
-            dc_connect = DatacubeConnection(api_key=api_key, workspace_id=workspace_id, database=database)
-            
+
+            dc_connect = DatacubeConnection(
+                api_key=api_key, workspace_id=workspace_id, database=database
+            )
+
             for collection_name in collection_names:
                 response = dc_connect.add_collection_to_database(collection_name)
                 all_responses.append(response)
-        #print(all_responses)
+        # print(all_responses)
         for responses in all_responses:
             if not responses["success"]:
                 return CustomResponse(
@@ -139,7 +145,9 @@ class DatabaseServices(APIView):
         workspace_id = request.GET.get("workspace_id")
         meta_data_database = f"{workspace_id}_DB_0"
         # #print(meta_data_database)
-        dc_connect = DatacubeConnection(api_key=api_key, workspace_id=workspace_id, database=meta_data_database)
+        dc_connect = DatacubeConnection(
+            api_key=api_key, workspace_id=workspace_id, database=meta_data_database
+        )
         response_meta_data = dc_connect.datacube_collection_retrieval()
         # #print(response_meta_data)
 
@@ -172,9 +180,7 @@ class DatabaseServices(APIView):
                 status.HTTP_404_NOT_FOUND,
             )
 
-        return CustomResponse(
-            True, "Meta-Data are available to be used", None, status.HTTP_200_OK
-        )
+        return CustomResponse(True, "Meta-Data are available to be used", None, status.HTTP_200_OK)
 
     def check_data_database_status(self, request):
         """
@@ -205,11 +211,13 @@ class DatabaseServices(APIView):
         data_database = f"{workspace_id}_DB_0"
         ready_collection = []
 
-        dc_connect = DatacubeConnection(api_key=api_key, workspace_id=workspace_id, database=data_database)
+        dc_connect = DatacubeConnection(
+            api_key=api_key, workspace_id=workspace_id, database=data_database
+        )
         response_data = dc_connect.datacube_collection_retrieval()
         # datas=response_data['data'][0]
-        #print(datas)
-        
+        # print(datas)
+
         if response_data["success"]:
             ready_collection.append(response_data["data"][0])
 
@@ -236,9 +244,7 @@ class DatabaseServices(APIView):
                 status.HTTP_404_NOT_FOUND,
             )
 
-        return CustomResponse(
-            True, "Databases are available to be used", None, status.HTTP_200_OK
-        )
+        return CustomResponse(True, "Databases are available to be used", None, status.HTTP_200_OK)
 
     def handle_error(self, request):
         """
@@ -268,15 +274,15 @@ class NewTemplate(APIView):
         template_id = request.GET.get("template_id")
         db_name = f"{workspace_id}_DB_0"
         collection_name = f"{workspace_id}_template_collection_0"
-        filters = {"_id":template_id}
-        dc_connect = DatacubeConnection(api_key=api_key, workspace_id=workspace_id, database=db_name)
+        filters = {"_id": template_id}
+        dc_connect = DatacubeConnection(
+            api_key=api_key, workspace_id=workspace_id, database=db_name
+        )
         res = dc_connect.get_templates_from_collection(filters, single=True)
         if res["success"]:
             return Response(res)
         else:
-            return CustomResponse(
-                False, res["message"], None, status.HTTP_400_BAD_REQUEST
-            )
+            return CustomResponse(False, res["message"], None, status.HTTP_400_BAD_REQUEST)
 
     def post(self, request):
         type_request = request.GET.get("type")
@@ -291,7 +297,7 @@ class NewTemplate(APIView):
         approved = False
         db_name = f"{workspace_id}_DB_0"
         metadata_db = f"{workspace_id}_DB_0"
-        
+
         try:
             api_key = authorization_check(request.headers.get("Authorization"))
         except InvalidTokenException as e:
@@ -299,8 +305,10 @@ class NewTemplate(APIView):
 
         if not validate_id(request.data["company_id"]):
             return Response("Invalid company details", status.HTTP_400_BAD_REQUEST)
-        
-        dc_connect = DatacubeConnection(api_key=api_key, workspace_id=workspace_id, database=db_name)
+
+        dc_connect = DatacubeConnection(
+            api_key=api_key, workspace_id=workspace_id, database=db_name
+        )
         collection_name = dc_connect.collection_names.get("template")
         metadata_collection = dc_connect.collection_names.get("template_metadata")
 
@@ -344,7 +352,7 @@ class NewTemplate(APIView):
                         "template_state": "draft",
                         "approval": False,
                     },
-                    database=metadata_db
+                    database=metadata_db,
                 )
                 if not res_metadata["success"]:
                     try:
@@ -400,10 +408,8 @@ class NewTemplate(APIView):
                     },
                     status.HTTP_201_CREATED,
                 )
-       
-        return Response(
-            {"Message": "Error creating template "}, status.HTTP_404_NOT_FOUND
-        )
+
+        return Response({"Message": "Error creating template "}, status.HTTP_404_NOT_FOUND)
 
     def approve(self, request):
         """Post data for template approval
@@ -422,20 +428,25 @@ class NewTemplate(APIView):
         workspace_id = request.GET.get("workspace_id")
 
         database = f"{workspace_id}_DB_0"
-        dc_connect = DatacubeConnection(api_key=api_key, workspace_id=workspace_id, database=database)
-        
+        dc_connect = DatacubeConnection(
+            api_key=api_key, workspace_id=workspace_id, database=database
+        )
+
         collection = dc_connect.collection_names.get("template")
         meta_data_collection = dc_connect.collection_names.get("template_metadata")
-        
+
         update_data = {"approval": True}
         collection_id = form["collection_id"]
         metadata_id = form["metadata_id"]
         query = {"_id": collection_id}
         query_metadata = {"_id": metadata_id}
 
-
-        approval_update = dc_connect.post_data_to_collection(collection, update_data, "update", query)
-        metadata_approval_update = dc_connect.post_data_to_collection(meta_data_collection, update_data, "update", query_metadata)
+        approval_update = dc_connect.post_data_to_collection(
+            collection, update_data, "update", query
+        )
+        metadata_approval_update = dc_connect.post_data_to_collection(
+            meta_data_collection, update_data, "update", query_metadata
+        )
 
         if approval_update and metadata_approval_update:
             return CustomResponse(True, "Template approved", None, status.HTTP_200_OK)
@@ -444,24 +455,25 @@ class NewTemplate(APIView):
                 False, "Template approval failed", None, status.HTTP_400_BAD_REQUEST
             )
 
+
 class ApprovedTemplates(APIView):
     def get(self, request, *args, **kwargs):
         try:
             api_key = authorization_check(request.headers.get("Authorization"))
         except InvalidTokenException as e:
             return CustomResponse(False, str(e), None, status.HTTP_401_UNAUTHORIZED)
-        
+
         workspace_id = request.GET.get("workspace_id")
         database = f"{workspace_id}_DB_0"
-        dc_connect = DatacubeConnection(api_key=api_key, workspace_id=workspace_id, database=database)
+        dc_connect = DatacubeConnection(
+            api_key=api_key, workspace_id=workspace_id, database=database
+        )
         filters = {"approval": True}
         res = dc_connect.get_templates_from_collection(filters)
         if res["success"]:
             return Response(res)
         else:
-            return CustomResponse(
-                False, res["message"], None, status.HTTP_400_BAD_REQUEST
-            )
+            return CustomResponse(False, res["message"], None, status.HTTP_400_BAD_REQUEST)
 
 
 class Workflow(APIView):
@@ -474,13 +486,13 @@ class Workflow(APIView):
 
         workspace_id = request.GET.get("workspace_id")
         db_name = f"{workspace_id}_DB_0"
-        dc_connect = DatacubeConnection(api_key=api_key, workspace_id=workspace_id, database=db_name)
+        dc_connect = DatacubeConnection(
+            api_key=api_key, workspace_id=workspace_id, database=db_name
+        )
         res = dc_connect.get_workflows_from_collection(single=True)
 
         if res["success"]:
-            return CustomResponse(
-                True, "workflows found!", res["data"], status.HTTP_200_OK
-            )
+            return CustomResponse(True, "workflows found!", res["data"], status.HTTP_200_OK)
 
         else:
             return CustomResponse(
@@ -503,7 +515,9 @@ class Workflow(APIView):
 
         workspace_id = request.GET.get("workspace_id")
         db_name = f"{workspace_id}_DB_0"
-        dc_connect = DatacubeConnection(api_key=api_key, workspace_id=workspace_id, database=db_name)
+        dc_connect = DatacubeConnection(
+            api_key=api_key, workspace_id=workspace_id, database=db_name
+        )
 
         organization_id = form["company_id"]
         data = {
@@ -562,11 +576,15 @@ class Workflow(APIView):
         workflow_id = form["workflow_id"]
         query = {"_id": workflow_id}
         database = f"{workspace_id}_DB_0"
-        dc_connect = DatacubeConnection(api_key=api_key, workspace_id=workspace_id, database=database)
+        dc_connect = DatacubeConnection(
+            api_key=api_key, workspace_id=workspace_id, database=database
+        )
         collection = dc_connect.collection_names.get("workflow")
         update_data = form["workflow_update"]
-        update_workflow = dc_connect.post_data_to_collection(collection, update_data, "update", query)
-        #print(update_workflow)
+        update_workflow = dc_connect.post_data_to_collection(
+            collection, update_data, "update", query
+        )
+        # print(update_workflow)
         if update_workflow:
             return CustomResponse(
                 True, "Workflow updated successfully", None, status.HTTP_201_CREATED
@@ -588,9 +606,7 @@ class CollectionData(APIView):
 
         dc_connect = DatacubeConnection(api_key=api_key, workspace_id="", database=database)
 
-        res = dc_connect.get_data_from_collection(
-            collection, filters, limit, offset
-        )
+        res = dc_connect.get_data_from_collection(collection, filters, limit, offset)
 
         return Response(res, status.HTTP_200_OK)
 
@@ -610,6 +626,7 @@ class AddToCollection(APIView):
 
         return Response(res, status.HTTP_200_OK)
 
+
 class NewDocument(APIView):
 
     def post(self, request):
@@ -618,7 +635,6 @@ class NewDocument(APIView):
         created_by = request.data.get("created_by")
         data_type = request.data.get("data_type")
         template_id = request.data.get("template_id")
-
 
         db_name_0 = f"{workspace_id}_DB_0"
         # metadata_db = f"{workspace_id}_DB_0"
@@ -630,7 +646,9 @@ class NewDocument(APIView):
         except InvalidTokenException as e:
             return CustomResponse(False, str(e), None, status.HTTP_401_UNAUTHORIZED)
 
-        dc_connect = DatacubeConnection(api_key=api_key, workspace_id=workspace_id, database=db_name_0)
+        dc_connect = DatacubeConnection(
+            api_key=api_key, workspace_id=workspace_id, database=db_name_0
+        )
 
         collection_name = dc_connect.collection_names.get("template")
         metadata_collection = dc_connect.collection_names.get("template_metadata")
@@ -651,7 +669,6 @@ class NewDocument(APIView):
         # TODO: This checks the collection existence in only one db. Will not pass database arg
         collection = dc_connect.check_if_name_exists_collection(collection_name)
 
-
         if not collection["success"]:
             return CustomResponse(
                 False, "No collection with found", None, status.HTTP_404_NOT_FOUND
@@ -660,10 +677,8 @@ class NewDocument(APIView):
         template = dc_connect.get_templates_from_collection({"_id": template_id}, single=True)
 
         if not template["data"]:
-            return CustomResponse(
-                False, "No template found", None, status.HTTP_404_NOT_FOUND
-            )
-      
+            return CustomResponse(False, "No template found", None, status.HTTP_404_NOT_FOUND)
+
         isapproved = template["data"][0].get("approval")
 
         if not isapproved:
@@ -706,7 +721,7 @@ class NewDocument(APIView):
             operation="insert",
             data=document_data,
             # using a different db here
-            database=db_name_1
+            database=db_name_1,
         )
 
         if res["success"]:
@@ -765,7 +780,9 @@ class Document(APIView):
         except InvalidTokenException as e:
             return CustomResponse(False, str(e), None, status.HTTP_401_UNAUTHORIZED)
 
-        dc_connect = DatacubeConnection(api_key=api_key, workspace_id=workspace_id, database=db_name)
+        dc_connect = DatacubeConnection(
+            api_key=api_key, workspace_id=workspace_id, database=db_name
+        )
 
         # TODO change this or find out why
         collection_name = dc_connect.collection_names.get("template")
@@ -778,9 +795,7 @@ class Document(APIView):
                 status.HTTP_400_BAD_REQUEST,
             )
         if not validate_id(company_id) or not data_type:
-            return CustomResponse(
-                False, "Invalid Request!", None, status.HTTP_400_BAD_REQUEST
-            )
+            return CustomResponse(False, "Invalid Request!", None, status.HTTP_400_BAD_REQUEST)
 
         collection = dc_connect.check_if_name_exists_collection(collection_name)
 
@@ -794,11 +809,10 @@ class Document(APIView):
         if member and portfolio:
             auth_viewers = [{"member": member, "portfolio": portfolio}]
 
-            # TODO Why getting clone from template collection?
-            # document_list = dc_connect.get_clones_from_collection(
-            document_list = dc_connect.get_templates_from_collection(
+            # TODO compare
+            document_list = dc_connect.get_clones_from_collection(
                 {
-                    "company_id":company_id,
+                    "company_id": company_id,
                     "data_type": data_type,
                     "document_state": document_state,
                     "auth_viewers": auth_viewers,
@@ -810,11 +824,10 @@ class Document(APIView):
             )
         else:
             if document_type == "document":
-                # TODO why getting from templates collection?
-                # documents = dc_connect.get_documents_from_collection(
-                documents = dc_connect.get_templates_from_collection(
+                # TODO compare
+                documents = dc_connect.get_documents_from_collection(
                     {
-                        "company_id":company_id,
+                        "company_id": company_id,
                         "data_type": data_type,
                         "document_state": document_state,
                     },
@@ -824,11 +837,10 @@ class Document(APIView):
                 cache_key = f"clones_{workspace_id}"
                 clones_list = cache.get(cache_key)
                 if clones_list is None:
-                    # TODO why still getting from templates collection?
-                    # clones_list = get_clones_from_collection(
-                    clones_list = dc_connect.get_templates_from_collection(
+                    # TODO compare
+                    clones_list = dc_connect.get_clones_from_collection(
                         {
-                            "company_id":company_id,
+                            "company_id": company_id,
                             "data_type": data_type,
                             "document_state": document_state,
                         },
@@ -853,8 +865,10 @@ class DocumentLink(APIView):
 
         except InvalidTokenException as e:
             return CustomResponse(False, str(e), None, status.HTTP_401_UNAUTHORIZED)
-        
-        dc_connect = DatacubeConnection(api_key=api_key, workspace_id=workspace_id, database=db_name)
+
+        dc_connect = DatacubeConnection(
+            api_key=api_key, workspace_id=workspace_id, database=db_name
+        )
 
         collection_name = dc_connect.collection_names.get("template")
 
@@ -877,17 +891,15 @@ class DocumentLink(APIView):
 
         if not validate_id(item_id) or not document_type:
             return Response("Something went wrong!", status.HTTP_400_BAD_REQUEST)
-        
+
         if document_type == "document":
-            # TODO why still getting from templates collection?
-            # document = dc_connect.get_document_from_collection(
-            document = dc_connect.get_templates_from_collection( {"_id": item_id}, single=True)
+            # TODO compare
+            document = dc_connect.get_documents_from_collection({"_id": item_id}, single=True)
 
         elif document_type == "clone":
-            # TODO fix
-            # document = get_clone_from_collection(
-            document = dc_connect.get_templates_from_collection({"_id": item_id}, single=True)
-            
+            # TODO compare
+            document = dc_connect.get_clones_from_collection({"_id": item_id}, single=True)
+
         if document:
             portfolio = request.query_params.get("portfolio", "")
 
@@ -916,8 +928,10 @@ class DocumentDetail(APIView):
 
         except InvalidTokenException as e:
             return CustomResponse(False, str(e), None, status.HTTP_401_UNAUTHORIZED)
-        
-        dc_connect = DatacubeConnection(api_key=api_key, workspace_id=workspace_id, database=db_name)
+
+        dc_connect = DatacubeConnection(
+            api_key=api_key, workspace_id=workspace_id, database=db_name
+        )
 
         if not workspace_id or not document_type:
             return CustomResponse(
@@ -935,22 +949,22 @@ class DocumentDetail(APIView):
             )
 
         collection_name = collection["name"]
-        
+
         if not validate_id(item_id) or not document_type:
             return CustomResponse(
                 False, "Something went wrong!", None, status.HTTP_400_BAD_REQUEST
             )
-        
+
         if document_type == "document":
             # document = dc_connect.get_documents_from_collection({"_id": item_id}, single=True)
             document = dc_connect.get_templates_from_collection({"_id": item_id}, single=True)
             return Response(document["data"], status.HTTP_200_OK)
-        
+
         if document_type == "clone":
             # document = dc_connect.get_clones_from_collection({"_id": item_id}, single=True)
             document = dc_connect.get_templates_from_collection({"_id": item_id}, single=True)
             return Response(document["data"], status.HTTP_200_OK)
-        
+
         return Response("Document could not be accessed!", status.HTTP_404_NOT_FOUND)
 
 
@@ -967,8 +981,10 @@ class ItemContent(APIView):
             api_key = authorization_check(request.headers.get("Authorization"))
         except InvalidTokenException as e:
             return CustomResponse(False, str(e), None, status.HTTP_401_UNAUTHORIZED)
-        
-        dc_connect = DatacubeConnection(api_key=api_key, workspace_id=workspace_id, database=db_name)
+
+        dc_connect = DatacubeConnection(
+            api_key=api_key, workspace_id=workspace_id, database=db_name
+        )
 
         if not validate_id(item_id):
             return Response("Something went wrong!", status.HTTP_400_BAD_REQUEST)
@@ -976,12 +992,16 @@ class ItemContent(APIView):
         item_type = request.query_params.get("item_type")
         if item_type == "template":
             my_dict = ast.literal_eval(
-                dc_connect.get_templates_from_collection({"_id": item_id}, single=True)["data"][0]["content"]
+                dc_connect.get_templates_from_collection({"_id": item_id}, single=True)["data"][0][
+                    "content"
+                ]
             )[0][0]
         else:
             my_dict = ast.literal_eval(
                 # dc_connect.get_documents_from_collection({"_id": item_id}, single=True)["data"][0]["content"]
-                dc_connect.get_templates_from_collection({"_id": item_id}, single=True)["data"][0]["content"]
+                dc_connect.get_templates_from_collection({"_id": item_id}, single=True)["data"][0][
+                    "content"
+                ]
             )[0][0]
         all_keys = [i for i in my_dict.keys()]
         for i in all_keys:
@@ -1025,7 +1045,6 @@ class FinalizeOrRejectEducation(APIView):
         if not request.data:
             return Response("you are missing something", status.HTTP_400_BAD_REQUEST)
 
-
         api_key = request.data["api_key"]
         collection_name = request.data["coll_name"]
         api_key = request.data["api_key"]
@@ -1042,8 +1061,10 @@ class FinalizeOrRejectEducation(APIView):
         product = request.data.get("product", "education")
         database = f"{workspace_id}_DB_0"
 
-        # TODO Why use PROCESS_DB_0?
-        dc_connect = DatacubeConnection(api_key=api_key, workspace_id=workspace_id, database=PROCESS_DB_0)
+        # TODO compare; Why was PROCESS_DB_0 used?
+        dc_connect = DatacubeConnection(
+            api_key=api_key, workspace_id=workspace_id, database=database
+        )
 
         payload = {
             "item_id": item_id,
@@ -1066,7 +1087,9 @@ class FinalizeOrRejectEducation(APIView):
         res = FinalizeOrReject().post(request, process_id, payload=payload)
 
         # if res.status_code == 200:
-        process = dc_connect.get_processes_from_collection(database=database, filters={"_id": process_id})["data"]
+        process = dc_connect.get_processes_from_collection(
+            database=database, filters={"_id": process_id}
+        )["data"]
         if not process:
             return CustomResponse(
                 False, "Document could not be accessed!", None, status.HTTP_404_NOT_FOUND
@@ -1085,16 +1108,17 @@ class Folders(APIView):
             api_key = authorization_check(request.headers.get("Authorization"))
         except InvalidTokenException as e:
             return CustomResponse(False, str(e), None, status.HTTP_401_UNAUTHORIZED)
-        
+
         data_type = request.query_params.get("data_type")
         company_id = request.query_params.get("company_id")
+        workspace_id = request.query_params.get("workspace_id")
+        database = f"{workspace_id}_DB_0"
 
         if not validate_id(company_id) or data_type is None:
             return Response("Invalid Request!", status.HTTP_400_BAD_REQUEST)
 
-        # TODO Fix the DB used
-        dc_connect = DatacubeConnection(api_key=api_key, workspace_id=None, database=PROCESS_DB_0)
-        
+        # TODO compare; Why was PROCESS_DB_0 used?
+        dc_connect = DatacubeConnection(api_key=api_key, workspace_id=None, database=database)
 
         cache_key = f"folders_{company_id}"
         folders_list = cache.get(cache_key)
@@ -1113,24 +1137,24 @@ class Folders(APIView):
             api_key = authorization_check(request.headers.get("Authorization"))
         except InvalidTokenException as e:
             return CustomResponse(False, str(e), None, status.HTTP_401_UNAUTHORIZED)
-        
-        # TODO Fix the DB used
-        dc_connect = DatacubeConnection(api_key=api_key, workspace_id=None, database=PROCESS_DB_0)
-        
+
+        workspace_id = request.query_params.get("workspace_id")
         folder_name = request.data.get("folder_name")
         created_by = request.data.get("created_by")
         company_id = request.data.get("company_id")
         data_type = request.data.get("data_type")
+        database = f"{workspace_id}_DB_0"
+
+        # TODO compare; Why was PROCESS_DB_0 used?
+        dc_connect = DatacubeConnection(api_key=api_key, workspace_id=None, database=database)
 
         if not all[folder_name, created_by, company_id, data_type]:
-            return CustomResponse(
-                False, "Invalid Request!", None, status.HTTP_400_BAD_REQUEST
-            )
+            return CustomResponse(False, "Invalid Request!", None, status.HTTP_400_BAD_REQUEST)
 
         data = []
         if not validate_id(request.data["company_id"]):
             return Response("Invalid company details", status.HTTP_400_BAD_REQUEST)
-        
+
         res = dc_connect.save_to_folder_collection(
             {
                 "folder_name": folder_name,
@@ -1141,7 +1165,7 @@ class Folders(APIView):
                 "folder_type": "original",
             }
         )
-        
+
         if res["success"]:
             return CustomResponse(
                 True,
@@ -1160,10 +1184,13 @@ class FolderDetail(APIView):
 
         if not validate_id(folder_id):
             return Response("Something went wrong!", status.HTTP_400_BAD_REQUEST)
-        
-        # TODO Fix the DB used
-        dc_connect = DatacubeConnection(api_key=api_key, workspace_id=None, database=PROCESS_DB_0)
-        
+
+        workspace_id = request.query_params.get("workspace_id")
+        database = f"{workspace_id}_DB_0"
+
+        # TODO compare; Why was PROCESS_DB_0 used?
+        dc_connect = DatacubeConnection(api_key=api_key, workspace_id=None, database=database)
+
         folder_details = dc_connect.get_folders_from_collection({"_id": folder_id}, single=True)
         return Response(folder_details, status.HTTP_200_OK)
 
@@ -1190,6 +1217,7 @@ class FolderDetail(APIView):
     #     delete_items_in_folder(item_id, folder_id, item_type)
     #     return Response(status.HTTP_204_NO_CONTENT)
 
+
 class DocumentOrTemplateProcessing(APIView):
     def post(self, request, *args, **kwargs):
         """processing is determined by action picked by user."""
@@ -1201,7 +1229,9 @@ class DocumentOrTemplateProcessing(APIView):
 
         workspace_id = request.query_params.get("workspace_id")
         database = f"{workspace_id}_DB_0"
-        dc_connect = DatacubeConnection(api_key=api_key, workspace_id=workspace_id, database=database)
+        dc_connect = DatacubeConnection(
+            api_key=api_key, workspace_id=workspace_id, database=database
+        )
 
         payload_dict = kwargs.get("payload")
         if payload_dict:
@@ -1234,93 +1264,114 @@ class DocumentOrTemplateProcessing(APIView):
         if action == "save_workflow_to_document_and_save_to_drafts":
             process.normal_process(action)
             return Response("Process Saved in drafts.", status.HTTP_201_CREATED)
-        
+
         elif action == "start_document_processing_content_wise":
             if process_id is not None:
-                process = dc_connect.get_processes_from_collection(filters={"_id": process_id}, single=True,)["data"]
+                process = dc_connect.get_processes_from_collection(
+                    filters={"_id": process_id},
+                    single=True,
+                )["data"]
             else:
                 data = process.normal_process(action)
-        
+
         elif action == "start_document_processing_wf_steps_wise":
             if process_id is not None:
-                process = dc_connect.get_processes_from_collection(filters={"_id": process_id}, single=True,)["data"]
+                process = dc_connect.get_processes_from_collection(
+                    filters={"_id": process_id},
+                    single=True,
+                )["data"]
             else:
                 data = process.normal_process(action)
-        
+
         elif action == "start_document_processing_wf_wise":
             if process_id is not None:
-                process = dc_connect.get_processes_from_collection(filters={"_id": process_id}, single=True,)["data"]
+                process = dc_connect.get_processes_from_collection(
+                    filters={"_id": process_id},
+                    single=True,
+                )["data"]
             else:
                 data = process.normal_process(action)
-        
+
         elif action == "test_document_processing_content_wise":
             if process_id is not None:
-                process = dc_connect.get_processes_from_collection(filters={"_id": process_id}, single=True,)["data"]
+                process = dc_connect.get_processes_from_collection(
+                    filters={"_id": process_id},
+                    single=True,
+                )["data"]
             else:
                 data = process.test_process(action)
-        
+
         elif action == "test_document_processing_wf_steps_wise":
             if process_id is not None:
-                process = dc_connect.get_processes_from_collection(filters={"_id": process_id}, single=True,)["data"]
+                process = dc_connect.get_processes_from_collection(
+                    filters={"_id": process_id},
+                    single=True,
+                )["data"]
             else:
                 data = process.test_process(action)
-        
+
         elif action == "test_document_processing_wf_wise":
             if process_id is not None:
-                process = dc_connect.get_processes_from_collection(filters={"_id": process_id}, single=True,)["data"]
+                process = dc_connect.get_processes_from_collection(
+                    filters={"_id": process_id},
+                    single=True,
+                )["data"]
             else:
                 data = process.test_process(action)
-        
+
         elif action == "close_processing_and_mark_as_completed":
-            process = dc_connect.get_processes_from_collection(filters={"_id": process_id}, single=True,)["data"]
+            process = dc_connect.get_processes_from_collection(
+                filters={"_id": process_id},
+                single=True,
+            )["data"]
             if process:
                 process = process[0]
 
             if process["processing_state"] == "completed":
-                return Response(
-                    "This Workflow process is already complete", status.HTTP_200_OK
-                )
+                return Response("This Workflow process is already complete", status.HTTP_200_OK)
             res = dc_connect.update_process_collection(
-                    process_id=process["process_id"],
-                    data={"process_steps": process["processing_steps"], "processing_state": "completed"}
-                )
+                process_id=process["process_id"],
+                data={
+                    "process_steps": process["processing_steps"],
+                    "processing_state": "completed",
+                },
+            )
             if res["success"]:
-                return Response(
-                    "Process closed and marked as complete!", status.HTTP_200_OK
-                )
+                return Response("Process closed and marked as complete!", status.HTTP_200_OK)
             return Response(status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
+
         elif action == "cancel_process_before_completion":
             process = dc_connect.get_processes_from_collection(
-                    filters={"_id": process_id},
-                    single=True
-                )["data"]
+                filters={"_id": process_id}, single=True
+            )["data"]
 
             if process:
                 process = process[0]
 
             if process["processing_state"] == "cancelled":
-                return Response(
-                    "This Workflow process is Cancelled!", status.HTTP_200_OK
-                )
+                return Response("This Workflow process is Cancelled!", status.HTTP_200_OK)
             res = dc_connect.update_process_collection(
-                    process_id=process[0]["process_id"],
-                    data={"process_steps": process["processing_steps"], "processing_state": "cancelled"}
-                )
+                process_id=process[0]["process_id"],
+                data={
+                    "process_steps": process["processing_steps"],
+                    "processing_state": "cancelled",
+                },
+            )
             if res["success"]:
-                return Response(
-                    "Process closed and marked as canalled!", status.HTTP_200_OK
-                )
+                return Response("Process closed and marked as canalled!", status.HTTP_200_OK)
             return Response(status.HTTP_500_INTERNAL_SERVER_ERROR)
-            
+
         elif action == "pause_processing_after_completing_ongoing_step":
             return Response(
                 "This Option is currently in development",
                 status.HTTP_501_NOT_IMPLEMENTED,
             )
         if data:
-            verification_links = datacube_processing.DataCubeHandleProcess(data, dc_connect=dc_connect).start()
+            verification_links = datacube_processing.DataCubeHandleProcess(
+                data, dc_connect=dc_connect
+            ).start()
             return Response(verification_links, status.HTTP_200_OK)
+
 
 class Process(APIView):
     def get(self, request, company_id):
@@ -1335,9 +1386,11 @@ class Process(APIView):
 
         if not validate_id(company_id) or data_type is None:
             return Response("Invalid Request!", status.HTTP_400_BAD_REQUEST)
-        
+
         db_name = f"{workspace_id}_DB_0"
-        dc_connect = DatacubeConnection(api_key=api_key, workspace_id=workspace_id, database=db_name)
+        dc_connect = DatacubeConnection(
+            api_key=api_key, workspace_id=workspace_id, database=db_name
+        )
         process_state = request.query_params.get("process_state")
 
         if process_state:
@@ -1381,35 +1434,33 @@ class ProcessDetail(APIView):
 
         if not validate_id(process_id):
             return Response("Something went wrong!", status.HTTP_400_BAD_REQUEST)
-        
-        dc_connect = DatacubeConnection(api_key=api_key, workspace_id=workspace_id, database=db_name)
+
+        dc_connect = DatacubeConnection(
+            api_key=api_key, workspace_id=workspace_id, database=db_name
+        )
 
         process = dc_connect.get_processes_from_collection(
-            filters={"_id": process_id},
-            single=True
+            filters={"_id": process_id}, single=True
         )["data"]
 
         if not process:
             return CustomResponse(False, "process not found", status.HTTP_404_NOT_FOUND)
-        
+
         process = process[0]
         progress = check_progress(process)
         parent_id = process["parent_item_id"]
-        
+
         if parent_id:
-            # TODO fix this
-            # document = dc_connect.get_documents_from_collection(
-            document = dc_connect.get_templates_from_collection(
-                {"_id": parent_id},
-                single=True
-            )["data"]
+            # TODO compare
+            document = dc_connect.get_documents_from_collection({"_id": parent_id}, single=True)[
+                "data"
+            ]
             if document:
                 document_name = document[0]["document_name"]
                 process.update({"document_name": document_name})
-            
-            # TODO confirm and fix if necessary; also need single arg?
-            # links = dc_connect.get_links_from_collection(
-            links = dc_connect.get_documents_from_collection(
+
+            # TODO compare; also need single arg?
+            links = dc_connect.get_links_from_collection(
                 filters={"process_id": process["_id"]},
             )["data"]
 
@@ -1417,7 +1468,7 @@ class ProcessDetail(APIView):
                 # TODO confirm
                 links_object = links[0]
                 process.update({"links": links_object["link"]})
-        
+
         process["progress"] = progress
         return Response(process, status.HTTP_200_OK)
 
@@ -1445,8 +1496,10 @@ class ProcessDetail(APIView):
         if not request.data:
             return Response("Some parameters are missing", status.HTTP_400_BAD_REQUEST)
 
-        dc_connect = DatacubeConnection(api_key=api_key, workspace_id=workspace_id, database=db_name)
-        
+        dc_connect = DatacubeConnection(
+            api_key=api_key, workspace_id=workspace_id, database=db_name
+        )
+
         workflow = request.data.get("workflows")
         step_id = request.data.get("step_id")
         step_id -= 1
@@ -1455,13 +1508,11 @@ class ProcessDetail(APIView):
                 "_id": process_id,
                 # "data_type": data_type,
             },
-            single=True
+            single=True,
         )
         data = process["data"]
         if not data:
-            return CustomResponse(
-                False, process["message"], None, status.HTTP_404_NOT_FOUND
-            )
+            return CustomResponse(False, process["message"], None, status.HTTP_404_NOT_FOUND)
 
         steps = data[0].get("process_steps")
         state = "processing_state"
@@ -1483,6 +1534,7 @@ class ProcessDetail(APIView):
                 status.HTTP_403_FORBIDDEN,
             )
 
+
 class ProcessLink(APIView):
     def post(self, request, process_id):
         """get a link process for person having notifications"""
@@ -1501,20 +1553,19 @@ class ProcessLink(APIView):
 
         if not validate_id(process_id):
             return Response("Something went wrong!", status.HTTP_400_BAD_REQUEST)
-        
-        dc_connect = DatacubeConnection(api_key=api_key, workspace_id=workspace_id, database=db_name)
-        
+
+        dc_connect = DatacubeConnection(
+            api_key=api_key, workspace_id=workspace_id, database=db_name
+        )
+
         # only one link as opposed to links in views_v2
         # link_object = dc_connect.get_links_from_collection(
         link_object = dc_connect.get_documents_from_collection(
-                filters={"process_id": process_id},
-                single=True
-            )["data"]
-        
+            filters={"process_id": process_id}, single=True
+        )["data"]
+
         if not link_object:
-            return Response(
-                "Verification link unavailable", status.HTTP_400_BAD_REQUEST
-            )
+            return Response("Verification link unavailable", status.HTTP_400_BAD_REQUEST)
         user = request.data["user_name"]
         process = dc_connect.get_processes_from_collection(
             filters={
@@ -1525,7 +1576,7 @@ class ProcessLink(APIView):
 
         if not process:
             return CustomResponse(False, "process not found", status.HTTP_404_NOT_FOUND)
-        
+
         # TODO confirm
         process_steps = process[0].get("process_steps")
         for step in process_steps:
@@ -1538,9 +1589,8 @@ class ProcessLink(APIView):
             else:
                 link = link_object[0]["link"]
                 return Response(link, status.HTTP_200_OK)
-        return Response(
-            "user is not part of this process", status.HTTP_401_UNAUTHORIZED
-        )
+        return Response("user is not part of this process", status.HTTP_401_UNAUTHORIZED)
+
 
 class ProcessVerification(APIView):
     def post(self, request, process_id):
@@ -1559,9 +1609,11 @@ class ProcessVerification(APIView):
 
         if not validate_id(process_id):
             return Response("Something went wrong!", status.HTTP_400_BAD_REQUEST)
-        
-        dc_connect = DatacubeConnection(api_key=api_key, workspace_id=workspace_id, database=db_name)
-        
+
+        dc_connect = DatacubeConnection(
+            api_key=api_key, workspace_id=workspace_id, database=db_name
+        )
+
         user_type = request.data["user_type"]
         auth_user = request.data["auth_username"]
         auth_role = request.data["auth_role"]
@@ -1570,21 +1622,16 @@ class ProcessVerification(APIView):
         org_name = request.data["org_name"]
         collection_id = None
         # only one link as opposed to links in views_v2
-        # TODO fix here
-        # link_object = dc_connect.get_qrcodes_from_collection(
+        # TODO compare
         link_object = dc_connect.get_qrcodes_from_collection(
-                filters={"unique_hash": token},
-            )["data"]
+            filters={"unique_hash": token},
+        )["data"]
         if not link_object:
-            return Response(
-                "Some link error here", status.HTTP_400_BAD_REQUEST
-            )
+            return Response("Some link error here", status.HTTP_400_BAD_REQUEST)
         link_object = link_object[0]
         if user_type == "team" or user_type == "user":
             collection_id = (
-                request.data["collection_id"]
-                if request.data.get("collection_id")
-                else None
+                request.data["collection_id"] if request.data.get("collection_id") else None
             )
             if (
                 link_object["user_name"] != auth_user
@@ -1594,19 +1641,17 @@ class ProcessVerification(APIView):
                     "User Logged in is not part of this process",
                     status.HTTP_401_UNAUTHORIZED,
                 )
-        # TODO if process_id is gotten from link object why are we passing process_id in the url path?
+        # TODO if the process_id used is from link object why are we passing process_id in the url path?
         process = dc_connect.get_processes_from_collection(
             filters={
                 "_id": link_object["process_id"],
                 # "data_type": data_type,
             },
-            single=True
+            single=True,
         )["data"]
 
         if not process:
-            return Response(
-                "Some process error here", status.HTTP_400_BAD_REQUEST
-            )
+            return Response("Some process error here", status.HTTP_400_BAD_REQUEST)
         process = process[0]
         if user_type == "public":
             for step in process["process_steps"]:
@@ -1614,18 +1659,15 @@ class ProcessVerification(APIView):
                     for item in step["stepDocumentCloneMap"]:
                         if item.get(auth_user[0]):
                             # Assign Collection ID
-                            # TODO why is it over writing the one gotten from request.data?
+                            # TODO why are we over writing the one gotten from request.data?
                             # TODO Do we break after getting a collection_id?
                             collection_id = item.get(auth_user[0])
-                            collection_id
 
         # Get previous and next users/viewers
         prev_viewers, next_viewers = get_prev_and_next_users(
             process, auth_user, auth_role, user_type
         )
-        user_email = (
-            request.data.get("user_email") if request.data.get("user_email") else ""
-        )
+        user_email = request.data.get("user_email") if request.data.get("user_email") else ""
         process["org_name"] = org_name
         handler = datacube_processing.DataCubeHandleProcess(process, dc_connect=dc_connect)
         location = handler.verify_location(
@@ -1668,6 +1710,7 @@ class ProcessVerification(APIView):
                 status.HTTP_400_BAD_REQUEST,
             )
 
+
 class TriggerProcess(APIView):
     def post(self, request, process_id):
         """Get process and begin processing it."""
@@ -1685,21 +1728,21 @@ class TriggerProcess(APIView):
 
         if not validate_id(process_id):
             return Response("Something went wrong!", status.HTTP_400_BAD_REQUEST)
-        
-        dc_connect = DatacubeConnection(api_key=api_key, workspace_id=workspace_id, database=db_name)
+
+        dc_connect = DatacubeConnection(
+            api_key=api_key, workspace_id=workspace_id, database=db_name
+        )
 
         process = dc_connect.get_processes_from_collection(
             filters={
                 "_id": process_id,
                 # "data_type": data_type,
             },
-            single=True
+            single=True,
         )["data"]
 
         if not process:
-            return Response(
-                "Some process error here", status.HTTP_400_BAD_REQUEST
-            )
+            return Response("Some process error here", status.HTTP_400_BAD_REQUEST)
         process = process[0]
         action = request.data["action"]
         state = process["processing_state"]
@@ -1727,10 +1770,11 @@ class TriggerProcess(APIView):
                 return Response(verification_links, status.HTTP_200_OK)
             else:
                 return Response(
-                f"The process is already in {state} state",
-                status.HTTP_200_OK,
+                    f"The process is already in {state} state",
+                    status.HTTP_200_OK,
                 )
-        # TODO what happens in neither conditions are met
+        # TODO Potential error: what is supposed to happen if neither conditions are met?
+
 
 class ProcessImport(APIView):
     def post(self, request, process_id):
@@ -1745,7 +1789,9 @@ class ProcessImport(APIView):
         except InvalidTokenException as e:
             return CustomResponse(False, str(e), None, status.HTTP_401_UNAUTHORIZED)
 
-        dc_connect = DatacubeConnection(api_key=api_key, workspace_id=workspace_id, database=db_name)
+        dc_connect = DatacubeConnection(
+            api_key=api_key, workspace_id=workspace_id, database=db_name
+        )
 
         data = request.data
         company_id = data.get("company_id")
@@ -1753,9 +1799,7 @@ class ProcessImport(APIView):
         member = data.get("member")
         data_type = data.get("data_type")
         # TODO confirm
-        user_email = (
-            request.data.get("user_email") if request.data.get("user_email") else ""
-        )
+        user_email = request.data.get("user_email") if request.data.get("user_email") else ""
 
         if not validate_id(process_id) or not validate_id(company_id):
             return Response("Invalid_ID!", status.HTTP_400_BAD_REQUEST)
@@ -1765,13 +1809,11 @@ class ProcessImport(APIView):
                 "_id": process_id,
                 # "data_type": data_type,
             },
-            single=True
+            single=True,
         )["data"]
 
         if not old_process:
-            return Response(
-                "Some process error here", status.HTTP_400_BAD_REQUEST
-            )
+            return Response("Some process error here", status.HTTP_400_BAD_REQUEST)
         old_process = old_process[0]
         document_id = old_process.get("parent_item_id")
         workflow_id = old_process.get("workflow_construct_ids")
@@ -1780,9 +1822,7 @@ class ProcessImport(APIView):
             single=True,
         )["data"]
         if not old_document:
-            return Response(
-                "Some document error here", status.HTTP_400_BAD_REQUEST
-            )
+            return Response("Some document error here", status.HTTP_400_BAD_REQUEST)
         old_document = old_document[0]
         viewers = [{"member": member, "portfolio": portfolio}]
         new_document_data = {
@@ -1805,9 +1845,7 @@ class ProcessImport(APIView):
             new_document_data,
         )
         if not res["success"]:
-            return Response(
-                "Failed to create document", status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
+            return Response("Failed to create document", status.HTTP_500_INTERNAL_SERVER_ERROR)
         metadata_data = {
             "document_name": old_document["document_name"],
             "collection_id": res["data"]["inserted_id"],
@@ -1830,17 +1868,20 @@ class ProcessImport(APIView):
                 status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
         metadata_id = res_metadata["data"]["inserted_id"]
-        editor_link = dc_connect.access_editor_metadata(res["data"]["inserted_id"], "document", metadata_id, user_email)
+        editor_link = dc_connect.access_editor_metadata(
+            res["data"]["inserted_id"], "document", metadata_id, user_email
+        )
         if not editor_link:
             return Response(
                 "Could not open document editor.", status.HTTP_500_INTERNAL_SERVER_ERROR
             )
-        
-        old_workflow = dc_connect.get_workflows_from_collection({"_id": workflow_id[0]}, single=True,)["data"]
+
+        old_workflow = dc_connect.get_workflows_from_collection(
+            {"_id": workflow_id[0]},
+            single=True,
+        )["data"]
         if not old_workflow:
-            return Response(
-                "Some workflow error here.", status.HTTP_400_BAD_REQUEST
-            )
+            return Response("Some workflow error here.", status.HTTP_400_BAD_REQUEST)
         old_workflow = old_workflow[0]
         new_wf_title = old_workflow["workflows"]["workflow_title"]
         new_wf_steps = old_workflow["workflows"]["steps"]
@@ -1860,9 +1901,7 @@ class ProcessImport(APIView):
             workflow_data,
         )
         if not res_workflow["success"]:
-            return Response(
-                "Failed to create workflow", status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
+            return Response("Failed to create workflow", status.HTTP_500_INTERNAL_SERVER_ERROR)
         remove_members_from_steps(old_process)
         process_data = {
             "process_title": old_process["process_title"],
@@ -1882,9 +1921,7 @@ class ProcessImport(APIView):
             process_data,
         )
         if not res_process["success"]:
-            return Response(
-                "Failed to create process", status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
+            return Response("Failed to create process", status.HTTP_500_INTERNAL_SERVER_ERROR)
         response_data = {
             "Message": "Workflow, document and process created successfully",
             "editor_link": editor_link,
@@ -1893,6 +1930,7 @@ class ProcessImport(APIView):
             "process_id": res_process["data"]["inserted_id"],
         }
         return Response(response_data, status.HTTP_201_CREATED)
+
 
 class ProcessCopies(APIView):
     def post(self, request, process_id):
@@ -1906,7 +1944,9 @@ class ProcessCopies(APIView):
         except InvalidTokenException as e:
             return CustomResponse(False, str(e), None, status.HTTP_401_UNAUTHORIZED)
 
-        dc_connect = DatacubeConnection(api_key=api_key, workspace_id=workspace_id, database=db_name)
+        dc_connect = DatacubeConnection(
+            api_key=api_key, workspace_id=workspace_id, database=db_name
+        )
 
         if not validate_id(process_id):
             return Response("something went wrong!", status.HTTP_400_BAD_REQUEST)
@@ -1920,5 +1960,5 @@ class ProcessCopies(APIView):
             request.data["portfolio"],
         )
         if process_id is None:
-                return Response(status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response(status.HTTP_500_INTERNAL_SERVER_ERROR)
         return Response("success created a process clone", status.HTTP_201_CREATED)

@@ -1,25 +1,7 @@
 # helper functions
-from app import processing
-from education.datacube_connection import (
-    datacube_collection_retrieval,
-    get_clone_from_collection,
-    get_clones_from_collection,
-    get_document_from_collection,
-    get_documents_from_collection,
-    get_process_from_collection,
-    get_template_from_collection,
-    save_to_clone_collection,
-    save_to_clone_metadata_collection,
-    save_to_process_collection
-)
-from app.constants import EDITOR_API
-import json
-from datetime import datetime
-import requests
 from rest_framework.response import Response
-import re
 
-import concurrent.futures
+from app import processing
 
 
 class InvalidTokenException(Exception):
@@ -41,11 +23,7 @@ def CustomResponse(success=True, message=None, response=None, status_code=None):
     if response is not None:
         response_data["response"] = response
 
-    return (
-        Response(response_data, status=status_code)
-        if status_code
-        else Response(response_data)
-    )
+    return Response(response_data, status=status_code) if status_code else Response(response_data)
 
 
 def authorization_check(api_key):
@@ -82,40 +60,6 @@ def generate_unique_collection_name(existing_collection_names, base_name):
     return f"{base_name}_{new_index}"
 
 
-def check_if_name_exists_collection(api_key, collection_name, db_name):
-    res = datacube_collection_retrieval(api_key, db_name)
-    base_name = re.sub(r"_\d+$", "", collection_name)
-    if res["success"]:
-        # THIS SHOULD WORK AS WELL
-        # if not [collection_name in item for item in res["data"][0]]:
-        #     print("essssss: ", res["data"][0])
-        #     new_collection_name = generate_unique_collection_name(res["data"][0], base_name)
-        if collection_name not in res["data"][0]:
-            new_collection_name = generate_unique_collection_name(
-                res["data"][0], base_name
-            )
-            return {
-                "name": new_collection_name,
-                "success": True,
-                "Message": "New_name_generated",
-                "status": "New",
-            }
-        else:
-            return {
-                # "name": [item for item in res["data"][0] if collection_name in item][0],
-                "name": collection_name,
-                "success": True,
-                "Message": "template_generated",
-                "status": "Existing",
-            }
-    else:
-        return {
-            "success": False,
-            "Message": res["message"],
-            "Url": "https://datacube.uxlivinglab.online/",
-        }
-
-
 def create_process_helper(
     company_id,
     workflows,
@@ -146,119 +90,9 @@ def create_process_helper(
     )
 
 
-def access_editor(
-    item_id,
-    item_type,
-    api_key,
-    database,
-    collection_name,
-    username="",
-    portfolio="",
-    email="",
-):
-    team_member_id = (
-        "11689044433"
-        if item_type == "document"
-        else "1212001" if item_type == "clone" else "22689044433"
-    )
-    if item_type == "document":
-        collection = "DocumentReports"
-        document = "documentreports"
-        field = "document_name"
-    if item_type == "clone":
-        collection = "CloneReports"
-        document = "CloneReports"
-        field = "document_name"
-    elif item_type == "template":
-        collection = "TemplateReports"
-        document = "templatereports"
-        field = "template_name"
-    
-    if item_type == "document":
-        item_name = get_document_from_collection(
-            api_key, database, collection_name, {"_id": item_id}
-        )
-    elif item_type == "clone":
-        item_name = get_clone_from_collection(
-            api_key, database, collection_name, {"_id": item_id}
-        )
-    else:
-        item_name = get_template_from_collection(
-            api_key, database, collection_name, {"_id": item_id}
-        )
-
-    name = item_name.get(field, "")
-    payload = {
-        "product_name": "Workflow AI",
-        "details": {
-            "cluster": "Documents",
-            "database": "Documentation",
-            "collection": collection,
-            "document": document,
-            "team_member_ID": team_member_id,
-            "function_ID": "ABCDE",
-            "_id": item_id,
-            "field": field,
-            "type": item_type,
-            "action": (
-                "document"
-                if item_type == "document"
-                else "clone" if item_type == "clone" else "template"
-            ),
-            "flag": "editing",
-            "name": name,
-            "username": username,
-            "portfolio": portfolio,
-            "email": email,
-            "time": str(datetime.utcnow()),
-            "command": "update",
-            "update_field": {
-                field: "",
-                "content": "",
-                "page": "",
-                "edited_by": username,
-                "portfolio": portfolio,
-                "edited_on": str(datetime.utcnow()),
-            },
-        },
-    }
-    try:
-        response = requests.post(
-            EDITOR_API,
-            data=json.dumps(payload),
-            headers={"Content-Type": "application/json"},
-        )
-        return response.json()
-    except Exception as e:
-        print(e)
-        return
-
-
-# to be used later
-"""collection_names = check_if_name_exists_collection(
-            api_key, collection_name, db_name
-        )
-        if collection_names["success"]:
-            collection_name = f"{collection_names['name']}
-        create_new_collection_for_template = add_collection_to_database(
-                api_key=api_key,
-                database=db_name,
-                collections=collection_name,
-            )
-            print(create_new_collection_for_template)
-        else:
-            return CustomResponse(
-                False,
-                str(collection_names["Message"]),
-                "Create a database",
-                status.HTTP_400_BAD_REQUEST,
-            )
-        ##   create_new_collection_for_template_metadata=
-
-        if create_new_collection_for_template["success"]:"""
-
 def check_all_accessed(dic):
     return all([item.get("accessed") for item in dic])
+
 
 def check_progress(process, *args, **kwargs):
     steps = process["process_steps"]
@@ -272,5 +106,3 @@ def check_progress(process, *args, **kwargs):
 
     percentage_progress = round((accessed / steps_count * 100), 2)
     return percentage_progress
-
-
