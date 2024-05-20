@@ -3,8 +3,8 @@ import re
 from datetime import UTC, datetime
 
 import requests
-
 from app.constants import EDITOR_API
+
 from education_v2.constants import DB_API, DB_API_CRUD
 from education_v2.helpers import generate_unique_collection_name
 
@@ -46,9 +46,9 @@ class DatacubeConnection:
             "clone_metadata": f"{self.workspace_id}_clones_metadata_collection_0",
             "template": f"{self.workspace_id}_template_collection_0",
             "template_metadata": f"{self.workspace_id}_templates_metadata_collection_0",
-            # TODO confirm qrcode collection
+            # NOTE confirm qrcode collection
             "qrcode": f"{self.workspace_id}_document_collection_0",
-            # TODO confirm links collection
+            # NOTE confirm links collection
             "link": f"{self.workspace_id}_document_collection_0",
             "folder": f"{self.workspace_id}_folder_collection_0",
         }
@@ -246,7 +246,7 @@ class DatacubeConnection:
         Returns:
             The selected clone(s) from the collection.
         """
-        # TODO: confirm
+        # NOTE: confirm
         if kwargs.get("metadata") == True:
             collection = self.collection_names["clone_metadata"]
         else:
@@ -432,7 +432,9 @@ class DatacubeConnection:
         return self.post_data_to_collection(collection, data, "update", query, **kwargs)
 
     def update_template_metadata_collection(self, metadata_id: str, data: dict, *args, **kwargs):
-        return self.update_template_collection(*args, template_id=metadata_id, data=data, metadata=True, **kwargs)
+        return self.update_template_collection(
+            *args, template_id=metadata_id, data=data, metadata=True, **kwargs
+        )
 
     def get_templates_from_collection(self, filters: dict, single=False, **kwargs):
         """
@@ -487,7 +489,7 @@ class DatacubeConnection:
         Returns:
             The selected link(s) from the collection.
         """
-        # TODO confirm links collection
+        # NOTE confirm links collection
         collection = self.collection_names["link"]
         limit = None if single is None else 1 if single else None
 
@@ -527,9 +529,7 @@ class DatacubeConnection:
         else:
             return self.get_data_from_collection(collection, filters, **kwargs)
 
-    def authorize(self, document_id, viewers, process_id, item_type, workspace_id=None, **kwargs):
-        clone_collection = self.collection_names["clone"]
-        clone_metadata_collection = self.collection_names["clone_metadata"]
+    def authorize(self, document_id, viewers, process_id, item_type, **kwargs):
         payload = None
         metadata_payload = None
         if item_type == "document":
@@ -563,13 +563,10 @@ class DatacubeConnection:
             }
         if payload is not None:
             if metadata_payload is not None:
-                query = {"_id": document_id}
-                metadata_clone_res = self.post_data_to_collection(
-                    clone_metadata_collection, metadata_payload, "update", query, **kwargs
+                metadata_clone_res = self.update_clone_metadata_collection(
+                    document_id, metadata_payload, **kwargs
                 )
-            clone_res = self.post_data_to_collection(
-                clone_collection, metadata_payload, "update", query, **kwargs
-            )
+            clone_res = self.update_clone_collection(document_id, metadata_payload, **kwargs)
 
             return clone_res
 
@@ -625,6 +622,7 @@ class DatacubeConnection:
             document = "templatereports"
             field = "template_name"
 
+        # FIXME we can accept the document object instead of id to avoid multiple api calls
         if item_type == "document":
             item_name = self.get_documents_from_collection({"_id": item_id}, single=True, **kwargs)
         elif item_type == "clone":
@@ -687,7 +685,7 @@ class DatacubeConnection:
 
             document = self.get_documents_from_collection(
                 filters={"_id": document_id}, single=True, **kwargs
-            )
+            )["data"][0]
             # Create new "signed" list to track users who have signed the document
             signed = []
             for item in auth_viewers:
@@ -834,7 +832,7 @@ class DatacubeConnection:
             field = "template_name"
 
         if item_type == "document":
-            # TODO compare
+            # NOTE compare
             item_name = self.get_documents_metadata_from_collection(
                 {"collection_id": item_id}, **kwargs
             )
@@ -849,7 +847,7 @@ class DatacubeConnection:
                 {"collection_id": item_id}, **kwargs
             )
 
-        # TODO confirm
+        # NOTE confirm
         if not item_name["data"]:
             return
 
@@ -893,7 +891,7 @@ class DatacubeConnection:
 
     def cloning_process(self, process_id, created_by, creator_portfolio, **kwargs):
         try:
-            # TODO confirm if correct collection for get and save
+            # NOTE confirm if correct collection for get and save
             process = self.get_processes_from_collection(
                 {"_id": process_id}, single=True, **kwargs
             )["data"]
@@ -1058,7 +1056,7 @@ class DatacubeConnection:
                             doc_state = self.get_templates_from_collection(
                                 {"_id": value}, single=True, **kwargs
                             )["data"][0].get("template_state")
-                            
+
                             if doc_state == "saved":
                                 doc_states.append(True)
                             elif doc_state == "draft":
@@ -1076,17 +1074,17 @@ class DatacubeConnection:
             if signers is not None:
                 data["signed_by"] = signers
             return data
-        
+
         if item_type == "document":
             data = {"document_state": state}
             return self.update_document_metadata_collection(item_id, check_signers(data), **kwargs)
-        
+
         elif item_type == "clone":
             data = {"document_state": state}
             return self.update_clone_metadata_collection(item_id, check_signers(data), **kwargs)
-          
+
         elif item_type == "template":
             data = {"template_state": state}
             return self.update_template_metadata_collection(item_id, check_signers(data), **kwargs)
-        
+
         return
