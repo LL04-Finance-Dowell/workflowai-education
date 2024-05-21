@@ -1,5 +1,5 @@
 from datetime import datetime, UTC, timedelta
-from education_v2.datacube_connection import DatacubeConnection
+from education.datacube_connection import DatacubeConnection
 
 def is_finalized(item_id, item_type, dc_connect: DatacubeConnection, **kwargs):
     if item_type == "document":
