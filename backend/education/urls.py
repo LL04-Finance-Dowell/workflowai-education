@@ -8,6 +8,7 @@ urlpatterns = [
     path("education/templates/", views.NewTemplate.as_view()),
     path("education/templates/approved/", views.ApprovedTemplates.as_view()),
     path("education/workflows/", views.Workflow.as_view()),
+
     path("education/collections/", views.CollectionData.as_view()),
     path("education/processes/", views.DocumentOrTemplateProcessing.as_view()),
     path(
@@ -26,7 +27,7 @@ urlpatterns = [
         views.Process.as_view(),
         name="process",
     ),
-    path("education/processes/<str:process_id>/", views.ProcessDetail.as_view()),
+    path("education/processes/<str:process_id>/detail/", views.ProcessDetail.as_view()),
     path("education/processes/<str:process_id>/link/", views.ProcessLink.as_view()),
     path("education/processes/<str:process_id>/verify/", views.ProcessVerification.as_view()),
     path("education/processes/<str:process_id>/trigger/", views.TriggerProcess.as_view()),

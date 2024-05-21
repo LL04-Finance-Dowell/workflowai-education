@@ -149,9 +149,12 @@ Folders:
     - query_params:
         - data_type
         - company_id
+        - workspace_id
         
 
 - POST (create a new folder):
+    - query_params:
+        - workspace_id
     - request_body:
         - folder_name
         - created_by
@@ -163,6 +166,8 @@ Folders:
 FolderDetail:
 - URL: education/folders/<str:folder_id>/detail
 - GET (retrieve the details of a specific folder):
+    - query_params:
+        - workspace_id
     - path_params:
         - folder_id
         
@@ -171,9 +176,10 @@ FolderDetail:
 DocumentOrTemplateProcessing:
 - URL: education/processes/
 - POST (processing is determined by action picked by user):
+    - query_params:
+        - workspace_id
     - request_body:
         - api_key
-        - workspace_id
         - company_id
         - workflows
         - created_by
