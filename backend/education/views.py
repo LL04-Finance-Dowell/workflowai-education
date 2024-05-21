@@ -10,7 +10,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from education.checks import is_finalized
-from education.datacube_connection import DatacubeConnection
+from education.datacube_connection import DatacubeConnection, get_db
 from education.datacube_processing import (
     DataCubeBackground,
     DataCubeHandleProcess,
@@ -96,10 +96,10 @@ class DatabaseServices(APIView):
 
         for types in database_type:
             if types == "META_DATA":
-                database = f"{workspace_id}_DB_0"
+                database = get_db(workspace_id)
                 collection_names = list(dc_connect.metadata_collections.values())
             elif types == "DATA":
-                database = f"{workspace_id}_DB_0"
+                database = get_db(workspace_id)
                 collection_names = list(dc_connect.normal_collection_names.values())
 
             dc_connect = DatacubeConnection(
@@ -139,7 +139,7 @@ class DatabaseServices(APIView):
             return CustomResponse(False, str(e), None, status.HTTP_401_UNAUTHORIZED)
 
         workspace_id = request.GET.get("workspace_id")
-        meta_data_database = f"{workspace_id}_DB_0"
+        meta_data_database = get_db(workspace_id)
         dc_connect = DatacubeConnection(
             api_key=api_key, workspace_id=workspace_id, database=meta_data_database
         )
@@ -189,7 +189,7 @@ class DatabaseServices(APIView):
 
         workspace_id = request.GET.get("workspace_id")
 
-        data_database = f"{workspace_id}_DB_0"
+        data_database = get_db(workspace_id)
         ready_collection = []
 
         dc_connect = DatacubeConnection(
@@ -252,7 +252,7 @@ class NewTemplate(APIView):
             return CustomResponse(False, str(e), None, status.HTTP_401_UNAUTHORIZED)
         workspace_id = request.GET.get("workspace_id")
         template_id = request.GET.get("template_id")
-        db_name = f"{workspace_id}_DB_0"
+        db_name = get_db(workspace_id)
         filters = {"_id": template_id}
         dc_connect = DatacubeConnection(
             api_key=api_key, workspace_id=workspace_id, database=db_name
@@ -274,8 +274,8 @@ class NewTemplate(APIView):
         page = ""
         folder = []
         approved = False
-        db_name = f"{workspace_id}_DB_0"
-        metadata_db = f"{workspace_id}_DB_0"
+        db_name = get_db(workspace_id)
+        metadata_db = get_db(workspace_id)
 
         try:
             api_key = authorization_check(request.headers.get("Authorization"))
@@ -401,7 +401,7 @@ class NewTemplate(APIView):
             return CustomResponse(False, str(e), None, status.HTTP_401_UNAUTHORIZED)
         workspace_id = request.GET.get("workspace_id")
 
-        database = f"{workspace_id}_DB_0"
+        database = get_db(workspace_id)
         dc_connect = DatacubeConnection(
             api_key=api_key, workspace_id=workspace_id, database=database
         )
@@ -433,7 +433,7 @@ class ApprovedTemplates(APIView):
             return CustomResponse(False, str(e), None, status.HTTP_401_UNAUTHORIZED)
 
         workspace_id = request.GET.get("workspace_id")
-        database = f"{workspace_id}_DB_0"
+        database = get_db(workspace_id)
         dc_connect = DatacubeConnection(
             api_key=api_key, workspace_id=workspace_id, database=database
         )
@@ -454,7 +454,7 @@ class Workflow(APIView):
             return CustomResponse(False, str(e), None, status.HTTP_401_UNAUTHORIZED)
 
         workspace_id = request.GET.get("workspace_id")
-        db_name = f"{workspace_id}_DB_0"
+        db_name = get_db(workspace_id)
         dc_connect = DatacubeConnection(
             api_key=api_key, workspace_id=workspace_id, database=db_name
         )
@@ -483,7 +483,7 @@ class Workflow(APIView):
             return Response("Workflow Data required", status.HTTP_400_BAD_REQUEST)
 
         workspace_id = request.GET.get("workspace_id")
-        db_name = f"{workspace_id}_DB_0"
+        db_name = get_db(workspace_id)
         dc_connect = DatacubeConnection(
             api_key=api_key, workspace_id=workspace_id, database=db_name
         )
@@ -542,7 +542,7 @@ class Workflow(APIView):
         workspace_id = request.GET.get("workspace_id")
         workflow_id = form["workflow_id"]
         query = {"_id": workflow_id}
-        database = f"{workspace_id}_DB_0"
+        database = get_db(workspace_id)
         dc_connect = DatacubeConnection(
             api_key=api_key, workspace_id=workspace_id, database=database
         )
@@ -604,7 +604,7 @@ class NewDocument(APIView):
         template_id = request.data.get("template_id")
 
         # NOTE please confirm this flow
-        db_name_0 = f"{workspace_id}_DB_0"
+        db_name_0 = get_db(workspace_id)
 
         try:
             api_key = authorization_check(request.headers.get("Authorization"))
@@ -728,7 +728,7 @@ class Document(APIView):
         member = request.query_params.get("member")
         portfolio = request.query_params.get("portfolio")
 
-        db_name = f"{workspace_id}_DB_0"
+        db_name = get_db(workspace_id)
 
         try:
             api_key = authorization_check(request.headers.get("Authorization"))
@@ -812,7 +812,7 @@ class DocumentLink(APIView):
         workspace_id = request.query_params.get("workspace_id")
         document_type = request.query_params.get("document_type")
 
-        db_name = f"{workspace_id}_DB_0"
+        db_name = get_db(workspace_id)
 
         try:
             api_key = authorization_check(request.headers.get("Authorization"))
@@ -875,7 +875,7 @@ class DocumentDetail(APIView):
         workspace_id = request.query_params.get("workspace_id")
         document_type = request.query_params.get("document_type")
 
-        db_name = f"{workspace_id}_DB_0"
+        db_name = get_db(workspace_id)
         collection_name = f"{workspace_id}_template_collection_0"
 
         try:
@@ -928,7 +928,7 @@ class ItemContent(APIView):
         content = []
         item_type = request.query_params.get("item_type")
         workspace_id = request.query_params.get("workspace_id")
-        db_name = f"{workspace_id}_DB_0"
+        db_name = get_db(workspace_id)
 
         try:
             api_key = authorization_check(request.headers.get("Authorization"))
@@ -1212,7 +1212,7 @@ class FinalizeOrRejectEducation(APIView):
         message = request.data.get("message", None)
         link_id = request.data.get("link_id", None)
         product = request.data.get("product", "education")
-        database = f"{workspace_id}_DB_0"
+        database = get_db(workspace_id)
 
         # NOTE compare; Why was PROCESS_DB_0 used?
         dc_connect = DatacubeConnection(
@@ -1263,7 +1263,7 @@ class Folders(APIView):
         data_type = request.query_params.get("data_type")
         company_id = request.query_params.get("company_id")
         workspace_id = request.query_params.get("workspace_id")
-        database = f"{workspace_id}_DB_0"
+        database = get_db(workspace_id)
 
         if not validate_id(company_id) or data_type is None:
             return Response("Invalid Request!", status.HTTP_400_BAD_REQUEST)
@@ -1294,7 +1294,7 @@ class Folders(APIView):
         created_by = request.data.get("created_by")
         company_id = request.data.get("company_id")
         data_type = request.data.get("data_type")
-        database = f"{workspace_id}_DB_0"
+        database = get_db(workspace_id)
 
         # NOTE compare; Why was PROCESS_DB_0 used?
         dc_connect = DatacubeConnection(api_key=api_key, workspace_id=None, database=database)
@@ -1337,7 +1337,7 @@ class FolderDetail(APIView):
             return Response("Something went wrong!", status.HTTP_400_BAD_REQUEST)
 
         workspace_id = request.query_params.get("workspace_id")
-        database = f"{workspace_id}_DB_0"
+        database = get_db(workspace_id)
 
         # NOTE compare; Why was PROCESS_DB_0 used?
         dc_connect = DatacubeConnection(api_key=api_key, workspace_id=None, database=database)
@@ -1379,7 +1379,7 @@ class DocumentOrTemplateProcessing(APIView):
             return CustomResponse(False, str(e), None, status.HTTP_401_UNAUTHORIZED)
 
         workspace_id = request.query_params.get("workspace_id")
-        database = f"{workspace_id}_DB_0"
+        database = get_db(workspace_id)
         dc_connect = DatacubeConnection(
             api_key=api_key, workspace_id=workspace_id, database=database
         )
@@ -1536,7 +1536,7 @@ class Process(APIView):
         if not validate_id(company_id) or data_type is None:
             return Response("Invalid Request!", status.HTTP_400_BAD_REQUEST)
 
-        db_name = f"{workspace_id}_DB_0"
+        db_name = get_db(workspace_id)
         dc_connect = DatacubeConnection(
             api_key=api_key, workspace_id=workspace_id, database=db_name
         )
@@ -1573,7 +1573,7 @@ class ProcessDetail(APIView):
         workspace_id = request.query_params.get("workspace_id")
         data_type = request.query_params.get("data_type")
 
-        db_name = f"{workspace_id}_DB_0"
+        db_name = get_db(workspace_id)
 
         try:
             api_key = authorization_check(request.headers.get("Authorization"))
@@ -1631,7 +1631,7 @@ class ProcessDetail(APIView):
         workspace_id = request.query_params.get("workspace_id")
         data_type = request.query_params.get("data_type")
 
-        db_name = f"{workspace_id}_DB_0"
+        db_name = get_db(workspace_id)
 
         try:
             api_key = authorization_check(request.headers.get("Authorization"))
@@ -1692,7 +1692,7 @@ class ProcessLink(APIView):
         workspace_id = request.query_params.get("workspace_id")
         data_type = request.query_params.get("data_type")
 
-        db_name = f"{workspace_id}_DB_0"
+        db_name = get_db(workspace_id)
 
         try:
             api_key = authorization_check(request.headers.get("Authorization"))
@@ -1748,7 +1748,7 @@ class ProcessVerification(APIView):
         workspace_id = request.query_params.get("workspace_id")
         data_type = request.query_params.get("data_type")
 
-        db_name = f"{workspace_id}_DB_0"
+        db_name = get_db(workspace_id)
 
         try:
             api_key = authorization_check(request.headers.get("Authorization"))
@@ -1865,7 +1865,7 @@ class TriggerProcess(APIView):
         workspace_id = request.query_params.get("workspace_id")
         data_type = request.query_params.get("data_type")
 
-        db_name = f"{workspace_id}_DB_0"
+        db_name = get_db(workspace_id)
 
         try:
             api_key = authorization_check(request.headers.get("Authorization"))
@@ -1926,7 +1926,7 @@ class ProcessImport(APIView):
         workspace_id = request.query_params.get("workspace_id")
         data_type = request.query_params.get("data_type")
 
-        db_name = f"{workspace_id}_DB_0"
+        db_name = get_db(workspace_id)
 
         try:
             api_key = authorization_check(request.headers.get("Authorization"))
@@ -2002,9 +2002,6 @@ class ProcessImport(APIView):
             "document_type": "imports",
         }
         res_metadata = dc_connect.save_to_document_metadata_collection(
-            api_key,
-            db_name,
-            f"{workspace_id}_templates_metadata_collection_0",
             metadata_data,
         )
         if not res_metadata.get("success"):
@@ -2080,7 +2077,7 @@ class ProcessCopies(APIView):
     def post(self, request, process_id):
         workspace_id = request.query_params.get("workspace_id")
 
-        db_name = f"{workspace_id}_DB_0"
+        db_name = get_db(workspace_id)
 
         try:
             api_key = authorization_check(request.headers.get("Authorization"))

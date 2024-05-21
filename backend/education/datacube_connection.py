@@ -24,6 +24,9 @@ def post_to_data_service(url: str, data: dict):
     response = requests.post(url=url, data=data, headers=headers)
     return json.loads(response.text)
 
+def get_db(workspace_id):
+    return f"{workspace_id}_DB_0"
+
 
 def create_db(options):
     """Creates a new database entity
