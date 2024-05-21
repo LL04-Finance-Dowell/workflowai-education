@@ -2,50 +2,26 @@ import json
 import urllib.parse
 import uuid
 from threading import Thread
+
 import qrcode
 import requests
-from django.conf import settings
-
-from app.checks import (
-    display_right,
-    location_right,
-    time_limit_right,
-    register_single_user_access,
-)
 from app.constants import (
     EDITOR_API,
     NOTIFICATION_API,
+    PRODUCTION_VERIFICATION_LINK,
     QRCODE_URL,
     VERIFICATION_LINK,
-    PRODUCTION_VERIFICATION_LINK,
 )
-from app.helpers import (
-    cloning_document,
-    cloning_clone,
-    register_public_login,
-    check_all_finalized_true,
-    check_step_items_state,
-    check_user_in_auth_viewers,
-    get_metadata_id,
-    set_reminder,
+from django.conf import settings
+
+from education.checks import (
+    display_right,
+    location_right,
+    register_single_user_access,
+    time_limit_right,
 )
-from education import datacube_connection as dc_con
-from app.mongo_db_connection import (
-    authorize,
-    authorize_metadata,
-    finalize_item,
-    save_to_links_collection,
-    save_to_process_collection,
-    save_to_qrcode_collection,
-    single_query_clones_metadata_collection,
-    single_query_document_collection,
-    single_query_template_collection,
-    single_query_clones_collection,
-    single_query_process_collection,
-    single_query_template_metadata_collection,
-    update_process,
-)
-from education import helpers as edu_helpers
+from education.datacube_connection import DatacubeConnection
+from education.helpers import register_public_login, set_reminder
 
 
 class DataCubeProcess:
@@ -82,9 +58,28 @@ class DataCubeProcess:
         self.api_key = kwargs.get("api_key")
         self.database = kwargs.get("database")
         self.collection = kwargs.get("collection")
+        self.dc_connect: DatacubeConnection = kwargs.get("dc_connect")
 
         parent_process = kwargs.get("parent_process")
         self.parent_process = parent_process
+
+    @classmethod
+    def format_process_data(cls, process, action):
+        return {
+            "process_title": process["process_title"],
+            "process_steps": process["process_steps"],
+            "processing_action": action,
+            "created_by": process["created_by"],
+            "company_id": process["company_id"],
+            "data_type": process["data_type"],
+            "parent_item_id": process["parent_item_id"],
+            "_id": process["_id"],
+            "process_type": process["process_type"],
+            "process_kind": process["process_kind"],
+            "org_name": process["org_name"],
+            "parent_process": process["parent_process"],
+            "email": process["email"],
+        }
 
     def normal_process(self, action):
         data = {
@@ -103,12 +98,7 @@ class DataCubeProcess:
             "parent_process": self.parent_process,
             "email": self.email,
         }
-        res = dc_con.save_to_process_collection(
-                api_key=self.api_key,
-                database=self.database,
-                collection=self.collection,
-                data=data,
-            )
+        res = self.dc_connect.save_to_process_collection(data=data)
         if res["success"]:
             inserted_id = res["data"]["inserted_id"]
             if inserted_id:
@@ -136,27 +126,21 @@ class DataCubeProcess:
     def test_process(self, action):
         data_type = "Testing_Data"
         data = {
-                    "process_title": self.process_title,
-                    "process_steps": self.process_steps,
-                    "created_by": self.created_by,
-                    "company_id": self.company_id,
-                    "data_type": data_type,
-                    "parent_item_id": self.parent_id,
-                    "processing_action": action,
-                    "creator_portfolio": self.portfolio,
-                    "workflow_construct_ids": self.workflow_ids,
-                    "process_type": self.process_type,
-                    "org_name": self.org_name,
-                    "process_kind": "original",
-                    "email": self.email
-
-                }
-        res = dc_con.save_to_process_collection(
-                api_key=self.api_key,
-                database=self.database,
-                collection=self.collection,
-                data=data,
-            )
+            "process_title": self.process_title,
+            "process_steps": self.process_steps,
+            "created_by": self.created_by,
+            "company_id": self.company_id,
+            "data_type": data_type,
+            "parent_item_id": self.parent_id,
+            "processing_action": action,
+            "creator_portfolio": self.portfolio,
+            "workflow_construct_ids": self.workflow_ids,
+            "process_type": self.process_type,
+            "org_name": self.org_name,
+            "process_kind": "original",
+            "email": self.email,
+        }
+        res = self.dc_connect.save_to_process_collection(data=data)
         if res["success"]:
             inserted_id = res["data"]["inserted_id"]
             if inserted_id:
@@ -189,10 +173,8 @@ class DataCubeHandleProcess:
             "product": "Workflow AI",
         }
 
-        self.kwargs  = kwargs
-        self.api_key = kwargs.get("api_key")
-        self.database = kwargs.get("database")
-        self.workspace_id = kwargs.get("workspace_id")
+        self.kwargs = kwargs
+        self.dc_connect: DatacubeConnection = kwargs.get("dc_connect")
 
     def parse_url(params):
         return urllib.parse.urlencode(params)
@@ -253,27 +235,19 @@ class DataCubeHandleProcess:
         params["portfolio"] = portfolio
         encoded_param = DataCubeHandleProcess.parse_url(params)
         utp_link = f"{link}?{encoded_param}"
-        api_key = kwargs.get("api_key")
-        database = kwargs.get("database")
-        workspace_id = kwargs.get("workspace_id")
+        dc_connect: DatacubeConnection = kwargs.get("dc_connect")
 
         data = {
-                "link": utp_link,
-                "process_id": process_id,
-                "item_id": item_id,
-                "auth_role": step_role,
-                "user_name": auth_name,
-                "auth_portfolio": portfolio,
-                "unique_hash": hash,
-                "item_type": item_type,
-            }
-        kwargs
-        dc_con.save_to_qrcode_collection(
-            api_key=api_key,
-            database=database,
-            collection=f"{workspace_id}_document_collection_0",
-            data=data
-        )
+            "link": utp_link,
+            "process_id": process_id,
+            "item_id": item_id,
+            "auth_role": step_role,
+            "user_name": auth_name,
+            "auth_portfolio": portfolio,
+            "unique_hash": hash,
+            "item_type": item_type,
+        }
+        dc_connect.save_to_qrcode_collection(data=data)
         # --------- Not used so I will scrap soon - Edwin ------
         # HandleProcess.notify(
         #     auth_name, item_id, portfolio, company_id, utp_link, org_name
@@ -291,45 +265,52 @@ class DataCubeHandleProcess:
         return link.json()
 
     def prepare_document_for_step_one_users(step, parent_item_id, process_id, **kwargs):
-        workspace_id = kwargs.get('collection')
-        process_type = dc_con.get_process_from_collection(
-            api_key=kwargs.get("api_key"),
-            database=kwargs.get("database"),
-            collection=f"{workspace_id}_process_collection",
-            filters={"_id": process_id},
-        ).get("process_type")
+        dc_connect: DatacubeConnection = kwargs.get("dc_connect")
+        process = dc_connect.get_processes_from_collection(
+            filters={"_id": process_id}, single=True
+        )["data"]
+
+        # NOTE confirm this flow
+        if process:
+            return
+
+        process_type = process[0].get("process_type")
         clones = []
         users = []
+
         for m in step.get("stepTeamMembers", []) + step.get("stepUserMembers", []):
             users.append(m)
         public = [m for m in step.get("stepPublicMembers", [])]
+
         if users:
             if process_type == "document":
-                clone_id = edu_helpers.cloning_document(
+                clone_id = dc_connect.cloning_document(
                     parent_item_id, users, parent_item_id, process_id, **kwargs
                 )
             elif process_type == "internal":
-                dc_con.authorize(parent_item_id, users, process_id, "document")
+                dc_connect.authorize(parent_item_id, users, process_id, "document")
                 clone_id = parent_item_id
             elif process_type == "template":
-                dc_con.authorize(parent_item_id, users, process_id, process_type)
+                dc_connect.authorize(parent_item_id, users, process_id, process_type)
                 clone_id = parent_item_id
+
             clones = [clone_id]
             for u in users:
                 step.get("stepDocumentCloneMap").append({u["member"]: clone_id})
+
         if public:
             public_clone_ids = []
             pub_users = []
 
             if step.get("stepActivityType") == "team_task":
                 if process_type == "document":
-                    pub_team_clone = edu_helpers.cloning_document(
+                    pub_team_clone = dc_connect.cloning_document(
                         parent_item_id, public, parent_item_id, process_id, **kwargs
                     )
                     for u in public:
                         public_clone_ids.append({u["member"]: pub_team_clone})
                 if process_type == "internal":
-                    dc_con.authorize(parent_item_id, public, process_id, "document")
+                    dc_connect.authorize(parent_item_id, public, process_id, "document")
                     pub_team_clone = parent_item_id
                     for u in public:
                         public_clone_ids.append({u["member"]: pub_team_clone})
@@ -338,7 +319,7 @@ class DataCubeHandleProcess:
                     if process_type == "document":
                         public_clone_ids.append(
                             {
-                                u["member"]: edu_helpers.cloning_document(
+                                u["member"]: dc_connect.cloning_document(
                                     parent_item_id, [u], parent_item_id, process_id
                                 )
                             }
@@ -349,12 +330,13 @@ class DataCubeHandleProcess:
                     elif process_type == "template":
                         pub_users.append(u)
                         public_clone_ids.append({u["member"]: parent_item_id})
+
             if pub_users != []:
                 # authorize() is only handled for "tdocument" and "template" process_types for now
                 if process_type == "internal":
-                    dc_con.authorize(parent_item_id, pub_users, process_id, "document")
+                    dc_connect.authorize(parent_item_id, pub_users, process_id, "document")
                 else:
-                    dc_con.authorize(parent_item_id, pub_users, process_id, process_type)
+                    dc_connect.authorize(parent_item_id, pub_users, process_id, process_type)
             step.get("stepDocumentCloneMap").extend(public_clone_ids)
             clones.extend(public_clone_ids)
         return clones
@@ -400,7 +382,7 @@ class DataCubeHandleProcess:
                     step.get("stepRole"),
                     member["portfolio"],
                     "public",
-                    **self.kwargs
+                    **self.kwargs,
                 )
                 links.append({member["member"]: link})
                 public_links.append({link_string: link})
@@ -413,7 +395,7 @@ class DataCubeHandleProcess:
                     step.get("stepRole"),
                     member["portfolio"],
                     "team",
-                    **self.kwargs
+                    **self.kwargs,
                 )
                 links.append({member["member"]: link})
                 # qrcodes.append({member["member"]: qrcode})
@@ -424,33 +406,33 @@ class DataCubeHandleProcess:
                     step.get("stepRole"),
                     member["portfolio"],
                     "user",
-                    **self.kwargs
+                    **self.kwargs,
                 )
                 links.append({member["member"]: link})
                 # qrcodes.append({member["member"]: qrcode})
 
             for step in step.get("stepGroupMembers", []):
                 for member in step.get("public", []):
-                    link  = DataCubeHandleProcess.user_team_public_data(
+                    link = DataCubeHandleProcess.user_team_public_data(
                         self.process,
                         member["member"],
                         step.get("stepRole"),
                         member["portfolio"],
                         "public",
-                        **self.kwargs
+                        **self.kwargs,
                     )
                     links.append({member["member"]: link})
                     public_links.append({link_string: link})
                     # qrcodes.append({member["member"]: qrcode})
 
                 for member in step.get("team_members", []):
-                    link  = DataCubeHandleProcess.user_team_public_data(
+                    link = DataCubeHandleProcess.user_team_public_data(
                         self.process,
                         member["member"],
                         step.get("stepRole"),
                         member["portfolio"],
                         "team",
-                        **self.kwargs
+                        **self.kwargs,
                     )
                     links.append({member["member"]: link})
                     public_links.append({link_string: link})
@@ -463,7 +445,7 @@ class DataCubeHandleProcess:
                         step.get("stepRole"),
                         member["portfolio"],
                         "user",
-                        **self.kwargs
+                        **self.kwargs,
                     )
                     links.append({member["member"]: link})
                     public_links.append({link_string: link})
@@ -475,13 +457,15 @@ class DataCubeHandleProcess:
 
         if public_links and self.process["process_type"] == "document":
             document_id = self.process["parent_item_id"]
-            res = dc_con.get_document_from_collection(
-                api_key=self.api_key,
-                database=self.database,
-                collection=f"{self.workspace_id}_template_collection_0",
-                filters={"_id": document_id},
-            )
-            document_name = res["data"][0]["document_name"]
+            # NOTE compare
+            res = self.dc_connect.get_documents_from_collection(
+                filters={"_id": document_id}, single=True
+            )["data"]
+
+            if not res:
+                return
+
+            document_name = res[0]["document_name"]
             m_link, m_code = DataCubeHandleProcess.generate_public_qrcode(
                 public_links, self.process["company_id"], document_name
             )
@@ -490,13 +474,14 @@ class DataCubeHandleProcess:
 
         elif public_links and self.process["process_type"] == "internal":
             document_id = self.process["parent_item_id"]
-            res = dc_con.get_clone_from_collection(
-                api_key=self.api_key,
-                database=self.database,
-                collection=f"{self.workspace_id}_clone_collection_0",
-                filters={"_id": document_id},
-            )
-            document_name = res["document_name"]
+            res = self.dc_connect.get_clones_from_collection(
+                filters={"_id": document_id}, single=True
+            )["data"]
+
+            if not res:
+                return
+
+            document_name = res[0]["document_name"]
             m_link, m_code = DataCubeHandleProcess.generate_public_qrcode(
                 public_links, self.process["company_id"], document_name
             )
@@ -505,22 +490,21 @@ class DataCubeHandleProcess:
 
         elif public_links and self.process["process_type"] == "template":
             template_id = self.process["parent_item_id"]
-            res = dc_con.get_template_from_collection(
-                api_key=self.api_key,
-                database=self.database,
-                collection=f"{self.workspace_id}_template_collection_0",
-                filters={"_id": template_id},
-            )
-            template_name = res["template_name"]
+            res = self.dc_connect.get_templates_from_collection(
+                filters={"_id": template_id}, single=True
+            )["data"]
+
+            if not res:
+                return
+
+            template_name = res[0]["template_name"]
             m_link, m_code = DataCubeHandleProcess.generate_public_qrcode(
                 public_links, self.process["company_id"], template_name
             )
             links.append({"master_link": m_link})
             qrcodes.append({"master_qrcode": m_code})
-        dc_con.save_to_links_collection(
-            api_key=self.api_key,
-            database=self.database,
-            collection=f"{self.workspace_id}_document_collection_0",
+
+        self.dc_connect.save_to_links_collection(
             data={
                 "links": links,
                 "process_id": process_id,
@@ -528,12 +512,8 @@ class DataCubeHandleProcess:
                 "company_id ": company_id,
             }
         )
-        hhhres = dc_con.update_process_collection(
-            process_id=process_id,
-            api_key=self.api_key,
-            database=self.database,
-            collection=f"{self.workspace_id}_process_collection",
-            data={"process_steps": steps, "processing_state": "processing"}
+        hhhres = self.dc_connect.update_process_collection(
+            process_id=process_id, data={"process_steps": steps, "processing_state": "processing"}
         )
         # Nobody use this feature so I turn it off - @Edwin
         # Thread(
@@ -548,8 +528,10 @@ class DataCubeHandleProcess:
         #         }
         #     )
         # ).start()
+
         if len(public_links) > 10:
             links = links[:10]
+
         return {
             "process_id": process_id,
             "links": links,
@@ -595,81 +577,6 @@ class DataCubeHandleProcess:
                 else:
                     return True  # If the steptimeLimit key does not exist
 
-    # Verify Access Original
-    def verify_access(self, auth_role, user_name, user_type):
-        clone_id = None
-        doc_map = None
-        right = None
-        role = None
-        item_flag = None
-        field = None
-        collection = None
-        document = None
-        team_member_id = None
-        item_type = self.process["process_type"]
-        for step in self.process["process_steps"]:
-            if step.get("stepRole") == auth_role:
-                if user_type == "public":
-                    user_name = user_name[0]
-                if any(user_name in map for map in step.get("stepDocumentCloneMap")):
-                    for d_map in step["stepDocumentCloneMap"]:
-                        if d_map.get(user_name) is not None:
-                            clone_id = d_map.get(user_name)
-                    doc_map = step["stepDocumentMap"]
-                    right = step["stepRights"]
-                    role = step["stepRole"]
-        if clone_id:
-            if item_type == "document":
-                collection = "CloneReports"
-                document = "CloneReports"
-                field = "document_name"
-                team_member_id = "1212001"
-                document_object = single_query_clones_collection({"_id": clone_id})
-                metadata = single_query_clones_metadata_collection(
-                    {"collection_id": clone_id}
-                )
-                item_flag = document_object["document_state"]
-                document_name = document_object["document_name"]
-                metadata_id = metadata.get("_id")
-                editor_link = DataCubeHandleProcess.get_editor_link(
-                    {
-                        "product_name": "Workflow AI",
-                        "details": {
-                            "field": field,
-                            "cluster": "Documents",
-                            "database": "Documentation",
-                            "collection": collection,
-                            "document": document,
-                            "team_member_ID": team_member_id,
-                            "function_ID": "ABCDE",
-                            "command": "update",
-                            "flag": "signing",
-                            "_id": clone_id,
-                            "action": item_type,
-                            "authorized": user_name,
-                            "user_type": user_type,
-                            "document_map": doc_map,
-                            "document_right": right,
-                            "document_flag": item_flag,
-                            "role": role,
-                            "metadata_id": metadata_id,
-                            "process_id": self.process["_id"],
-                            "update_field": {
-                                "document_name": document_name,
-                                "content": "",
-                                "page": "",
-                            },
-                        },
-                    }
-                )
-                if user_type == "public" and editor_link:
-                    Thread(
-                        target=lambda: register_public_login(
-                            user_name[0], self.process["org_name"]
-                        )
-                    )
-                return editor_link
-
     # Verify_Access V3
     def verify_access_v3(
         self,
@@ -714,26 +621,21 @@ class DataCubeHandleProcess:
                 document = "CloneReports"
                 field = "document_name"
                 team_member_id = "1212001"
-                document_object = dc_con.get_clone_from_collection(
-                    api_key=self.api_key,
-                    database=self.database,
-                    collection=f"{self.workspace_id}_clone_collection_0",
-                    filters={"_id": clone_id}
+                # NOTE comfirm
+                document_object = self.dc_connect.get_clones_from_collection(
+                    filters={"_id": clone_id}, single=True
                 )["data"]
-                # TODO confirm
+                # NOTE confirm
                 if not document_object:
                     return
-                
-                metadata = dc_con.get_clone_from_collection(
-                    api_key=self.api_key,
-                    database=self.database,
-                    collection=f"{self.workspace_id}_clones_metadata_collection_0",
-                    filters={"collection_id": clone_id}
+
+                metadata = self.dc_connect.get_clones_metadata_from_collection(
+                    filters={"collection_id": clone_id}, single=True
                 )["data"]
-                # TODO confirm
+                # NOTE confirm
                 if not metadata:
                     return
-                
+
                 document_object = document_object[0]
                 metadata = metadata[0]
                 item_flag = document_object["document_state"]
@@ -744,23 +646,17 @@ class DataCubeHandleProcess:
                 document = "templatereports"
                 team_member_id = "22689044433"
                 field = "template_name"
-                template_object = dc_con.get_template_from_collection(
-                    api_key=self.api_key,
-                    database=self.database,
-                    collection=f"{self.workspace_id}_template_collection_0",
-                    filters={"_id": clone_id}
+                template_object = self.dc_connect.get_templates_from_collection(
+                    filters={"_id": clone_id}, single=True
                 )["data"]
-                # TODO confirm
+                # NOTE confirm
                 if not template_object:
                     return
-                
-                metadata = dc_con.get_template_from_collection(
-                    api_key=self.api_key,
-                    database=self.database,
-                    collection=f"{self.workspace_id}_template_metadata_collection_0",
-                    filters={"collection_id": clone_id}
+
+                metadata = self.dc_connect.get_templates_metadata_from_collection(
+                    filters={"collection_id": clone_id}, single=True
                 )["data"]
-                # TODO confirm
+                # NOTE confirm
                 if not metadata:
                     return
 
@@ -805,29 +701,25 @@ class DataCubeHandleProcess:
                 }
             )
             if user_type == "public" and editor_link:
-                # TODO confirm
+                # NOTE confirm
                 if isinstance(user_name, list):
-                   user_name = user_name[0] 
-                Thread(
-                    target=lambda: register_public_login(
-                        user_name, self.process["org_name"]
-                    )
-                )
+                    user_name = user_name[0]
+                Thread(target=lambda: register_public_login(user_name, self.process["org_name"]))
             return editor_link
 
 
 class DataCubeBackground:
-    def __init__(self, process, item_type, item_id, role, username, message):
+    def __init__(self, process, item_type, item_id, role, username, message, **kwargs):
         self.process = process
         self.item_type = item_type
         self.item_id = item_id
         self.role = role
         self.username = username
         self.message = message
+        self.kwargs = kwargs
+        self.dc_connect: DatacubeConnection = kwargs.get("dc_connect")
 
-    def request_task_helper(
-        self, step: dict, document_id: str, parent_id: str, process_id: str
-    ):
+    def request_task_helper(self, step: dict, document_id: str, parent_id: str, process_id: str):
         """_summary_
 
         Args:
@@ -844,13 +736,15 @@ class DataCubeBackground:
         ]
         if step.get("stepActivityType") == "team_task":
             # TEAM_TASK: create one single clone and append it to each user in the step
-            clone_id = cloning_clone(document_id, users, parent_id, process_id)
+            clone_id = self.dc_connect.cloning_clone(document_id, users, parent_id, process_id)
             for user in users:
                 step.get("stepDocumentCloneMap").append({user["member"]: clone_id})
         else:
             # INDIVIDUAL_TASK: create individual clones for each user and append the clone ids to each user
             for user in users:
-                clone_id = cloning_clone(document_id, [user], parent_id, process_id)
+                clone_id = self.dc_connect.cloning_clone(
+                    document_id, [user], parent_id, process_id
+                )
                 step.get("stepDocumentCloneMap").append({user["member"]: clone_id})
 
     def assign_task_helper(self, step: dict, process_id: str, process_steps: list):
@@ -871,9 +765,9 @@ class DataCubeBackground:
                     my_key = item[key]
                     if (
                         "accessed" in item
-                        and single_query_clones_collection({"_id": my_key}).get(
-                            "document_state"
-                        )
+                        and self.dc_connect.get_clones_from_collection(
+                            {"_id": my_key}, single=True
+                        )["data"][0].get("document_state")
                         == "finalized"
                     ):
                         step1_documents.append(my_key)
@@ -885,55 +779,55 @@ class DataCubeBackground:
             ]
             if step.get("stepActivityType") == "team_task":
                 for document in step1_documents:
-                    authorize(document, assign_users, process_id, "document")
+                    self.dc_connect.authorize(document, assign_users, process_id, "document")
                     for user in assign_users:
-                        step.get("stepDocumentCloneMap").append(
-                            {user["member"]: document}
-                        )
+                        step.get("stepDocumentCloneMap").append({user["member"]: document})
                         # Change auth viewers in the metadata as well
-                        metadata_id = get_metadata_id(document, "clone")
-                        authorize_metadata(metadata_id, user, process_id, "document")
+                        metadata_id = self.dc_connect.get_metadata_id(document, "clone")
+                        self.dc_connect.authorize_metadata(
+                            metadata_id, user, process_id, "document"
+                        )
             else:
                 for document in step1_documents:
                     for user in step.get("stepTeamMembers"):
-                        authorize(
+                        self.dc_connect.authorize(
                             document,
                             user,
                             process_id,
                             "document",
                         )
-                        step.get("stepDocumentCloneMap").append(
-                            {user["member"]: document}
-                        )
+                        step.get("stepDocumentCloneMap").append({user["member"]: document})
                         # Change auth viewers in the metadata as well
-                        metadata_id = get_metadata_id(document, "clone")
-                        authorize_metadata(metadata_id, user, process_id, "document")
+                        metadata_id = self.dc_connect.get_metadata_id(document, "clone")
+                        self.dc_connect.authorize_metadata(
+                            metadata_id, user, process_id, "document"
+                        )
                     for user in step.get("stepPublicMembers"):
-                        authorize(
+                        self.dc_connect.authorize(
                             document,
                             user,
                             process_id,
                             "document",
                         )
-                        step.get("stepDocumentCloneMap").append(
-                            {user["member"]: document}
-                        )
+                        step.get("stepDocumentCloneMap").append({user["member"]: document})
                         # Change auth viewers in the metadata as well
-                        metadata_id = get_metadata_id(document, "clone")
-                        authorize_metadata(metadata_id, user, process_id, "document")
+                        metadata_id = self.dc_connect.get_metadata_id(document, "clone")
+                        self.dc_connect.authorize_metadata(
+                            metadata_id, user, process_id, "document"
+                        )
                     for user in step.get("stepUserMembers"):
-                        authorize(
+                        self.dc_connect.authorize(
                             document,
                             user,
                             process_id,
                             "document",
                         )
-                        step.get("stepDocumentCloneMap").append(
-                            {user["member"]: document}
-                        )
+                        step.get("stepDocumentCloneMap").append({user["member"]: document})
                         # Change auth viewers in the metadata as well
-                        metadata_id = get_metadata_id(document, "clone")
-                        authorize_metadata(metadata_id, user, process_id, "document")
+                        metadata_id = self.dc_connect.get_metadata_id(document, "clone")
+                        self.dc_connect.authorize_metadata(
+                            metadata_id, user, process_id, "document"
+                        )
 
     def register_user_access(process_steps, authorized_role, user):
         """Once someone has made changes to their docs"""
@@ -967,7 +861,7 @@ class DataCubeBackground:
                             for k, v in document_map.items()
                             if isinstance(v, str)
                         ]
-                        user_in_viewers = check_user_in_auth_viewers(
+                        user_in_viewers = self.dc_connect.check_user_in_auth_viewers(
                             user=self.username, item=document_id, item_type="document"
                         )
                         if not user_in_viewers:
@@ -983,41 +877,35 @@ class DataCubeBackground:
                                     internal_process = DataCubeProcess(
                                         workflows=internal_process_workflows,
                                         created_by=self.username,
-                                        portfolio=step["stepTeamMembers"][0][
-                                            "portfolio"
-                                        ],
+                                        portfolio=step["stepTeamMembers"][0]["portfolio"],
                                         company_id=self.process["company_id"],
                                         process_type="internal",
                                         org_name=self.process["org_name"],
-                                        workflow_ids=self.process[
-                                            "workflow_construct_ids"
-                                        ],
+                                        workflow_ids=self.process["workflow_construct_ids"],
                                         parent_id=document_id,
                                         data_type=self.process["data_type"],
                                         process_title=f'{self.process["process_title"]} - {created_by} - Internal Process',
                                         parent_process=self.process["_id"],
+                                        dc_connect=self.dc_connect,
                                     )
-                                    internal_process_res = (
-                                        internal_process.normal_process(
-                                            self.process["processing_action"]
-                                        )
+                                    internal_process_res = internal_process.normal_process(
+                                        self.process["processing_action"]
                                     )
                                     internal_process_details = DataCubeHandleProcess(
-                                        internal_process_res
+                                        internal_process_res, dc_connect=self.dc_connect
                                     ).start()
 
-                                    step["internal_process_details"] = (
-                                        internal_process_details
-                                    )
+                                    step["internal_process_details"] = internal_process_details
                                     break
                                 else:
-                                    internal_process_id = step.get(
-                                        "internal_process_details"
-                                    ).get("process_id")
+                                    internal_process_id = step.get("internal_process_details").get(
+                                        "process_id"
+                                    )
                                     internal_process_state = (
-                                        single_query_process_collection(
-                                            {"_id": internal_process_id}
-                                        ).get("processing_state")
+                                        self.dc_connect.get_processes_from_collection(
+                                            {"_id": internal_process_id},
+                                            single=True,
+                                        )["data"][0].get("processing_state")
                                     )
                                     if internal_process_state != "finalized":
                                         raise Exception(
@@ -1027,40 +915,29 @@ class DataCubeBackground:
                                         pass
                             for document_map in step.get("stepDocumentCloneMap"):
                                 for k, v in list(document_map.items()):
-                                    if (
-                                        isinstance(v, str)
-                                        and single_query_clones_collection(
-                                            {"_id": v}
-                                        ).get("document_state")
-                                        == "processing"
-                                    ):
-                                        continue
-                                    elif (
-                                        isinstance(v, str)
-                                        and single_query_clones_collection(
-                                            {"_id": v}
-                                        ).get("document_state")
-                                        == "finalized"
-                                        and k
-                                        in [
+                                    if isinstance(v, str):
+                                        clone_data = self.dc_connect.get_clones_from_collection(
+                                            {"_id": v}, single=True
+                                        )["data"][0]
+                                        if clone_data.get("document_state") == "processing":
+                                            continue
+
+                                        elif clone_data.get(
+                                            "document_state"
+                                        ) == "finalized" and k in [
                                             mem["member"]
-                                            for mem in (
-                                                single_query_clones_collection(
-                                                    {"_id": v}
-                                                ).get("auth_viewers", [])
+                                            for mem in (clone_data.get("auth_viewers", []))
+                                        ]:
+                                            register_single_user_access(
+                                                step, step.get("stepRole"), k
                                             )
-                                        ]
-                                    ):
-                                        register_single_user_access(
-                                            step, step.get("stepRole"), k
-                                        )
-                                        finalized.append(v)
+                                            finalized.append(v)
                                     else:
                                         continue
                         else:
                             if (
                                 document_id not in current_doc_map
-                            ) and not check_step_items_state(current_doc_map):
+                            ) and not self.dc_connect.check_step_items_state(current_doc_map):
                                 if step.get("stepTaskType") == "request_for_task":
                                     self.request_task_helper(
                                         step=step,
@@ -1091,14 +968,16 @@ class DataCubeBackground:
 
                         # update_process(process_id, steps, processing_state)
                 # Check that all documents are finalized
-                all_accessed_true = check_all_finalized_true(steps, process_type)
+                all_accessed_true = self.dc_connect.check_all_finalized_true(steps, process_type)
                 if all_accessed_true:
-                    update_process(process_id, steps, "finalized")
+                    update_data = {"process_steps": steps, "processing_state": "finalized"}
                 else:
-                    update_process(process_id, steps, "processing")
+                    update_data = {"process_steps": steps, "processing_state": "processing"}
+
+                self.dc_connect.update_process_collection(process_id, update_data)
         except Exception as e:
             print("----exception----", e)
-            finalize_item(self.item_id, "processing", self.item_type, self.message)
+            self.dc_connect.finalize_item(self.item_id, "processing", self.item_type, self.message)
             return
 
     def template_processing(self):
@@ -1120,7 +999,7 @@ class DataCubeBackground:
                             for k, v in template_map.items()
                             if isinstance(v, str)
                         ]
-                        user_in_viewers = check_user_in_auth_viewers(
+                        user_in_viewers = self.dc_connect.check_user_in_auth_viewers(
                             self.username, template_id, "template"
                         )
                         if not user_in_viewers:
@@ -1128,33 +1007,31 @@ class DataCubeBackground:
                         elif template_id in current_temp_map:
                             for template_map in step.get("stepDocumentCloneMap"):
                                 for k, v in list(template_map.items()):
-                                    if (
-                                        isinstance(v, str)
-                                        and single_query_template_collection(
-                                            {"_id": v}
-                                        ).get("template_state")
-                                        == "saved"
-                                        and k
-                                        in [
-                                            mem["member"]
-                                            for mem in (
-                                                single_query_template_collection(
-                                                    {"_id": v}
-                                                ).get("auth_viewers", [])[0]
-                                            )
-                                        ]
-                                    ):
-                                        register_single_user_access(
-                                            step, step.get("stepRole"), k
+                                    if isinstance(v, str):
+                                        template_data = (
+                                            self.dc_connect.get_templates_from_collection(
+                                                {"_id": v}, single=True
+                                            )["data"][0]
                                         )
-                                        finalized.append(v)
+
+                                        if template_data.get(
+                                            "template_state"
+                                        ) == "saved" and k in [
+                                            mem["member"]
+                                            for mem in (template_data.get("auth_viewers", [])[0])
+                                        ]:
+
+                                            register_single_user_access(
+                                                step, step.get("stepRole"), k
+                                            )
+                                            finalized.append(v)
                                     else:
                                         continue
 
                         else:
                             if (
                                 template_id not in current_temp_map
-                            ) and not check_step_items_state(current_temp_map):
+                            ) and not self.dc_connect.check_step_items_state(current_temp_map):
                                 if step.get("stepTaskType") == "assign_task":
                                     step1_templates = []
                                     for i in range(1, len(steps)):
@@ -1169,9 +1046,13 @@ class DataCubeBackground:
 
                                                 if (
                                                     "accessed" in item
-                                                    and single_query_template_collection(
-                                                        {"_id": my_key}
-                                                    ).get(
+                                                    and self.dc_connect.get_templates_from_collection(
+                                                        {"_id": my_key}, single=True
+                                                    )[
+                                                        "data"
+                                                    ][
+                                                        0
+                                                    ].get(
                                                         "template_state"
                                                     )
                                                     == "saved"
@@ -1180,7 +1061,7 @@ class DataCubeBackground:
 
                                         for template in step1_templates:
                                             for user in step.get("stepTeamMembers"):
-                                                authorize(
+                                                self.dc_connect.authorize(
                                                     template,
                                                     user,
                                                     process_id,
@@ -1190,18 +1071,18 @@ class DataCubeBackground:
                                                     {user["member"]: template}
                                                 )
                                                 # Change auth viewers in the metadata as well
-                                                metadata_id = get_metadata_id(
+                                                metadata_id = self.dc_connect.get_metadata_id(
                                                     template, process_type
                                                 )
 
-                                                authorize_metadata(
+                                                self.dc_connect.authorize_metadata(
                                                     metadata_id,
                                                     user,
                                                     process_id,
                                                     process_type,
                                                 )
                                             for user in step.get("stepPublicMembers"):
-                                                authorize(
+                                                self.dc_connect.authorize(
                                                     template,
                                                     user,
                                                     process_id,
@@ -1211,17 +1092,17 @@ class DataCubeBackground:
                                                     {user["member"]: template}
                                                 )
                                                 # Change auth viewers in the metadata as well
-                                                metadata_id = get_metadata_id(
+                                                metadata_id = self.dc_connect.get_metadata_id(
                                                     template, process_type
                                                 )
-                                                authorize_metadata(
+                                                self.dc_connect.authorize_metadata(
                                                     metadata_id,
                                                     user,
                                                     process_id,
                                                     process_type,
                                                 )
                                             for user in step.get("stepUserMembers"):
-                                                authorize(
+                                                self.dc_connect.authorize(
                                                     template,
                                                     user,
                                                     process_id,
@@ -1231,10 +1112,10 @@ class DataCubeBackground:
                                                     {user["member"]: template}
                                                 )
                                                 # Change auth viewers in the metadata as well
-                                                metadata_id = get_metadata_id(
+                                                metadata_id = self.dc_connect.get_metadata_id(
                                                     template, process_type
                                                 )
-                                                authorize_metadata(
+                                                self.dc_connect.authorize_metadata(
                                                     metadata_id,
                                                     user,
                                                     process_id,
@@ -1245,9 +1126,7 @@ class DataCubeBackground:
                             step1_templates = []
                             for i in range(1, len((steps))):
                                 current_idx = i
-                                prev_templates = steps[current_idx - 1].get(
-                                    "stepDocumentCloneMap"
-                                )
+                                prev_templates = steps[current_idx - 1].get("stepDocumentCloneMap")
                                 if prev_templates:
                                     for item in prev_templates:
                                         key = next(iter(item))
@@ -1255,64 +1134,71 @@ class DataCubeBackground:
 
                                         if (
                                             "accessed" in item
-                                            and single_query_template_collection(
-                                                {"_id": my_key}
-                                            ).get("template_state")
+                                            and self.dc_connect.get_templates_from_collection(
+                                                {"_id": my_key}, single=True
+                                            )["data"][0].get("template_state")
                                             == "saved"
                                         ):
                                             step1_templates.append(my_key)
                                 for template in step1_templates:
                                     for user in step.get("stepTeamMembers"):
-                                        authorize(
+                                        self.dc_connect.authorize(
                                             template, user, process_id, process_type
                                         )
                                         step.get("stepDocumentCloneMap").append(
                                             {user["member"]: template}
                                         )
                                         # Change auth viewers in the metadata as well
-                                        metadata_id = get_metadata_id(
+                                        metadata_id = self.dc_connect.get_metadata_id(
                                             template, process_type
                                         )
-                                        authorize_metadata(
+                                        self.dc_connect.authorize_metadata(
                                             metadata_id, user, process_id, process_type
                                         )
                                     for user in step.get("stepPublicMembers"):
-                                        authorize(
+                                        self.dc_connect.authorize(
                                             template, user, process_id, process_type
                                         )
                                         step.get("stepDocumentCloneMap").append(
                                             {user["member"]: template}
                                         )
                                         # Change auth viewers in the metadata as well
-                                        metadata_id = get_metadata_id(
+                                        metadata_id = self.dc_connect.get_metadata_id(
                                             template, process_type
                                         )
-                                        authorize_metadata(
+                                        self.dc_connect.authorize_metadata(
                                             metadata_id, user, process_id, process_type
                                         )
                                     for user in step.get("stepUserMembers"):
-                                        authorize(
+                                        self.dc_connect.authorize(
                                             template, user, process_id, process_type
                                         )
                                         step.get("stepDocumentCloneMap").append(
                                             {user["member"]: template}
                                         )
                                         # Change auth viewers in the metadata as well
-                                        metadata_id = get_metadata_id(
+                                        metadata_id = self.dc_connect.get_metadata_id(
                                             template, process_type
                                         )
-                                        authorize_metadata(
+                                        self.dc_connect.authorize_metadata(
                                             metadata_id, user, process_id, process_type
                                         )
+                        update_data = {
+                            "process_steps": steps,
+                            "processing_state": processing_state,
+                        }
+                        self.dc_connect.update_process_collection(process_id, update_data)
 
-                        update_process(process_id, steps, processing_state)
                 # Check that all documents are finalized
-                all_accessed_true = check_all_finalized_true(steps, process_type)
+                all_accessed_true = self.dc_connect.check_all_finalized_true(steps, process_type)
                 if all_accessed_true == True:
-                    update_process(process_id, steps, "finalized")
+                    update_data = {"process_steps": steps, "processing_state": "finalized"}
                 else:
-                    update_process(process_id, steps, "processing")
+                    update_data = {"process_steps": steps, "processing_state": "processing"}
+
+                self.dc_connect.update_process_collection(process_id, update_data)
+
         except Exception as e:
             print(e)
-            finalize_item(self.item_id, "saved", self.item_type, self.message)
+            self.dc_connect.finalize_item(self.item_id, "saved", self.item_type, self.message)
             return
