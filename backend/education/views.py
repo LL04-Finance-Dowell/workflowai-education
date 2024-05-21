@@ -343,6 +343,10 @@ class NewTemplate(APIView):
                 operation="insert",
                 data=template_data,
             )
+            # FIXME
+            if not res["success"]:
+                return CustomResponse(False, res.get("message", "Unable to post to collection"), 400)
+            
             if res["success"]:
                 collection_id = res["data"]["inserted_id"]
                 res_metadata = save_to_metadata(
