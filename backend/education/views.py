@@ -645,7 +645,12 @@ class NewDocument(APIView):
         if not template["data"]:
             return CustomResponse(False, "No template found", None, status.HTTP_404_NOT_FOUND)
 
-        isapproved = template["data"][0].get("approval")
+        if not template["data"]:
+            return CustomResponse(
+                False, "No template found", None, status.HTTP_404_NOT_FOUND
+            )
+        
+        isapproved = template["data"][0]["approval"]
 
         if not isapproved:
             return CustomResponse(
