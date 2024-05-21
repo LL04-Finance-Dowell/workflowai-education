@@ -3,8 +3,8 @@ import re
 from datetime import UTC, datetime
 
 import requests
-from app.constants import EDITOR_API
 
+from app.constants import EDITOR_API
 from education.constants import DB_API, DB_API_CRUD
 from education.helpers import generate_unique_collection_name
 
@@ -35,24 +35,6 @@ def create_db(options):
 
 class DatacubeConnection:
 
-    @property
-    def collection_names(self):
-        return {
-            "workflow": f"{self.workspace_id}_workflow_collection_0",
-            "process": f"{self.workspace_id}_process_collection",
-            "document": f"{self.workspace_id}_document_collection_0",
-            "document_metadata": f"{self.workspace_id}_documents_metadata_collection_0",
-            "clone": f"{self.workspace_id}_clone_collection_0",
-            "clone_metadata": f"{self.workspace_id}_clones_metadata_collection_0",
-            "template": f"{self.workspace_id}_template_collection_0",
-            "template_metadata": f"{self.workspace_id}_templates_metadata_collection_0",
-            # NOTE confirm qrcode collection
-            "qrcode": f"{self.workspace_id}_document_collection_0",
-            # NOTE confirm links collection
-            "link": f"{self.workspace_id}_document_collection_0",
-            "folder": f"{self.workspace_id}_folder_collection_0",
-        }
-
     def __init__(self, api_key: str, workspace_id: str, database: str = None) -> None:
         """
         api_key (str): the API key
@@ -62,6 +44,30 @@ class DatacubeConnection:
         self.api_key = api_key
         self.workspace_id = workspace_id
         self.database = database
+        self.collection_names = self.normal_collection_names | self.metadata_collections
+
+    @property
+    def metadata_collections(self):
+        return {
+            "document_metadata": f"{self.workspace_id}_documents_metadata_collection_0",
+            "clone_metadata": f"{self.workspace_id}_clones_metadata_collection_0",
+            "template_metadata": f"{self.workspace_id}_templates_metadata_collection_0",
+        }
+
+    @property
+    def normal_collection_names(self):
+        return {
+            "workflow": f"{self.workspace_id}_workflow_collection_0",
+            "process": f"{self.workspace_id}_process_collection",
+            "document": f"{self.workspace_id}_document_collection_0",
+            "clone": f"{self.workspace_id}_clone_collection_0",
+            "template": f"{self.workspace_id}_template_collection_0",
+            # NOTE confirm qrcode collection
+            "qrcode": f"{self.workspace_id}_document_collection_0",
+            # NOTE confirm links collection
+            "link": f"{self.workspace_id}_document_collection_0",
+            "folder": f"{self.workspace_id}_folder_collection_0",
+        }
 
     def add_collection_to_database(self, collections: str, num_of_collections=1, **kwargs):
         """adds collection(s) to a database

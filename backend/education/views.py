@@ -97,21 +97,10 @@ class DatabaseServices(APIView):
         for types in database_type:
             if types == "META_DATA":
                 database = f"{workspace_id}_DB_0"
-                collection_names = [
-                    f"{workspace_id}_templates_metadata_collection_0",
-                    f"{workspace_id}_documents_metadata_collection_0",
-                    f"{workspace_id}_clones_metadata_collection_0",
-                ]
+                collection_names = list(dc_connect.metadata_collections.values())
             elif types == "DATA":
                 database = f"{workspace_id}_DB_0"
-                collection_names = [
-                    f"{workspace_id}_template_collection_0",
-                    f"{workspace_id}_document_collection_0",
-                    f"{workspace_id}_process_collection",
-                    f"{workspace_id}_clone_collection_0",
-                    f"{workspace_id}_workflow_collection_0",
-                    f"{workspace_id}_folder_collection_0",
-                ]
+                collection_names = list(dc_connect.normal_collection_names.values())
 
             dc_connect = DatacubeConnection(
                 api_key=api_key, workspace_id=workspace_id, database=database
@@ -151,12 +140,10 @@ class DatabaseServices(APIView):
 
         workspace_id = request.GET.get("workspace_id")
         meta_data_database = f"{workspace_id}_DB_0"
-        # #print(meta_data_database)
         dc_connect = DatacubeConnection(
             api_key=api_key, workspace_id=workspace_id, database=meta_data_database
         )
         response_meta_data = dc_connect.datacube_collection_retrieval()
-        # #print(response_meta_data)
 
         if not response_meta_data["success"]:
             return CustomResponse(
@@ -166,11 +153,7 @@ class DatabaseServices(APIView):
                 status.HTTP_501_NOT_IMPLEMENTED,
             )
 
-        list_of_meta_data_collection = [
-            f"{workspace_id}_templates_metadata_collection_0",
-            f"{workspace_id}_documents_metadata_collection_0",
-            f"{workspace_id}_clones_metadata_collection_0",
-        ]
+        list_of_meta_data_collection = list(dc_connect.metadata_collections.values())
 
         missing_collections = []
         for collection in list_of_meta_data_collection:
@@ -206,24 +189,14 @@ class DatabaseServices(APIView):
 
         workspace_id = request.GET.get("workspace_id")
 
-        datas = [
-            f"{workspace_id}_process_collection",
-            f"{workspace_id}_document_collection_0",
-            f"{workspace_id}_workflow_collection_0",
-            f"{workspace_id}_template_collection_0",
-            f"{workspace_id}_clone_collection_0",
-            f"{workspace_id}_folder_collection_0",
-        ]
-
         data_database = f"{workspace_id}_DB_0"
         ready_collection = []
 
         dc_connect = DatacubeConnection(
             api_key=api_key, workspace_id=workspace_id, database=data_database
         )
+        datas = list(dc_connect.normal_collection_names.values())
         response_data = dc_connect.datacube_collection_retrieval()
-        # datas=response_data['data'][0]
-        # print(datas)
 
         if response_data["success"]:
             ready_collection.append(response_data["data"][0])
