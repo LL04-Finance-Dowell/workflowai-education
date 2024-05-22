@@ -83,6 +83,7 @@ class DatabaseServices(APIView):
                 return CustomResponse(
                     False,
                     f"unable to create collection {coll}",
+                    None,
                     status.HTTP_501_NOT_IMPLEMENTED,
                 )
 
