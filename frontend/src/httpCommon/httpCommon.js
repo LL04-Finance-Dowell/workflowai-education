@@ -37,12 +37,14 @@ export const dowellLogoutUrl =
   window.location.origin +
   "/100018-dowellWorkflowAi-testing/%23";
 
-export const httpWorkflow = axios.create({
-  baseURL: api_url_v2 + "workflows",
-});
+// export const httpWorkflow = axios.create({
+//   baseURL: api_url_v2 + "workflows",
+// });
 
-export const testTemplateApi = "http://localhost:8000/v3/education/templates/";
-export const testDocApi = "http://localhost:8000/v3/education/documents/";
+
+export const testTemplateApi = "http://localhost:8001/v3/education/templates/";
+export const testDocApi = "http://localhost:8001/v3/education/documents/";
+export const testWorkflowApi = "http://localhost:8001/v3/education/workflows/";
 
 // export const httpApiUrl = axios.create({ baseURL: api_url });
 
@@ -62,6 +64,10 @@ export const httpAuth = axios.create({ baseURL: auth_url });
 export const httpAuthOther = axios.create({ baseURL: auth_url_other });
 
 export const httpProcess = axios.create({ baseURL: api_url_v2 + "processes" });
+
+export const httpWorkflow = axios.create({
+  baseURL: testWorkflowApi
+});
 
 export const newHttpProcess = axios.create({
   baseURL: new_process_api_url + "process",
