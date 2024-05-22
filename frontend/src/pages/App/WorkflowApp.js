@@ -1,42 +1,41 @@
-import styles from './workflowApp.module.css';
-import CustomerSupport from '../../components/landingPage/customerSupport/CustomerSupport';
-import WorkflowLayout from '../../layouts/WorkflowLayout/WorkflowLayout';
-import { v4 as uuidv4 } from 'uuid';
-import SectionBox from '../../components/manageFiles/sectionBox/SectionBox';
-import HandleTasks from '../../components/landingPage/handleTasks/HandleTasks';
-import FlipMenu from '../../components/flipMenu/FlipMenu';
+import styles from "./workflowApp.module.css";
+import CustomerSupport from "../../components/landingPage/customerSupport/CustomerSupport";
+import WorkflowLayout from "../../layouts/WorkflowLayout/WorkflowLayout";
+import { v4 as uuidv4 } from "uuid";
+import SectionBox from "../../components/manageFiles/sectionBox/SectionBox";
+import HandleTasks from "../../components/landingPage/handleTasks/HandleTasks";
+import FlipMenu from "../../components/flipMenu/FlipMenu";
 // import DocumnetCard from '../../components/hoverCard/documentCard/DocumentCard';
-import TemplateCard from '../../components/hoverCard/templateCard/TemplateCard';
-import WorkflowCard from '../../components/hoverCard/workflowCard/WorkflowCard';
-import { useDispatch, useSelector } from 'react-redux';
-import { useEffect, useState } from 'react';
-import Spinner from '../../components/spinner/Spinner';
-import ProgressBar from '../../components/progressBar/ProgressBar';
-import { useLocation } from 'react-router-dom';
+import TemplateCard from "../../components/hoverCard/templateCard/TemplateCard";
+import WorkflowCard from "../../components/hoverCard/workflowCard/WorkflowCard";
+import { useDispatch, useSelector } from "react-redux";
+import { useEffect, useState } from "react";
+import Spinner from "../../components/spinner/Spinner";
+import ProgressBar from "../../components/progressBar/ProgressBar";
+import { useLocation } from "react-router-dom";
 import {
   setNotificationFinalStatus,
   setNotificationsForUser,
   setNotificationsLoaded,
   setNotificationsLoading,
-} from '../../features/notifications/notificationSlice';
-import Iframe from '../../components/iFrame/Iframe';
-import Skeleton from '../../components/skeloton/Skeleton';
+} from "../../features/notifications/notificationSlice";
+import Iframe from "../../components/iFrame/Iframe";
+import Skeleton from "../../components/skeloton/Skeleton";
 
-import { useAppContext } from '../../contexts/AppContext';
-import { getFavoritesForUser } from '../../services/favoritesServices';
-import React from 'react';
-import DocumentCard from '../../components/hoverCard/documentCard/DocumentCard';
-import { useTranslation } from 'react-i18next';
-import { productName } from '../../utils/helpers';
-import { DocumentServices } from '../../services/documentServices';
-import ApiKeyFailureModal from '../../components/apiKeyFailureModal/ApiKeyFailureModal';
+import { useAppContext } from "../../contexts/AppContext";
+import { getFavoritesForUser } from "../../services/favoritesServices";
+import React from "react";
+import DocumentCard from "../../components/hoverCard/documentCard/DocumentCard";
+import { useTranslation } from "react-i18next";
+import { productName } from "../../utils/helpers";
+import { DocumentServices } from "../../services/documentServices";
+import ApiKeyFailureModal from "../../components/apiKeyFailureModal/ApiKeyFailureModal";
 
 const WorkflowApp = () => {
   const { userDetail } = useSelector((state) => state.auth);
-  const {
-    ShowProfileSpinner,
-    showApiKeyFetchFailureModal,
-  } = useSelector((state) => state.app);
+  const { ShowProfileSpinner, showApiKeyFetchFailureModal } = useSelector(
+    (state) => state.app
+  );
 
   const {
     notificationsLoading,
@@ -73,19 +72,19 @@ const WorkflowApp = () => {
   const [uncompletedTasks, setUncompletedTasks] = useState([
     {
       id: uuidv4(),
-      parent: 'documents',
+      parent: "documents",
       children: [],
       isOpen: false,
     },
     {
       id: uuidv4(),
-      parent: 'templates',
+      parent: "templates",
       children: [],
       isOpen: false,
     },
     {
       id: uuidv4(),
-      parent: 'workflows',
+      parent: "workflows",
       children: [],
       isOpen: false,
     },
@@ -93,26 +92,26 @@ const WorkflowApp = () => {
   const [completedTasks, setCompletedTasks] = useState([
     {
       id: uuidv4(),
-      parent: 'documents',
+      parent: "documents",
       children: [],
       isOpen: false,
     },
     {
       id: uuidv4(),
-      parent: 'templates',
+      parent: "templates",
       children: [],
       isOpen: false,
     },
     {
       id: uuidv4(),
-      parent: 'workflows',
+      parent: "workflows",
       children: [],
       isOpen: false,
     },
   ]);
 
   ///choose notification
-  const [whichNotification, setWhichNotification] = useState("")
+  const [whichNotification, setWhichNotification] = useState("");
 
   useEffect(() => {
     if (!userDetail || userDetail.msg || userDetail.message) return;
@@ -134,6 +133,7 @@ const WorkflowApp = () => {
           )?.portfolio_name
         : userDetail?.portfolio_info[0]?.portfolio_name,
     ];
+
     if (!notificationsLoaded && userName && portfolioName) {
       dispatch(setNotificationsLoading(true));
 
@@ -159,7 +159,7 @@ const WorkflowApp = () => {
                     Array.isArray(document.auth_viewers) &&
                     // new format
                     ((document.auth_viewers.every(
-                      (item) => typeof item === 'object'
+                      (item) => typeof item === "object"
                     ) &&
                       document.auth_viewers
                         .map((viewer) => viewer.member)
@@ -188,11 +188,11 @@ const WorkflowApp = () => {
             (notification) => {
               const data = documentsToSign.map((dataObj) => {
                 let copyOfDataObj = { ...dataObj };
-                copyOfDataObj.type = 'sign-document';
+                copyOfDataObj.type = "sign-document";
                 return copyOfDataObj;
               });
               const copyOfNotification = { ...notification };
-              if (copyOfNotification.title === 'documents') {
+              if (copyOfNotification.title === "documents") {
                 copyOfNotification.items = data;
                 return copyOfNotification;
               }
@@ -251,7 +251,7 @@ const WorkflowApp = () => {
 
     if (elementToScrollTo) {
       elementToScrollTo.scrollIntoView({
-        behavior: 'smooth',
+        behavior: "smooth",
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -260,7 +260,7 @@ const WorkflowApp = () => {
   useEffect(() => {
     if (location.hash) {
       // // console.log("the location is ", location.hash)
-      setWhichNotification(location.hash)
+      setWhichNotification(location.hash);
       setVisible(true);
     } else {
       setVisible(false);
@@ -270,11 +270,11 @@ const WorkflowApp = () => {
   useEffect(() => {
     if (allDocuments && Array.isArray(allDocuments)) {
       const completedDocs = allDocuments.filter(
-        (doc) => doc.document_state === 'finalized'
+        (doc) => doc.document_state === "finalized"
       );
 
       const unCompletedDocs = allDocuments.filter(
-        (doc) => doc.document_state === 'processing'
+        (doc) => doc.document_state === "processing"
       );
 
       setDocs({
@@ -295,7 +295,7 @@ const WorkflowApp = () => {
     if (docs) {
       setUncompletedTasks(
         uncompletedTasks.map((task) =>
-          task.parent === 'documents'
+          task.parent === "documents"
             ? { ...task, children: [...docs.unCompleted] }
             : task
         )
@@ -303,7 +303,7 @@ const WorkflowApp = () => {
 
       setCompletedTasks(
         completedTasks.map((task) =>
-          task.parent === 'documents'
+          task.parent === "documents"
             ? { ...task, children: [...docs.completed] }
             : task
         )
@@ -319,20 +319,20 @@ const WorkflowApp = () => {
       {ShowProfileSpinner && (
         <div
           style={{
-            background: 'rgba(0, 0, 0, 0.12)',
-            backdropFilter: 'blur(5px)',
-            animation: 'fadeIn 0.2s ease-in-out',
+            background: "rgba(0, 0, 0, 0.12)",
+            backdropFilter: "blur(5px)",
+            animation: "fadeIn 0.2s ease-in-out",
             zIndex: 99999,
-            overflow: 'hidden',
-            display: 'flex',
-            height: '100%',
-            width: '100%',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: '#000',
-            position: 'fixed',
-            top: '0%',
-            left: '0%',
+            overflow: "hidden",
+            display: "flex",
+            height: "100%",
+            width: "100%",
+            alignItems: "center",
+            justifyContent: "center",
+            color: "#000",
+            position: "fixed",
+            top: "0%",
+            left: "0%",
           }}
         >
           <Spinner />
@@ -341,20 +341,20 @@ const WorkflowApp = () => {
       {showApiKeyFetchFailureModal && (
         <div
           style={{
-            background: 'rgba(0, 0, 0, 0.12)',
-            backdropFilter: 'blur(5px)',
-            animation: 'fadeIn 0.2s ease-in-out',
+            background: "rgba(0, 0, 0, 0.12)",
+            backdropFilter: "blur(5px)",
+            animation: "fadeIn 0.2s ease-in-out",
             zIndex: 99999,
-            overflow: 'hidden',
-            display: 'flex',
-            height: '100%',
-            width: '100%',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: '#000',
-            position: 'fixed',
-            top: '0%',
-            left: '0%',
+            overflow: "hidden",
+            display: "flex",
+            height: "100%",
+            width: "100%",
+            alignItems: "center",
+            justifyContent: "center",
+            color: "#000",
+            position: "fixed",
+            top: "0%",
+            left: "0%",
           }}
         >
           <ApiKeyFailureModal />
@@ -366,92 +366,122 @@ const WorkflowApp = () => {
         <FlipMenu />
         {isVisible && (
           <div className={styles.section__container}>
-            {notificationsLoading ? (
-              <div>
-                <Spinner />
-                <div style={{ margin: '0 auto 0 1.5%', textAlign: 'center' }}>
-                  <p>Notifications loading...</p>
-                  <ProgressBar
-                    durationInMS={8000}
-                    finalWidth={notificationFinalStatus}
-                    style={{ height: '2rem' }}
-                  />
+            {
+              notificationsLoading ? (
+                <div>
+                  <Spinner />
+                  <div style={{ margin: "0 auto 0 1.5%", textAlign: "center" }}>
+                    <p>Notifications loading...</p>
+                    <ProgressBar
+                      durationInMS={8000}
+                      finalWidth={notificationFinalStatus}
+                      style={{ height: "2rem" }}
+                    />
+                  </div>
                 </div>
-              </div>
-            ) : (
-                whichNotification == "#documents" ? 
-                 <div key={notificationsForUser[0]._id} id={notificationsForUser[0].title}>
+              ) : whichNotification == "#documents" ? (
+                <div
+                  key={notificationsForUser[0]._id}
+                  id={notificationsForUser[0].title}
+                >
                   <SectionBox
                     Card={notificationsForUser[0].card}
                     title={`notifications - ${
-                      notificationsForUser[0].title.toLowerCase().includes('documents') &&
-                      customDocName
+                      notificationsForUser[0].title
+                        .toLowerCase()
+                        .includes("documents") && customDocName
                         ? customDocName
-                        : notificationsForUser[0].title.toLowerCase().includes('templates') &&
-                          customTempName
+                        : notificationsForUser[0].title
+                            .toLowerCase()
+                            .includes("templates") && customTempName
                         ? customTempName
-                        : notificationsForUser[0].title.toLowerCase().includes('workflows') &&
-                          customWrkfName
+                        : notificationsForUser[0].title
+                            .toLowerCase()
+                            .includes("workflows") && customWrkfName
                         ? customWrkfName
                         : notificationsForUser[0].title
                     }`}
                     cardItems={notificationsForUser[0].items}
                     cardBgColor={notificationsForUser[0].cardBgColor}
-                    idKey={notificationsForUser[0].id ? notificationsForUser[0].id : null}
+                    idKey={
+                      notificationsForUser[0].id
+                        ? notificationsForUser[0].id
+                        : null
+                    }
                     hideFavoriteIcon={true}
-                    itemType={'notifications'}
+                    itemType={"notifications"}
                     hideDeleteIcon={true}
                   />
-                </div> :
-                whichNotification == "#templates" ? 
-                <div key={notificationsForUser[1]._id} id={notificationsForUser[1].title}>
-                 <SectionBox
-                   Card={notificationsForUser[1].card}
-                   title={`notifications - ${
-                    notificationsForUser[1].title.toLowerCase().includes('documents') &&
-                     customDocName
-                       ? customDocName
-                       : notificationsForUser[1].title.toLowerCase().includes('templates') &&
-                         customTempName
-                       ? customTempName
-                       : notificationsForUser[1].title.toLowerCase().includes('workflows') &&
-                         customWrkfName
-                       ? customWrkfName
-                       : notificationsForUser[1].title
-                   }`}
-                   cardItems={notificationsForUser[1].items}
-                   cardBgColor={notificationsForUser[1].cardBgColor}
-                   idKey={notificationsForUser[1].id ? notificationsForUser[1].id : null}
-                   hideFavoriteIcon={true}
-                   itemType={'notifications'}
-                   hideDeleteIcon={true}
-                 />
-               </div> :
-          
-                <div key={notificationsForUser[2]._id} id={notificationsForUser[2].title}>
-                 <SectionBox
-                   Card={notificationsForUser[2].card}
-                   title={`notifications - ${
-                    notificationsForUser[2].title.toLowerCase().includes('documents') &&
-                     customDocName
-                       ? customDocName
-                       : notificationsForUser[2].title.toLowerCase().includes('templates') &&
-                         customTempName
-                       ? customTempName
-                       : notificationsForUser[2].title.toLowerCase().includes('workflows') &&
-                         customWrkfName
-                       ? customWrkfName
-                       : notificationsForUser[2].title
-                   }`}
-                   cardItems={notificationsForUser[2].items}
-                   cardBgColor={notificationsForUser[2].cardBgColor}
-                   idKey={notificationsForUser[2].id ? notificationsForUser[2].id : null}
-                   hideFavoriteIcon={true}
-                   itemType={'notifications'}
-                   hideDeleteIcon={true}
-                 />
-               </div> 
-
+                </div>
+              ) : whichNotification == "#templates" ? (
+                <div
+                  key={notificationsForUser[1]._id}
+                  id={notificationsForUser[1].title}
+                >
+                  <SectionBox
+                    Card={notificationsForUser[1].card}
+                    title={`notifications - ${
+                      notificationsForUser[1].title
+                        .toLowerCase()
+                        .includes("documents") && customDocName
+                        ? customDocName
+                        : notificationsForUser[1].title
+                            .toLowerCase()
+                            .includes("templates") && customTempName
+                        ? customTempName
+                        : notificationsForUser[1].title
+                            .toLowerCase()
+                            .includes("workflows") && customWrkfName
+                        ? customWrkfName
+                        : notificationsForUser[1].title
+                    }`}
+                    cardItems={notificationsForUser[1].items}
+                    cardBgColor={notificationsForUser[1].cardBgColor}
+                    idKey={
+                      notificationsForUser[1].id
+                        ? notificationsForUser[1].id
+                        : null
+                    }
+                    hideFavoriteIcon={true}
+                    itemType={"notifications"}
+                    hideDeleteIcon={true}
+                  />
+                </div>
+              ) : (
+                <div
+                  key={notificationsForUser[2]._id}
+                  id={notificationsForUser[2].title}
+                >
+                  <SectionBox
+                    Card={notificationsForUser[2].card}
+                    title={`notifications - ${
+                      notificationsForUser[2].title
+                        .toLowerCase()
+                        .includes("documents") && customDocName
+                        ? customDocName
+                        : notificationsForUser[2].title
+                            .toLowerCase()
+                            .includes("templates") && customTempName
+                        ? customTempName
+                        : notificationsForUser[2].title
+                            .toLowerCase()
+                            .includes("workflows") && customWrkfName
+                        ? customWrkfName
+                        : notificationsForUser[2].title
+                    }`}
+                    cardItems={notificationsForUser[2].items}
+                    cardBgColor={notificationsForUser[2].cardBgColor}
+                    idKey={
+                      notificationsForUser[2].id
+                        ? notificationsForUser[2].id
+                        : null
+                    }
+                    hideFavoriteIcon={true}
+                    itemType={"notifications"}
+                    hideDeleteIcon={true}
+                  />
+                </div>
+              )
 
               // notificationsForUser.map((item) => (
               //   <div key={item._id} id={item.title}>
@@ -478,37 +508,37 @@ const WorkflowApp = () => {
               //     />
               //   </div>
               // ))
-            )}
+            }
             <div className={styles.tasks__container}>
               {uncompletedTasks[0].children.length ? (
                 <HandleTasks feature='incomplete' tasks={uncompletedTasks} />
               ) : (
-                ''
+                ""
               )}
 
               {completedTasks[0].children.length ? (
                 <HandleTasks feature='completed' tasks={completedTasks} />
               ) : (
-                ''
+                ""
               )}
             </div>
           </div>
         )}
         {!isVisible && (
           <>
-            <div style={{ marginBottom: '45px' }}>
+            <div style={{ marginBottom: "45px" }}>
               <>
                 {!favoriteItemsLoaded ? (
-                  <p style={{ textAlign: 'center' }}>
-                    {' '}
-                    {t('loading')} {t('bookmarks')}...
+                  <p style={{ textAlign: "center" }}>
+                    {" "}
+                    {t("loading")} {t("bookmarks")}...
                   </p>
                 ) : (
                   <>
                     {React.Children.toArray(
                       Object.keys(favoriteItems).map((key) => {
                         if (
-                          key === 'documents' &&
+                          key === "documents" &&
                           favoriteItems[key].filter(
                             (item) =>
                               item.favourited_by ===
@@ -527,12 +557,12 @@ const WorkflowApp = () => {
                                     userDetail?.userinfo?.username
                                 )}
                                 status={favoriteItemsLoaded}
-                                itemType={'documents'}
+                                itemType={"documents"}
                               />
                             </div>
                           );
                         if (
-                          key === 'templates' &&
+                          key === "templates" &&
                           favoriteItems[key].filter(
                             (item) =>
                               item.favourited_by ===
@@ -555,7 +585,7 @@ const WorkflowApp = () => {
                             </div>
                           );
                         if (
-                          key === 'workflows' &&
+                          key === "workflows" &&
                           favoriteItems[key].filter(
                             (item) =>
                               item.favourited_by ===
@@ -613,34 +643,34 @@ export default WorkflowApp;
 export const introVideos = [
   {
     id: uuidv4(),
-    title: 'capabilities',
-    src: 'https://www.youtube.com/embed/e5HdKmoA8b8',
+    title: "capabilities",
+    src: "https://www.youtube.com/embed/e5HdKmoA8b8",
   },
   {
     id: uuidv4(),
-    title: 'examples',
-    src: 'https://www.youtube.com/embed/videoseries?list=PL6rKBSwpVCYXUW09QN3xfGRWeWMNschP9',
+    title: "examples",
+    src: "https://www.youtube.com/embed/videoseries?list=PL6rKBSwpVCYXUW09QN3xfGRWeWMNschP9",
   },
 ];
 
 export const notifications = [
   {
     id: uuidv4(),
-    title: 'documents',
-    cardBgColor: '#1ABC9C',
+    title: "documents",
+    cardBgColor: "#1ABC9C",
     card: DocumentCard,
     items: [{ id: uuidv4() }],
   },
   {
     id: uuidv4(),
-    title: 'templates',
+    title: "templates",
     cardBgColor: null,
     card: TemplateCard,
     items: [{ id: uuidv4() }],
   },
   {
     id: uuidv4(),
-    title: 'workflows',
+    title: "workflows",
     card: WorkflowCard,
     cardBgColor: null,
     items: [{ id: uuidv4() }],

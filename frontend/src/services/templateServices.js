@@ -2,18 +2,20 @@ import {
   httpApiUrl,
   httpApiUrlV2,
   httpTemplate,
+  httpApiUrlnewV2,
 } from "../httpCommon/httpCommon";
 
 // create-template doesn't have a type
-// what id get template??
+// Where is get template?
 // approve template is post here but get on the read me ?
 
 export class TemplateServices {
   createTemplate = (data) => {
-    return httpTemplate.post("/", data);
-    // return httpTemplate.post("education/templates/", data);
+    return httpTemplate.post("/", data, {
+      headers: { Authorization: "Bearer 1b834e07-c68b-4bf6-96dd-ab7cdc62f07f" },
+    });
     // return httpTemplate.post(
-    //   `http://localhost:9002/education/templates/`,
+    //   `http://localhost:8000/education/templates/`,
     //   data
     // );
   };
@@ -24,7 +26,8 @@ export class TemplateServices {
   };
 
   approvedTemplate = (data) => {
-    return httpTemplate.post("/approved/", data);
+    // return httpTemplate.post("/approved/", data);
+    return httpTemplate.get("/approved/", data);
   };
 
   approveTemplate = (templateId) => {
@@ -51,6 +54,9 @@ export class TemplateServices {
     return httpApiUrlV2.get(
       `/metadata/${companyId}/organisations/?data_type=${dataType}&item_type=template`
     );
+    // return httpApiUrlnewV2.get(`/approved/?workspace_id=${companyId}`, {
+    //   headers: { Authorization: "Bearer 1b834e07-c68b-4bf6-96dd-ab7cdc62f07f" },
+    // });
   };
 
   // * The company id for demoTemplates is hard coded to that of Dowell Knowledge Centre

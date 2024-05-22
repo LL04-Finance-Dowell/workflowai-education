@@ -1,7 +1,4 @@
-version: '3.8'
-
 services:
-
   editor-backend:
     build:
       context: ./editor-backend
