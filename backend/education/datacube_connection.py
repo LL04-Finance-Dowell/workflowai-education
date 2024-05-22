@@ -1,8 +1,10 @@
 import json
 import re
 from datetime import UTC, datetime
+from uuid import uuid4
 
 import requests
+from rest_framework.exceptions import NotFound
 
 from app.constants import EDITOR_API
 from education.constants import DB_API, DB_API_CRUD
@@ -24,60 +26,101 @@ def post_to_data_service(url: str, data: dict):
     response = requests.post(url=url, data=data, headers=headers)
     return json.loads(response.text)
 
-def get_db(workspace_id):
-    return f"{workspace_id}_DB_0"
+
+def get_master_db(workspace_id):
+    return f"{workspace_id}_master_db_0"
 
 
-def create_db(options):
+def make_db_name(value: str):
+    if not value:
+        return
+
+    value = value.replace(" ", "_")
+    trailing = uuid4().hex[:4]
+    return f"{value}_db_{trailing}"
+
+
+def create_db(*, api_key, workspace_id, template_name, **kwargs):
     """Creates a new database entity
 
     Args:
-        options (_type_): _description_
+        api_key: api key
+        workspace_id: the workspace_id
+        template_name: the name of the template
+        kwargs (_dict_): other keyword arguments to create db_
     """
+    db_name = make_db_name(template_name)
+
+    return db_name
 
 
 class DatacubeConnection:
 
-    def __init__(self, api_key: str, workspace_id: str, database: str = None) -> None:
+    def __init__(
+        self, api_key: str, workspace_id: str, database: str = None, template_id: str = None
+    ) -> None:
         """
         api_key (str): the API key
         workspace_id (str): workspace_id
         database (str): database name
+        template_id (str): template_id
         """
         self.api_key = api_key
         self.workspace_id = workspace_id
-        self.database = database
         self.collection_names = self.normal_collection_names | self.metadata_collections
+        self.template_id = None
+        self.master_template_collection = f"{self.workspace_id}_workflowai_master_template_collection"
+
+        if template_id is not None:
+            db_name = self.get_db(template_id)
+            if db_name:
+                self.database = db_name
+            else:
+                raise NotFound(f"template with id {template_id}")
+        else:
+            self.database = database
 
     @property
     def metadata_collections(self):
         return {
-            "document_metadata": f"{self.workspace_id}_documents_metadata_collection_0",
-            "clone_metadata": f"{self.workspace_id}_clones_metadata_collection_0",
-            "template_metadata": f"{self.workspace_id}_templates_metadata_collection_0",
+            "document_metadata": f"{self.workspace_id}_workflowai_documents_metadata_collection_0",
+            "clone_metadata": f"{self.workspace_id}_workflowai_clones_metadata_collection_0",
+            "template_metadata": f"{self.workspace_id}_workflowai_templates_metadata_collection_0",
         }
 
     @property
     def normal_collection_names(self):
         return {
-            "workflow": f"{self.workspace_id}_workflow_collection_0",
-            "process": f"{self.workspace_id}_process_collection",
-            "document": f"{self.workspace_id}_document_collection_0",
-            "clone": f"{self.workspace_id}_clone_collection_0",
-            "template": f"{self.workspace_id}_template_collection_0",
-            # NOTE confirm qrcode collection
-            "qrcode": f"{self.workspace_id}_document_collection_0",
-            # NOTE confirm links collection
-            "link": f"{self.workspace_id}_document_collection_0",
-            "folder": f"{self.workspace_id}_folder_collection_0",
+            "workflow": f"{self.workspace_id}_workflowai_workflow_collection_0",
+            "process": f"{self.workspace_id}_workflowai_process_collection",
+            "document": f"{self.workspace_id}_workflowai_document_collection_0",
+            "clone": f"{self.workspace_id}_workflowai_clone_collection_0",
+            "template": f"{self.workspace_id}_workflowai_template_collection_0",
+            "qrcode": f"{self.workspace_id}_workflowai_qrcode_collection_0",
+            "link": f"{self.workspace_id}_workflowai_link_collection_0",
+            "folder": f"{self.workspace_id}_workflowai_folder_collection_0",
         }
+
+    def get_db(self, template_id):
+        db_name = get_master_db(self.workspace_id)
+        filters = {"_id": template_id}
+        template_data = self.get_data_from_collection(
+            self.master_template_collection, filters, 1, database=db_name
+        )
+
+        if not template_data["data"]:
+            return
+
+        self.template_id = template_id
+
+        return template_data["database_name"]
 
     def add_collection_to_database(self, collections: str, num_of_collections=1, **kwargs):
         """adds collection(s) to a database
 
         Args:
             collections (str): comma separated list of collection names to be created
-            num_of_collections (int): number of collcctions to be added
+            num_of_collections (int): number of collections to be added
         """
         url = f"{DB_API}/add_collection/"
         database: str = kwargs.get("database", self.database)
@@ -130,13 +173,23 @@ class DatacubeConnection:
             "db_name": database.lower(),
             "coll_name": collection,
             "operation": operation,
+            "payment": False,
         }
         if operation.lower() == "insert":
             payload_dict["data"] = data
             payload = payload_dict
+            payload.update({"records": [{"record": "1", "type": "overall"}]})
+
+            # ensure template_id is present at time of insertion
+            if not self.template_id:
+                raise ValueError("template_id is missing")
+
+            # add the template_id for db reference
+            payload["template_id"] = self.template_id
 
         elif operation.lower() == "update":
             payload_dict["update_data"] = data
+            data.pop("template_id", None)
             payload_dict["query"] = query
             payload = payload_dict
             response = requests.put(DB_API_CRUD, json=payload)
@@ -413,6 +466,12 @@ class DatacubeConnection:
         """
         return self.get_documents_from_collection(*args, metadata=True, **kwargs)
 
+    def save_template_to_master_db(self, data: dict, **kwargs):
+        database = kwargs.get("database", get_master_db(self.workspace_id))
+        return self.post_data_to_collection(
+            self.master_template_collection, data, "insert", database=database, **kwargs
+        )
+
     def save_to_template_collection(self, data: dict, **kwargs):
         if kwargs.get("metadata") == True:
             collection = self.collection_names["template_metadata"]
@@ -444,6 +503,25 @@ class DatacubeConnection:
         return self.update_template_collection(
             *args, template_id=metadata_id, data=data, metadata=True, **kwargs
         )
+
+    def get_templates_from_master_db(self, filters=None, single=False, **kwargs):
+        """
+            Using thi method always returns templates from the `master db`
+            regardless of which db was used to init. \n
+            A different db will be used only if that db is specifically given in the `database`
+            arg but I would not recommend doing this. Instead, use the  `get_templates_from_collection` method.
+        """
+        database = kwargs.get("database", get_master_db(self.workspace_id))
+        limit = None if single is None else 1 if single else None
+        
+        if filters is None:
+            filters = {}
+
+        if limit is not None:
+            return self.get_data_from_collection(self.master_template_collection, filters, limit=limit, database=database **kwargs)
+        else:
+            return self.get_data_from_collection(self.master_template_collection, filters, database=database, **kwargs)
+
 
     def get_templates_from_collection(self, filters: dict, single=False, **kwargs):
         """
