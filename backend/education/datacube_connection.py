@@ -24,6 +24,7 @@ def post_to_data_service(url: str, data: dict):
     response = requests.post(url=url, data=data, headers=headers)
     return json.loads(response.text)
 
+
 def get_db(workspace_id):
     return f"{workspace_id}_DB_0"
 
@@ -125,11 +126,19 @@ class DatacubeConnection:
         self, collection: str, data: dict, operation: str, query: dict = None, **kwargs
     ):
         database = kwargs.get("database", self.database)
+        data.update(
+            {
+                "records": [
+                    {"record": "1", "type": "overall"},
+                ]
+            }
+        )
         payload_dict = {
             "api_key": self.api_key,
             "db_name": database.lower(),
             "coll_name": collection,
             "operation": operation,
+            "payment": False,
         }
         if operation.lower() == "insert":
             payload_dict["data"] = data
