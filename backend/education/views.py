@@ -5,35 +5,24 @@ import re
 import requests
 from app.constants import EDITOR_API, PROCESS_COMPLETION_MAIL
 from django.core.cache import cache
+from education.checks import is_finalized
+from education.datacube_connection import DatacubeConnection, get_db
+from education.datacube_processing import (DataCubeBackground,
+                                           DataCubeHandleProcess,
+                                           DataCubeProcess)
+from education.helpers import (CustomResponse, InvalidTokenException,
+                               authorization_check, check_all_accessed,
+                               check_last_finalizer, check_progress,
+                               dowell_email_sender, get_prev_and_next_users,
+                               paginate, register_finalized,
+                               remove_finalized_reminder,
+                               remove_members_from_steps, update_signed,
+                               validate_id)
+from education.serializers import *
+from education.serializers import CreateCollectionSerializer
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-
-from education.checks import is_finalized
-from education.datacube_connection import DatacubeConnection, get_db
-from education.datacube_processing import (
-    DataCubeBackground,
-    DataCubeHandleProcess,
-    DataCubeProcess,
-)
-from education.helpers import (
-    CustomResponse,
-    InvalidTokenException,
-    authorization_check,
-    check_all_accessed,
-    check_last_finalizer,
-    check_progress,
-    dowell_email_sender,
-    get_prev_and_next_users,
-    paginate,
-    register_finalized,
-    remove_finalized_reminder,
-    remove_members_from_steps,
-    update_signed,
-    validate_id,
-)
-from education.serializers import *
-from education.serializers import CreateCollectionSerializer
 
 # Create your views here.
 # Education views are created here
@@ -46,88 +35,14 @@ class HomeView(APIView):
 
 
 class DatabaseServices(APIView):
-
-    def post(self, request):
-        type_request = request.GET.get("type")
-
-        if type_request == "create_collection":
-            return self.create_collection(request)
-        else:
-            return self.handle_error(request)
-
     def get(self, request):
-        type_request = request.GET.get("type")
-
-        if type_request == "check_metadata_database_status":
-            return self.check_metadata_database_status(request)
-        elif type_request == "check_data_database_status":
-            return self.check_data_database_status(request)
-        else:
-            return self.handle_error(request)
-
-    def create_collection(self, request):
         """
-        Create a new collection from the given database
+        Check the existence of the needed database and it's collection.
 
-        This method helps to create a new collection in the specified database.
-
-        :param database_type: The type of the database, which can be META DATA or DATA.
-        :param workspace_id: The ID of the workspace where the collection will be created.
-        :param collection_name: The name of the collection to be created.
-        """
-        database_type = request.data.get("database_type")
-        workspace_id = request.GET.get("workspace_id")
-
-        try:
-            api_key = authorization_check(request.headers.get("Authorization"))
-
-        except InvalidTokenException as e:
-            return CustomResponse(False, str(e), None, status.HTTP_401_UNAUTHORIZED)
-        serializer = CreateCollectionSerializer(data=request.data)
-
-        if not serializer.is_valid():
-            return CustomResponse(
-                False,
-                "Posting wrong data to API",
-                serializer.errors,
-                status.HTTP_400_BAD_REQUEST,
-            )
-        all_responses = []
-
-        for types in database_type:
-            if types == "META_DATA":
-                database = get_db(workspace_id)
-                collection_names = list(dc_connect.metadata_collections.values())
-            elif types == "DATA":
-                database = get_db(workspace_id)
-                collection_names = list(dc_connect.normal_collection_names.values())
-
-            dc_connect = DatacubeConnection(
-                api_key=api_key, workspace_id=workspace_id, database=database
-            )
-
-            for collection_name in collection_names:
-                response = dc_connect.add_collection_to_database(collection_name)
-                all_responses.append(response)
-        # print(all_responses)
-        for responses in all_responses:
-            if not responses["success"]:
-                return CustomResponse(
-                    False,
-                    "Failed to create collection, kindly contact the administrator.",
-                    None,
-                    status.HTTP_400_BAD_REQUEST,
-                )
-
-        return CustomResponse(
-            True, "Collection has been created successfully", None, status.HTTP_200_OK
-        )
-
-    def check_metadata_database_status(self, request):
-        """
-        Check the existence of the metadata database.
-
-        This method checks if the specified databases (meta data and data) are available for a given workspace.
+        This method checks if all the needed database is available for
+        a given workspace and if so, returns a 200. 
+        For now, missing collections will be created if the database is available.
+        If not an error will be returned.
 
         :param request: The HTTP request object.
         :param api_key: The API key for authorization.
@@ -138,108 +53,42 @@ class DatabaseServices(APIView):
         except InvalidTokenException as e:
             return CustomResponse(False, str(e), None, status.HTTP_401_UNAUTHORIZED)
 
-        workspace_id = request.GET.get("workspace_id")
-        meta_data_database = get_db(workspace_id)
+        workspace_id = request.query_params.get("workspace_id")
+        data_database = get_db(workspace_id)
         dc_connect = DatacubeConnection(
-            api_key=api_key, workspace_id=workspace_id, database=meta_data_database
+            api_key=api_key, workspace_id=workspace_id, database=data_database
         )
-        response_meta_data = dc_connect.datacube_collection_retrieval()
+        needed_collections = list(dc_connect.collection_names.values())
+        response_data = dc_connect.datacube_collection_retrieval()
 
-        if not response_meta_data["success"]:
+        if not response_data["success"]:
             return CustomResponse(
                 False,
-                "Meta-Data is not yet available, kindly contact the administrator.",
+                "Database is not yet available, kindly contact the administrator",
                 None,
                 status.HTTP_501_NOT_IMPLEMENTED,
             )
 
-        list_of_meta_data_collection = list(dc_connect.metadata_collections.values())
-
+        ready_collections = response_data["data"][0] if response_data["data"] else []
         missing_collections = []
-        for collection in list_of_meta_data_collection:
-            if collection not in response_meta_data["data"][0]:
+
+        for collection in needed_collections:
+            if collection not in ready_collections:
                 missing_collections.append(collection)
 
-        if missing_collections:
-            missing_collections_str = ", ".join(missing_collections)
-            self.create_collection(request)
-            return CustomResponse(
-                False,
-                f"The following collections are missing: {missing_collections_str}",
-                missing_collections,
-                status.HTTP_404_NOT_FOUND,
-            )
-
-        return CustomResponse(True, "Meta-Data are available to be used", None, status.HTTP_200_OK)
-
-    def check_data_database_status(self, request):
-        """
-        Check the existence of the data database.
-
-        This method checks if the specified databases (meta data and data) are available for a given workspace.
-
-        :param request: The HTTP request object.
-        :param api_key: The API key for authorization.
-        :param workspace_id: The ID of the workspace.
-        """
-        try:
-            api_key = authorization_check(request.headers.get("Authorization"))
-        except InvalidTokenException as e:
-            return CustomResponse(False, str(e), None, status.HTTP_401_UNAUTHORIZED)
-
-        workspace_id = request.GET.get("workspace_id")
-
-        data_database = get_db(workspace_id)
-        ready_collection = []
-
-        dc_connect = DatacubeConnection(
-            api_key=api_key, workspace_id=workspace_id, database=data_database
-        )
-        datas = list(dc_connect.normal_collection_names.values())
-        response_data = dc_connect.datacube_collection_retrieval()
-
-        if response_data["success"]:
-            ready_collection.append(response_data["data"][0])
-
-            if not response_data["success"]:
+        # missing_collections_str = ", ".join(missing_collections)
+        for coll in missing_collections:
+            res = dc_connect.add_collection_to_database(coll)
+            if not res["success"]:
                 return CustomResponse(
                     False,
-                    "Database is not yet available, kindly contact the administrator",
+                    f"unable to create collection {coll}",
                     None,
                     status.HTTP_501_NOT_IMPLEMENTED,
                 )
 
-        missing_collections = []
-
-        for collection in datas:
-            if collection not in response_data["data"][0]:
-                missing_collections.append(collection)
-
-        if missing_collections:
-            missing_collections_str = ", ".join(missing_collections)
-            return CustomResponse(
-                False,
-                f"The following collections are missing: {missing_collections_str}",
-                missing_collections,
-                status.HTTP_404_NOT_FOUND,
-            )
-
         return CustomResponse(True, "Databases are available to be used", None, status.HTTP_200_OK)
 
-    def handle_error(self, request):
-        """
-        Handle invalid request type.
-        This method is called when the requested type is not recognized or supported.
-
-        :param request: The HTTP request object.
-        :type request: HttpRequest
-        :return: Response indicating failure due to an invalid request type.
-        :rtype: Response
-        """
-        return Response(
-            {"success": False, "message": "Invalid request type"},
-            status=status.HTTP_400_BAD_REQUEST,
-        )
 
 
 class NewTemplate(APIView):

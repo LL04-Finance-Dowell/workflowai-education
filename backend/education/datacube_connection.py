@@ -85,7 +85,7 @@ class DatacubeConnection:
         payload = json.dumps(
             {
                 "api_key": self.api_key,
-                "db_name": database,
+                "db_name": database.lower(),
                 "coll_names": collections,
                 "num_collections": num_of_collections,
             }

@@ -26,4 +26,5 @@ node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+.vscode
 >>>>>>> b77b3ef0eb3b513b5cf36ef631469b1ab3aa0781
