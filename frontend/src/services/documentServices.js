@@ -79,17 +79,17 @@ export class DocumentServices {
   };
 
   allDocuments = (companyId, dataType, member) => {
-    return httpApiUrlV2.get(
-      `metadata/${companyId}/organisations/?data_type=${dataType}&document_state=draft&item_type=document`
-    );
-    // return httpDocument.get(
-    //   `/${companyId}/list/?workspace_id=${companyId}&data_type=${dataType}&document_state=draft&item_type=document`,
-    //   {
-    //     headers: {
-    //       Authorization: "Bearer 1b834e07-c68b-4bf6-96dd-ab7cdc62f07f",
-    //     },
-    //   }
+    // return httpApiUrlV2.get(
+    //   `metadata/${companyId}/organisations/?data_type=${dataType}&document_state=draft&item_type=document`
     // );
+    return httpDocument.get(
+      `/${companyId}/list/?workspace_id=${companyId}&data_type=${dataType}&document_state=draft&document_type=document`,
+      {
+        headers: {
+          Authorization: "Bearer 1b834e07-c68b-4bf6-96dd-ab7cdc62f07f",
+        },
+      }
+    );
   };
 
   // * The company id for demoTemplates is hard coded to that of Dowell Knowledge Centre

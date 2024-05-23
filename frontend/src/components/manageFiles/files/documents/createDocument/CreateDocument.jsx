@@ -146,7 +146,6 @@ const CreateDocument = ({ handleToggleOverlay }) => {
       (singleTemplate) => singleTemplate._id === template
     );
     if (!foundTemplateObj) return;
-    console.log(userDetail?.userinfo.username);
 
     const createDocumentData = {
       workspace_id:
@@ -164,15 +163,16 @@ const CreateDocument = ({ handleToggleOverlay }) => {
       created_by: userDetail?.userinfo.username,
 
       // data_type: "Real_Data",
-      template_id: foundTemplateObj.collection_id,
+      // template_id: foundTemplateObj.collection_id,
+      template_id: template,
       data_type:
         userDetail?.portfolio_info?.length > 1
           ? userDetail?.portfolio_info.find(
               (portfolio) => portfolio.product === productName
             )?.data_type
           : userDetail?.portfolio_info[0].data_type,
-      page: foundTemplateObj?.page,
-      content: foundTemplateObj?.content,
+      // page: foundTemplateObj?.page,
+      // content: foundTemplateObj?.content,
       portfolio:
         userDetail?.portfolio_info?.length > 1
           ? userDetail?.portfolio_info.find(
@@ -184,33 +184,59 @@ const CreateDocument = ({ handleToggleOverlay }) => {
 
     const Api_key = creditResponse?.api_key;
 
-    const response = await dispatch(createDocument(createDocumentData));
+    try {
+      const res = await axios.post(
+        `https://100105.pythonanywhere.com/api/v3/process-services/?type=product_service&api_key=${Api_key}`,
+        {
+          service_id: "DOWELL10026",
+          sub_service_ids: ["DOWELL100261"],
+        }
+      );
 
-    if (response?.meta?.requestStatus === "fulfilled") {
-      axios
-        .post(
-          `https://100105.pythonanywhere.com/api/v3/process-services/?type=product_service&api_key=${Api_key}`,
-          {
-            service_id: "DOWELL10026",
-            sub_service_ids: ["DOWELL100261"],
+      if (res.data.success === true) {
+        toast.success(res?.data?.message);
+
+        const response = await dispatch(createDocument(createDocumentData));
+
+        if (response?.meta?.requestStatus === "fulfilled") {
+          if (response?.payload?.editor_link) {
+            console.info("\nEDITOR LINK:", response.payload.editor_link);
+            window.open(response.payload.editor_link);
           }
-        )
-        .then((res) => {
-          // console.log(res)
-          if (res.data.success === true) {
-            //open new window here//
-            if (response?.payload?.editor_link) {
-              console.info("\nEDITOR LINK:", response.payload.editor_link);
-              window.open(response.payload.editor_link);
-            }
-            // dispatch(setEditorLink(response?.payload?.editor_link));
-          }
-        })
-        .catch((error) => {
-          // console.log(error);
-          toast.info(error.response?.data?.message);
-        });
+        } else {
+          dispatch(setToggleManageFileForm(true));
+        }
+      }
+    } catch (error) {
+      //   console.error("Error:", error);
+      toast.info(error.response?.data?.message);
     }
+
+    // if (response?.meta?.requestStatus === "fulfilled") {
+    // axios
+    //   .post(
+    //     `https://100105.pythonanywhere.com/api/v3/process-services/?type=product_service&api_key=${Api_key}`,
+    //     {
+    //       service_id: "DOWELL10026",
+    //       sub_service_ids: ["DOWELL100261"],
+    //     }
+    //   )
+    //     .then((res) => {
+    //       // console.log(res)
+    // if (res.data.success === true) {
+    //   //open new window here//
+    //   if (response?.payload?.editor_link) {
+    //     console.info("\nEDITOR LINK:", response.payload.editor_link);
+    //     window.open(response.payload.editor_link);
+    //   }
+    //   // dispatch(setEditorLink(response?.payload?.editor_link));
+    // }
+    //     })
+    //     .catch((error) => {
+    //       // console.log(error);
+    //       toast.info(error.response?.data?.message);
+    //     });
+    // }
   };
 
   const handleDropdown = () => {
@@ -251,6 +277,7 @@ const CreateDocument = ({ handleToggleOverlay }) => {
     };
 
     dispatch(allTemplates(data));
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const reversedArray = [...allTemplatesArray].reverse();
@@ -258,6 +285,10 @@ const CreateDocument = ({ handleToggleOverlay }) => {
     value: item._id,
     label: item.template_name,
   }));
+
+  // console.log("all template array " + options);
+
+  console.log("appr rev " + reversedArray[0].template_name);
 
   return (
     <Overlay title='Create Document' handleToggleOverlay={handleToggleOverlay}>
