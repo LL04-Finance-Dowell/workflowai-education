@@ -50,9 +50,29 @@ def create_db(*, api_key, workspace_id, template_name, **kwargs):
         kwargs (_dict_): other keyword arguments to create db_
     """
     db_name = make_db_name(template_name)
+    
+    # FIXME remove these
+    db_name = "new_structure_template_0_db_c155"
 
     return db_name
 
+# FIXME remove these
+USER_1 = "_user_temp_0"
+
+class CustomDict(dict):
+    def values(self):
+        new_values = [val + USER_1 for val in super().values()]
+        return new_values
+
+    def __getitem__(self, key):
+        val = super().__getitem__(key)
+        if val:
+            return val + USER_1
+        return val
+    
+    def __or__(self, other):
+        result = CustomDict(super().__or__(other))
+        return result
 
 class DatacubeConnection:
 
@@ -69,6 +89,7 @@ class DatacubeConnection:
         self.workspace_id = workspace_id
         self.collection_names = self.normal_collection_names | self.metadata_collections
         self.template_id = None
+        # FIXME if needed
         self.master_template_collection = f"{self.workspace_id}_workflowai_master_template_collection"
 
         if template_id is not None:
@@ -82,15 +103,15 @@ class DatacubeConnection:
 
     @property
     def metadata_collections(self):
-        return {
+        return CustomDict({
             "document_metadata": f"{self.workspace_id}_workflowai_documents_metadata_collection_0",
             "clone_metadata": f"{self.workspace_id}_workflowai_clones_metadata_collection_0",
             "template_metadata": f"{self.workspace_id}_workflowai_templates_metadata_collection_0",
-        }
+        })
 
     @property
     def normal_collection_names(self):
-        return {
+        return CustomDict({
             "workflow": f"{self.workspace_id}_workflowai_workflow_collection_0",
             "process": f"{self.workspace_id}_workflowai_process_collection",
             "document": f"{self.workspace_id}_workflowai_document_collection_0",
@@ -99,7 +120,7 @@ class DatacubeConnection:
             "qrcode": f"{self.workspace_id}_workflowai_qrcode_collection_0",
             "link": f"{self.workspace_id}_workflowai_link_collection_0",
             "folder": f"{self.workspace_id}_workflowai_folder_collection_0",
-        }
+        })
 
     def get_db(self, template_id):
         db_name = get_master_db(self.workspace_id)
@@ -132,7 +153,6 @@ class DatacubeConnection:
                 "num_collections": num_of_collections,
             }
         )
-
         response = post_to_data_service(url=url, data=payload)
         return response
 
@@ -179,13 +199,18 @@ class DatacubeConnection:
             payload_dict["data"] = data
             payload = payload_dict
             payload.update({"records": [{"record": "1", "type": "overall"}]})
+            
+            # NOTE None is the default but if this is set to True that means it is
+            # a new template insertion. Advised this is the only scenario where
+            # this should be set to True 
+            if not kwargs.get("no_template_id"):
 
-            # ensure template_id is present at time of insertion
-            if not self.template_id:
-                raise ValueError("template_id is missing")
+                # ensure template_id is present at time of insertion
+                if not self.template_id:
+                    raise ValueError("template_id is missing")
 
-            # add the template_id for db reference
-            payload["template_id"] = self.template_id
+                # add the template_id for db reference
+                payload["template_id"] = self.template_id
 
         elif operation.lower() == "update":
             payload_dict["update_data"] = data
@@ -467,7 +492,7 @@ class DatacubeConnection:
         return self.get_documents_from_collection(*args, metadata=True, **kwargs)
 
     def save_template_to_master_db(self, data: dict, **kwargs):
-        database = kwargs.get("database", get_master_db(self.workspace_id))
+        database = get_master_db(self.workspace_id)
         return self.post_data_to_collection(
             self.master_template_collection, data, "insert", database=database, **kwargs
         )
