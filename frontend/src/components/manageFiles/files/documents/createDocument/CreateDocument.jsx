@@ -283,12 +283,12 @@ const CreateDocument = ({ handleToggleOverlay }) => {
   const reversedArray = [...allTemplatesArray].reverse();
   const options = reversedArray.map((item) => ({
     value: item._id,
-    label: item.template_name,
+    label: item.template_name || item.document_name,
   }));
 
   // console.log("all template array " + options);
 
-  console.log("appr rev " + reversedArray[0].template_name);
+  // console.log("appr rev " + reversedArray[0].template_name);
 
   return (
     <Overlay title='Create Document' handleToggleOverlay={handleToggleOverlay}>
