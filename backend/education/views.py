@@ -303,14 +303,14 @@ class TemplateDetail(APIView):
             return CustomResponse(False, str(e), None, status.HTTP_401_UNAUTHORIZED)
 
         workspace_id = request.GET.get("workspace_id")
-        database = request.data.get("template_database")
+        database = request.GET.get("template_database")
         if not database:
             return CustomResponse(False, "template_database is required", status.HTTP_400_BAD_REQUEST)
         
         dc_connect = DatacubeConnection(
-            api_key=api_key, workspace_id=workspace_id, database=database
+            api_key=api_key, workspace_id=workspace_id, database=database, template_id=template_id
         )
-        # NOTE do we need to pass filters being that only one template will exist in the template collection of each db
+        # NOTE do we need to pass this filter being that only one template will exist in the template collection of each db?
         res = dc_connect.get_templates_from_collection({"_id": template_id})
         if res["success"]:
             return Response(res)

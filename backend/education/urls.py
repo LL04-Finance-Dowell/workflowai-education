@@ -6,7 +6,7 @@ urlpatterns = [
     path("education/", views.HomeView.as_view()),
     path("education/database/", views.DatabaseServices.as_view()),
     path("education/templates/", views.NewTemplate.as_view()),
-    path("education/templates/detail/", views.TemplateDetail.as_view()),
+    path("education/templates/<str:template_id>/detail/", views.TemplateDetail.as_view()),
     path("education/workflows/", views.Workflow.as_view()),
 
     path("education/collections/", views.CollectionData.as_view()),

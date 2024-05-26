@@ -57,7 +57,7 @@ def create_db(*, api_key, workspace_id, template_name, **kwargs):
     return db_name
 
 # FIXME remove these
-USER = "_user_temp_0"
+USER = "_user_temp_2"
 
 class CustomDict(dict):
     def values(self):
