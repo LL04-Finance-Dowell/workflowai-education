@@ -57,17 +57,17 @@ def create_db(*, api_key, workspace_id, template_name, **kwargs):
     return db_name
 
 # FIXME remove these
-USER_1 = "_user_temp_0"
+USER = "_user_temp_0"
 
 class CustomDict(dict):
     def values(self):
-        new_values = [val + USER_1 for val in super().values()]
+        new_values = [val + USER for val in super().values()]
         return new_values
 
     def __getitem__(self, key):
         val = super().__getitem__(key)
         if val:
-            return val + USER_1
+            return val + USER
         return val
     
     def __or__(self, other):
@@ -93,11 +93,9 @@ class DatacubeConnection:
         self.master_template_collection = f"{self.workspace_id}_workflowai_master_template_collection"
 
         if template_id is not None:
-            db_name = self.get_db(template_id)
-            if db_name:
-                self.database = db_name
-            else:
-                raise NotFound(f"template with id {template_id}")
+            self.master_template_data = self.check_db(template_id, database)
+            self.template_id = template_id
+            self.database = database
         else:
             self.database = database
 
@@ -122,20 +120,15 @@ class DatacubeConnection:
             "folder": f"{self.workspace_id}_workflowai_folder_collection_0",
         })
 
-    def get_db(self, template_id):
-        db_name = get_master_db(self.workspace_id)
-        filters = {"_id": template_id}
-        template_data = self.get_data_from_collection(
-            self.master_template_collection, filters, 1, database=db_name
-        )
+    def check_db(self, template_id, database):
+        filters = {"template_id": template_id, "template_database": database}
+        template_data = self.get_templates_from_master_db(filters=filters, single=True)["data"]
+        
+        if not template_data:
+            raise NotFound("template with db not found")
 
-        if not template_data["data"]:
-            return
-
-        self.template_id = template_id
-
-        return template_data["database_name"]
-
+        return template_data[0]
+    
     def add_collection_to_database(self, collections: str, num_of_collections=1, **kwargs):
         """adds collection(s) to a database
 
@@ -157,7 +150,7 @@ class DatacubeConnection:
         return response
 
     def get_data_from_collection(
-        self, collection: str, filters: dict = {}, limit=5, offset=0, **kwargs
+        self, collection: str, filters: dict = {}, limit=5, offset=0, database=None, **kwargs
     ):
         """_summary_
 
@@ -168,7 +161,8 @@ class DatacubeConnection:
             offset (int, optional): page number . Defaults to 0.
         """
         url = f"{DB_API}/get_data/"
-        database: str = kwargs.get("database", self.database)
+        if database is None:
+            database = self.database
 
         payload = {
             "api_key": self.api_key,
@@ -211,6 +205,7 @@ class DatacubeConnection:
 
                 # add the template_id for db reference
                 payload["template_id"] = self.template_id
+            response = requests.post(DB_API_CRUD, json=payload)
 
         elif operation.lower() == "update":
             payload_dict["update_data"] = data
@@ -218,18 +213,13 @@ class DatacubeConnection:
             payload_dict["query"] = query
             payload = payload_dict
             response = requests.put(DB_API_CRUD, json=payload)
-            return response
 
         elif operation.lower() == "delete":
             payload_dict["query"] = query
             payload = payload_dict
             response = requests.delete(DB_API_CRUD, json=payload)
-            return
 
-        # print(payload)
-        response = requests.post(DB_API_CRUD, json=payload)
         res = json.loads(response.text)
-        # print(res)
         return res
 
     def datacube_collection_retrieval(self, **kwargs):
@@ -516,9 +506,14 @@ class DatacubeConnection:
     def update_template_collection(self, template_id: str, data: dict, query=None, **kwargs):
         if query is None:
             query = {"_id": template_id}
+        
 
-        if kwargs.get("metadata") == True:
+        if kwargs.get("master") == True:
+            collection = self.master_template_collection
+
+        elif kwargs.get("metadata") == True:
             collection = self.collection_names["template_metadata"]
+        
         else:
             collection = self.collection_names["template"]
 
@@ -528,22 +523,27 @@ class DatacubeConnection:
         return self.update_template_collection(
             *args, template_id=metadata_id, data=data, metadata=True, **kwargs
         )
+    
+    def update_master_template_collection(self, template_id: str, data: dict, *args, **kwargs):
+        query = {"template_id": template_id}
+        database = get_master_db(self.workspace_id)
+        return self.update_template_collection(
+            *args, template_id=template_id, data=data, query=query, master=True, database=database, **kwargs
+        )
 
     def get_templates_from_master_db(self, filters=None, single=False, **kwargs):
         """
             Using thi method always returns templates from the `master db`
-            regardless of which db was used to init. \n
-            A different db will be used only if that db is specifically given in the `database`
-            arg but I would not recommend doing this. Instead, use the  `get_templates_from_collection` method.
+            regardless of which db was used to init.
         """
-        database = kwargs.get("database", get_master_db(self.workspace_id))
+        database = get_master_db(self.workspace_id)
         limit = None if single is None else 1 if single else None
         
         if filters is None:
             filters = {}
 
         if limit is not None:
-            return self.get_data_from_collection(self.master_template_collection, filters, limit=limit, database=database **kwargs)
+            return self.get_data_from_collection(self.master_template_collection, filters, limit=limit, database=database, **kwargs)
         else:
             return self.get_data_from_collection(self.master_template_collection, filters, database=database, **kwargs)
 

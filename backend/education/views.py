@@ -265,16 +265,17 @@ class NewTemplate(APIView):
         workspace_id = request.GET.get("workspace_id")
 
         database = form.get("template_database")
+        collection_id = form["collection_id"] # template_id
+        metadata_id = form["metadata_id"] # template_metadata_id
+        
         if not database:
             return CustomResponse(False, "template_database is required", status.HTTP_400_BAD_REQUEST)
         
         dc_connect = DatacubeConnection(
-            api_key=api_key, workspace_id=workspace_id, database=database
+            api_key=api_key, workspace_id=workspace_id, database=database, template_id=collection_id
         )
         # NOTE compare
         update_data = {"approval": True}
-        collection_id = form["collection_id"] # template_id
-        metadata_id = form["metadata_id"] # template_metadata_id
 
         approval_update = dc_connect.update_template_collection(
             template_id=collection_id, data=update_data
@@ -283,7 +284,10 @@ class NewTemplate(APIView):
             metadata_id=metadata_id, data=update_data
         )
 
-        if approval_update and metadata_approval_update:
+        master_approval = dc_connect.update_master_template_collection(template_id=collection_id, data=update_data)
+        
+        # FIXME: Whether the update was successful or not the success key is always True
+        if approval_update["success"] and metadata_approval_update["success"] and master_approval["success"]:
             return CustomResponse(True, "Template approved", None, status.HTTP_200_OK)
         else:
             return CustomResponse(
