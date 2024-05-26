@@ -129,7 +129,6 @@ class NewTemplate(APIView):
         data = ""
         page = ""
         folder = []
-        approved = False
 
         try:
             api_key = authorization_check(request.headers.get("Authorization"))
@@ -172,7 +171,7 @@ class NewTemplate(APIView):
                 "template_type": "draft",
                 "auth_viewers": viewers,
                 "message": "",
-                "approval": approved,
+                "approval": False,
                 "collection_name": collection_name,
                 "template_database": new_db,
             }
@@ -201,7 +200,8 @@ class NewTemplate(APIView):
                     # NOTE might be a duplication since on all insertions template_id is added unless
                     "template_id": collection_id,
                     "template_metadata_id": res_metadata["data"].get("inserted_id"),
-                    "template_database": new_db
+                    "template_database": new_db,
+                    "approval": False
                 }
                 master_res = dc_connect.save_template_to_master_db(
                     data=master_db_data
@@ -475,23 +475,29 @@ class NewDocument(APIView):
         created_by = request.data.get("created_by")
         data_type = request.data.get("data_type")
         template_id = request.data.get("template_id")
+        template_database = request.data.get("template_database")
 
         # NOTE please confirm this flow
-        db_name_0 = get_db(workspace_id)
-
         try:
             api_key = authorization_check(request.headers.get("Authorization"))
 
         except InvalidTokenException as e:
             return CustomResponse(False, str(e), None, status.HTTP_401_UNAUTHORIZED)
 
+        if not template_id or not template_database:
+            return CustomResponse(False, "template_database and template_id is required", status.HTTP_400_BAD_REQUEST)
+
         dc_connect = DatacubeConnection(
-            api_key=api_key, workspace_id=workspace_id, database=db_name_0
+            api_key=api_key, workspace_id=workspace_id, database=template_database, template_id=template_id
         )
 
-        collection_name = dc_connect.collection_names.get("template")
-        metadata_collection = dc_connect.collection_names.get("template_metadata")
+        isapproved = dc_connect.master_template_data["approval"]
 
+        if not isapproved:
+            return CustomResponse(
+                False, "Template is not approved", None, status.HTTP_403_FORBIDDEN
+            )
+        
         portfolio = ""
         if request.data["portfolio"]:
             portfolio = request.data["portfolio"]
@@ -504,29 +510,8 @@ class NewDocument(APIView):
                 None,
                 status.HTTP_400_BAD_REQUEST,
             )
-
-        # NOTE: This checks the collection existence in only one db. Will not pass database arg
-        collection = dc_connect.check_if_name_exists_collection(collection_name)
-
-        if not collection["success"]:
-            return CustomResponse(
-                False, "No collection with found", None, status.HTTP_404_NOT_FOUND
-            )
-
-        template = dc_connect.get_templates_from_collection({"_id": template_id}, single=True)
-
-        if not template["data"]:
-            return CustomResponse(False, "No template found", None, status.HTTP_404_NOT_FOUND)
-
-        if not template["data"]:
-            return CustomResponse(False, "No template found", None, status.HTTP_404_NOT_FOUND)
-
-        isapproved = template["data"][0]["approval"]
-
-        if not isapproved:
-            return CustomResponse(
-                False, "Template is not approved", None, status.HTTP_403_FORBIDDEN
-            )
+        
+        template = dc_connect.get_templates_from_collection({"_id": template_id})
 
         document_data = {
             "document_name": "Untitled Document",
@@ -538,10 +523,9 @@ class NewDocument(APIView):
             "document_state": "draft",
             "auth_viewers": viewers,
             "document_type": "original",
-            "collection_name": collection_name,
+            "collection_name": dc_connect.collection_names["document"],
             "process_id": "",
             "folders": [],
-            "template": db_name_0,
         }
 
         # NOTE please confirm
@@ -603,8 +587,10 @@ class Document(APIView):
         document_state = request.query_params.get("document_state")
         member = request.query_params.get("member")
         portfolio = request.query_params.get("portfolio")
+        template_id = request.query_params.get("template_id")
+        template_database = request.query_params.get("template_database")
 
-        db_name = get_db(workspace_id)
+        # FIXME add checks for template id and database
 
         try:
             api_key = authorization_check(request.headers.get("Authorization"))
@@ -613,11 +599,8 @@ class Document(APIView):
             return CustomResponse(False, str(e), None, status.HTTP_401_UNAUTHORIZED)
 
         dc_connect = DatacubeConnection(
-            api_key=api_key, workspace_id=workspace_id, database=db_name
+            api_key=api_key, workspace_id=workspace_id, database=template_database, template_id=template_id
         )
-
-        # NOTE change this or find out why
-        collection_name = dc_connect.collection_names.get("template")
 
         if not document_type or not document_state or not workspace_id:
             return CustomResponse(
@@ -628,13 +611,6 @@ class Document(APIView):
             )
         if not validate_id(company_id) or not data_type:
             return CustomResponse(False, "Invalid Request!", None, status.HTTP_400_BAD_REQUEST)
-
-        collection = dc_connect.check_if_name_exists_collection(collection_name)
-
-        if not collection["success"]:
-            return CustomResponse(
-                False, "No collection with found", None, status.HTTP_404_NOT_FOUND
-            )
 
         if member and portfolio:
             auth_viewers = [{"member": member, "portfolio": portfolio}]
@@ -688,7 +664,10 @@ class DocumentLink(APIView):
         workspace_id = request.query_params.get("workspace_id")
         document_type = request.query_params.get("document_type")
 
-        db_name = get_db(workspace_id)
+        template_id = request.query_params.get("template_id")
+        template_database = request.query_params.get("template_database")
+
+        # FIXME add checks for template id and database
 
         try:
             api_key = authorization_check(request.headers.get("Authorization"))
@@ -697,10 +676,8 @@ class DocumentLink(APIView):
             return CustomResponse(False, str(e), None, status.HTTP_401_UNAUTHORIZED)
 
         dc_connect = DatacubeConnection(
-            api_key=api_key, workspace_id=workspace_id, database=db_name
+            api_key=api_key, workspace_id=workspace_id, database=template_database, template_id=template_id
         )
-
-        collection_name = dc_connect.collection_names.get("template")
 
         if not document_type or not workspace_id:
             return CustomResponse(
@@ -709,15 +686,6 @@ class DocumentLink(APIView):
                 None,
                 status.HTTP_400_BAD_REQUEST,
             )
-
-        collection = dc_connect.check_if_name_exists_collection(collection_name)
-
-        if not collection["success"]:
-            return CustomResponse(
-                False, "No collection with found", None, status.HTTP_404_NOT_FOUND
-            )
-
-        collection_name = collection["name"]
 
         if not validate_id(item_id) or not document_type:
             return Response("Something went wrong!", status.HTTP_400_BAD_REQUEST)
@@ -733,7 +701,7 @@ class DocumentLink(APIView):
         if document:
             portfolio = request.query_params.get("portfolio", "")
 
-            # FIXME: we can pass the document object instead of the item_id
+            # FIXME: we can pass the document object instead of the item_id to reduce num of api requests
             editor_link = dc_connect.access_editor(
                 item_id,
                 document_type,
@@ -750,9 +718,10 @@ class DocumentDetail(APIView):
         """Retrieves the document object for a specific document"""
         workspace_id = request.query_params.get("workspace_id")
         document_type = request.query_params.get("document_type")
+        template_id = request.query_params.get("template_id")
+        template_database = request.query_params.get("template_database")
 
-        db_name = get_db(workspace_id)
-        collection_name = f"{workspace_id}_template_collection_0"
+        # FIXME add checks for template id and database
 
         try:
             api_key = authorization_check(request.headers.get("Authorization"))
@@ -761,7 +730,7 @@ class DocumentDetail(APIView):
             return CustomResponse(False, str(e), None, status.HTTP_401_UNAUTHORIZED)
 
         dc_connect = DatacubeConnection(
-            api_key=api_key, workspace_id=workspace_id, database=db_name
+            api_key=api_key, workspace_id=workspace_id, database=template_database, template_id=template_id
         )
 
         if not workspace_id or not document_type:
@@ -771,15 +740,6 @@ class DocumentDetail(APIView):
                 None,
                 status.HTTP_400_BAD_REQUEST,
             )
-
-        collection = dc_connect.check_if_name_exists_collection(collection_name)
-
-        if not collection["success"]:
-            return CustomResponse(
-                False, "No collection with found", None, status.HTTP_404_NOT_FOUND
-            )
-
-        collection_name = collection["name"]
 
         if not validate_id(item_id) or not document_type:
             return CustomResponse(
@@ -804,7 +764,10 @@ class ItemContent(APIView):
         content = []
         item_type = request.query_params.get("item_type")
         workspace_id = request.query_params.get("workspace_id")
-        db_name = get_db(workspace_id)
+        template_id = request.query_params.get("template_id")
+        template_database = request.query_params.get("template_database")
+
+        # FIXME add checks for template id and database
 
         try:
             api_key = authorization_check(request.headers.get("Authorization"))
@@ -812,7 +775,7 @@ class ItemContent(APIView):
             return CustomResponse(False, str(e), None, status.HTTP_401_UNAUTHORIZED)
 
         dc_connect = DatacubeConnection(
-            api_key=api_key, workspace_id=workspace_id, database=db_name
+            api_key=api_key, workspace_id=workspace_id, database=template_database, template_id=template_id
         )
 
         if not validate_id(item_id):
@@ -883,7 +846,8 @@ class FinalizeOrReject(APIView):
         # NOTE should authorization check be done here?
         api_key = request.data["api_key"]
         workspace_id = request.data["workspace_id"]
-        database = request.data["database"]
+        database = request.data["template_database"]
+        template_id = request.data["template_id"]
         item_id = request_data["item_id"]
         item_type = request_data["item_type"]
         role = request_data["role"]
@@ -893,7 +857,7 @@ class FinalizeOrReject(APIView):
         message = ""
 
         dc_connect = DatacubeConnection(
-            api_key=api_key, workspace_id=workspace_id, database=database
+            api_key=api_key, workspace_id=workspace_id, database=database, template_id=template_id
         )
 
         if state == "rejected":
@@ -1088,11 +1052,14 @@ class FinalizeOrRejectEducation(APIView):
         message = request.data.get("message", None)
         link_id = request.data.get("link_id", None)
         product = request.data.get("product", "education")
-        database = get_db(workspace_id)
+        template_id = request.query_params.get("template_id")
+        template_database = request.query_params.get("template_database")
+
+        # FIXME add checks for template id and database
 
         # NOTE compare; Why was PROCESS_DB_0 used?
         dc_connect = DatacubeConnection(
-            api_key=api_key, workspace_id=workspace_id, database=database
+            api_key=api_key, workspace_id=workspace_id, database=template_database, template_id=template_id
         )
 
         payload = {
@@ -1114,9 +1081,7 @@ class FinalizeOrRejectEducation(APIView):
         res = FinalizeOrReject().post(request, process_id, payload=payload)
 
         # if res.status_code == 200:
-        process = dc_connect.get_processes_from_collection(
-            database=database, filters={"_id": process_id}
-        )["data"]
+        process = dc_connect.get_processes_from_collection(filters={"_id": process_id})["data"]
         if not process:
             return CustomResponse(
                 False, "Document could not be accessed!", None, status.HTTP_404_NOT_FOUND
@@ -1170,10 +1135,13 @@ class Folders(APIView):
         created_by = request.data.get("created_by")
         company_id = request.data.get("company_id")
         data_type = request.data.get("data_type")
-        database = get_db(workspace_id)
+        template_id = request.query_params.get("template_id")
+        template_database = request.query_params.get("template_database")
+
+        # FIXME add checks for template id and database
 
         # NOTE compare; Why was PROCESS_DB_0 used?
-        dc_connect = DatacubeConnection(api_key=api_key, workspace_id=None, database=database)
+        dc_connect = DatacubeConnection(api_key=api_key, workspace_id=None, database=template_database, template_id=template_id)
 
         if not all[folder_name, created_by, company_id, data_type]:
             return CustomResponse(False, "Invalid Request!", None, status.HTTP_400_BAD_REQUEST)
@@ -1213,10 +1181,13 @@ class FolderDetail(APIView):
             return Response("Something went wrong!", status.HTTP_400_BAD_REQUEST)
 
         workspace_id = request.query_params.get("workspace_id")
-        database = get_db(workspace_id)
+        template_id = request.query_params.get("template_id")
+        template_database = request.query_params.get("template_database")
+
+        # FIXME add checks for template id and database
 
         # NOTE compare; Why was PROCESS_DB_0 used?
-        dc_connect = DatacubeConnection(api_key=api_key, workspace_id=None, database=database)
+        dc_connect = DatacubeConnection(api_key=api_key, workspace_id=None, database=template_database, template_id=template_id)
 
         folder_details = dc_connect.get_folders_from_collection({"_id": folder_id}, single=True)
         return Response(folder_details, status.HTTP_200_OK)
@@ -1255,9 +1226,12 @@ class DocumentOrTemplateProcessing(APIView):
             return CustomResponse(False, str(e), None, status.HTTP_401_UNAUTHORIZED)
 
         workspace_id = request.query_params.get("workspace_id")
-        database = get_db(workspace_id)
+        template_id = request.query_params.get("template_id")
+        template_database = request.query_params.get("template_database")
+
+        # FIXME add checks for template id and database
         dc_connect = DatacubeConnection(
-            api_key=api_key, workspace_id=workspace_id, database=database
+            api_key=api_key, workspace_id=workspace_id, database=template_database, template_id=template_id
         )
 
         payload_dict = kwargs.get("payload")
@@ -1412,9 +1386,12 @@ class Process(APIView):
         if not validate_id(company_id) or data_type is None:
             return Response("Invalid Request!", status.HTTP_400_BAD_REQUEST)
 
-        db_name = get_db(workspace_id)
+        template_id = request.query_params.get("template_id")
+        template_database = request.query_params.get("template_database")
+
+        # FIXME add checks for template id and database
         dc_connect = DatacubeConnection(
-            api_key=api_key, workspace_id=workspace_id, database=db_name
+            api_key=api_key, workspace_id=workspace_id, database=template_database, template_id=template_id
         )
         process_state = request.query_params.get("process_state")
 
@@ -1449,7 +1426,10 @@ class ProcessDetail(APIView):
         workspace_id = request.query_params.get("workspace_id")
         data_type = request.query_params.get("data_type")
 
-        db_name = get_db(workspace_id)
+        template_id = request.query_params.get("template_id")
+        template_database = request.query_params.get("template_database")
+
+        # FIXME add checks for template id and database
 
         try:
             api_key = authorization_check(request.headers.get("Authorization"))
@@ -1461,7 +1441,7 @@ class ProcessDetail(APIView):
             return Response("Something went wrong!", status.HTTP_400_BAD_REQUEST)
 
         dc_connect = DatacubeConnection(
-            api_key=api_key, workspace_id=workspace_id, database=db_name
+            api_key=api_key, workspace_id=workspace_id, database=template_database, template_id=template_id
         )
 
         process = dc_connect.get_processes_from_collection(
@@ -1507,7 +1487,10 @@ class ProcessDetail(APIView):
         workspace_id = request.query_params.get("workspace_id")
         data_type = request.query_params.get("data_type")
 
-        db_name = get_db(workspace_id)
+        template_id = request.query_params.get("template_id")
+        template_database = request.query_params.get("template_database")
+
+        # FIXME add checks for template id and database
 
         try:
             api_key = authorization_check(request.headers.get("Authorization"))
@@ -1522,7 +1505,7 @@ class ProcessDetail(APIView):
             return Response("Some parameters are missing", status.HTTP_400_BAD_REQUEST)
 
         dc_connect = DatacubeConnection(
-            api_key=api_key, workspace_id=workspace_id, database=db_name
+            api_key=api_key, workspace_id=workspace_id, database=template_database, template_id=template_id
         )
 
         workflow = request.data.get("workflows")
@@ -1568,8 +1551,10 @@ class ProcessLink(APIView):
         workspace_id = request.query_params.get("workspace_id")
         data_type = request.query_params.get("data_type")
 
-        db_name = get_db(workspace_id)
+        template_id = request.query_params.get("template_id")
+        template_database = request.query_params.get("template_database")
 
+        # FIXME add checks for template id and database
         try:
             api_key = authorization_check(request.headers.get("Authorization"))
 
@@ -1580,7 +1565,7 @@ class ProcessLink(APIView):
             return Response("Something went wrong!", status.HTTP_400_BAD_REQUEST)
 
         dc_connect = DatacubeConnection(
-            api_key=api_key, workspace_id=workspace_id, database=db_name
+            api_key=api_key, workspace_id=workspace_id, database=template_database, template_id=template_id
         )
 
         # only one link as opposed to links in views_v2
@@ -1624,7 +1609,10 @@ class ProcessVerification(APIView):
         workspace_id = request.query_params.get("workspace_id")
         data_type = request.query_params.get("data_type")
 
-        db_name = get_db(workspace_id)
+        template_id = request.query_params.get("template_id")
+        template_database = request.query_params.get("template_database")
+
+        # FIXME add checks for template id and database
 
         try:
             api_key = authorization_check(request.headers.get("Authorization"))
@@ -1636,7 +1624,7 @@ class ProcessVerification(APIView):
             return Response("Something went wrong!", status.HTTP_400_BAD_REQUEST)
 
         dc_connect = DatacubeConnection(
-            api_key=api_key, workspace_id=workspace_id, database=db_name
+            api_key=api_key, workspace_id=workspace_id, database=template_database, template_id=template_id
         )
 
         user_type = request.data["user_type"]
@@ -1741,7 +1729,10 @@ class TriggerProcess(APIView):
         workspace_id = request.query_params.get("workspace_id")
         data_type = request.query_params.get("data_type")
 
-        db_name = get_db(workspace_id)
+        template_id = request.query_params.get("template_id")
+        template_database = request.query_params.get("template_database")
+
+        # FIXME add checks for template id and database
 
         try:
             api_key = authorization_check(request.headers.get("Authorization"))
@@ -1753,7 +1744,7 @@ class TriggerProcess(APIView):
             return Response("Something went wrong!", status.HTTP_400_BAD_REQUEST)
 
         dc_connect = DatacubeConnection(
-            api_key=api_key, workspace_id=workspace_id, database=db_name
+            api_key=api_key, workspace_id=workspace_id, database=template_database, template_id=template_id
         )
 
         process = dc_connect.get_processes_from_collection(
@@ -1802,7 +1793,10 @@ class ProcessImport(APIView):
         workspace_id = request.query_params.get("workspace_id")
         data_type = request.query_params.get("data_type")
 
-        db_name = get_db(workspace_id)
+        template_id = request.query_params.get("template_id")
+        template_database = request.query_params.get("template_database")
+
+        # FIXME add checks for template id and database
 
         try:
             api_key = authorization_check(request.headers.get("Authorization"))
@@ -1811,7 +1805,7 @@ class ProcessImport(APIView):
             return CustomResponse(False, str(e), None, status.HTTP_401_UNAUTHORIZED)
 
         dc_connect = DatacubeConnection(
-            api_key=api_key, workspace_id=workspace_id, database=db_name
+            api_key=api_key, workspace_id=workspace_id, database=template_database, template_id=template_id
         )
 
         data = request.data
@@ -1953,7 +1947,10 @@ class ProcessCopies(APIView):
     def post(self, request, process_id):
         workspace_id = request.query_params.get("workspace_id")
 
-        db_name = get_db(workspace_id)
+        template_id = request.query_params.get("template_id")
+        template_database = request.query_params.get("template_database")
+
+        # FIXME add checks for template id and database
 
         try:
             api_key = authorization_check(request.headers.get("Authorization"))
@@ -1962,7 +1959,7 @@ class ProcessCopies(APIView):
             return CustomResponse(False, str(e), None, status.HTTP_401_UNAUTHORIZED)
 
         dc_connect = DatacubeConnection(
-            api_key=api_key, workspace_id=workspace_id, database=db_name
+            api_key=api_key, workspace_id=workspace_id, database=template_database, template_id=template_id
         )
 
         if not validate_id(process_id):

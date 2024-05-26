@@ -50,14 +50,16 @@ def create_db(*, api_key, workspace_id, template_name, **kwargs):
         kwargs (_dict_): other keyword arguments to create db_
     """
     db_name = make_db_name(template_name)
-    
+
     # FIXME remove these
     db_name = "new_structure_template_0_db_c155"
 
     return db_name
 
+
 # FIXME remove these
 USER = "_user_temp_2"
+
 
 class CustomDict(dict):
     def values(self):
@@ -69,10 +71,11 @@ class CustomDict(dict):
         if val:
             return val + USER
         return val
-    
+
     def __or__(self, other):
         result = CustomDict(super().__or__(other))
         return result
+
 
 class DatacubeConnection:
 
@@ -90,7 +93,9 @@ class DatacubeConnection:
         self.collection_names = self.normal_collection_names | self.metadata_collections
         self.template_id = None
         # FIXME if needed
-        self.master_template_collection = f"{self.workspace_id}_workflowai_master_template_collection"
+        self.master_template_collection = (
+            f"{self.workspace_id}_workflowai_master_template_collection"
+        )
 
         if template_id is not None:
             self.master_template_data = self.check_db(template_id, database)
@@ -101,34 +106,38 @@ class DatacubeConnection:
 
     @property
     def metadata_collections(self):
-        return CustomDict({
-            "document_metadata": f"{self.workspace_id}_workflowai_documents_metadata_collection_0",
-            "clone_metadata": f"{self.workspace_id}_workflowai_clones_metadata_collection_0",
-            "template_metadata": f"{self.workspace_id}_workflowai_templates_metadata_collection_0",
-        })
+        return CustomDict(
+            {
+                "document_metadata": f"{self.workspace_id}_workflowai_documents_metadata_collection_0",
+                "clone_metadata": f"{self.workspace_id}_workflowai_clones_metadata_collection_0",
+                "template_metadata": f"{self.workspace_id}_workflowai_templates_metadata_collection_0",
+            }
+        )
 
     @property
     def normal_collection_names(self):
-        return CustomDict({
-            "workflow": f"{self.workspace_id}_workflowai_workflow_collection_0",
-            "process": f"{self.workspace_id}_workflowai_process_collection",
-            "document": f"{self.workspace_id}_workflowai_document_collection_0",
-            "clone": f"{self.workspace_id}_workflowai_clone_collection_0",
-            "template": f"{self.workspace_id}_workflowai_template_collection_0",
-            "qrcode": f"{self.workspace_id}_workflowai_qrcode_collection_0",
-            "link": f"{self.workspace_id}_workflowai_link_collection_0",
-            "folder": f"{self.workspace_id}_workflowai_folder_collection_0",
-        })
+        return CustomDict(
+            {
+                "workflow": f"{self.workspace_id}_workflowai_workflow_collection_0",
+                "process": f"{self.workspace_id}_workflowai_process_collection",
+                "document": f"{self.workspace_id}_workflowai_document_collection_0",
+                "clone": f"{self.workspace_id}_workflowai_clone_collection_0",
+                "template": f"{self.workspace_id}_workflowai_template_collection_0",
+                "qrcode": f"{self.workspace_id}_workflowai_qrcode_collection_0",
+                "link": f"{self.workspace_id}_workflowai_link_collection_0",
+                "folder": f"{self.workspace_id}_workflowai_folder_collection_0",
+            }
+        )
 
     def check_db(self, template_id, database):
         filters = {"template_id": template_id, "template_database": database}
         template_data = self.get_templates_from_master_db(filters=filters, single=True)["data"]
-        
+
         if not template_data:
             raise NotFound("template with db not found")
 
         return template_data[0]
-    
+
     def add_collection_to_database(self, collections: str, num_of_collections=1, **kwargs):
         """adds collection(s) to a database
 
@@ -193,10 +202,10 @@ class DatacubeConnection:
             payload_dict["data"] = data
             payload = payload_dict
             payload.update({"records": [{"record": "1", "type": "overall"}]})
-            
+
             # NOTE None is the default but if this is set to True that means it is
             # a new template insertion. Advised this is the only scenario where
-            # this should be set to True 
+            # this should be set to True
             if not kwargs.get("no_template_id"):
 
                 # ensure template_id is present at time of insertion
@@ -205,6 +214,7 @@ class DatacubeConnection:
 
                 # add the template_id for db reference
                 payload["template_id"] = self.template_id
+                payload["template_database"] = self.database
             response = requests.post(DB_API_CRUD, json=payload)
 
         elif operation.lower() == "update":
@@ -506,14 +516,13 @@ class DatacubeConnection:
     def update_template_collection(self, template_id: str, data: dict, query=None, **kwargs):
         if query is None:
             query = {"_id": template_id}
-        
 
         if kwargs.get("master") == True:
             collection = self.master_template_collection
 
         elif kwargs.get("metadata") == True:
             collection = self.collection_names["template_metadata"]
-        
+
         else:
             collection = self.collection_names["template"]
 
@@ -523,31 +532,41 @@ class DatacubeConnection:
         return self.update_template_collection(
             *args, template_id=metadata_id, data=data, metadata=True, **kwargs
         )
-    
+
     def update_master_template_collection(self, template_id: str, data: dict, *args, **kwargs):
         query = {"template_id": template_id}
         database = get_master_db(self.workspace_id)
         return self.update_template_collection(
-            *args, template_id=template_id, data=data, query=query, master=True, database=database, **kwargs
+            *args,
+            template_id=template_id,
+            data=data,
+            query=query,
+            master=True,
+            database=database,
+            **kwargs,
         )
 
     def get_templates_from_master_db(self, filters=None, single=False, **kwargs):
         """
-            Using thi method always returns templates from the `master db`
-            regardless of which db was used to init.
+        Using thi method always returns templates from the `master db`
+        regardless of which db was used to init.
         """
         database = get_master_db(self.workspace_id)
         limit = None if single is None else 1 if single else None
-        
+
         if filters is None:
             filters = {}
 
         if limit is not None:
-            return self.get_data_from_collection(self.master_template_collection, filters, limit=limit, database=database, **kwargs)
+            return self.get_data_from_collection(
+                self.master_template_collection, filters, limit=limit, database=database, **kwargs
+            )
         else:
-            return self.get_data_from_collection(self.master_template_collection, filters, database=database, **kwargs)
+            return self.get_data_from_collection(
+                self.master_template_collection, filters, database=database, **kwargs
+            )
 
-
+    # FIXME we have everything we need to get the template data so no need to pass anything
     def get_templates_from_collection(self, filters: dict, single=False, **kwargs):
         """
         Retrieves templates from the template collection.
@@ -576,6 +595,7 @@ class DatacubeConnection:
         else:
             return self.get_data_from_collection(collection, filters, **kwargs)
 
+    # FIXME create custom query for metadata since only one metadata per template metadata collection
     def get_templates_metadata_from_collection(self, *args, **kwargs):
         """
         Retrieves template metadata from the template collection
