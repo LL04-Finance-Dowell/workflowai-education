@@ -69,7 +69,7 @@ class DatabaseServices(APIView):
         dc_connect = DatacubeConnection(
             api_key=api_key, workspace_id=workspace_id, database=data_database
         )
-        needed_collections = list(dc_connect.master_template_collection)
+        needed_collections = list(dc_connect.master_collections.values())
         response_data = dc_connect.datacube_collection_retrieval()
 
         if not response_data["success"]:
@@ -153,7 +153,7 @@ class NewTemplate(APIView):
                 )
 
             dc_connect = DatacubeConnection(
-                api_key=api_key, workspace_id=workspace_id, database=new_db
+                api_key=api_key, workspace_id=workspace_id, database=new_db, check=False
             )
             collection_name = dc_connect.collection_names.get("template")
             metadata_collection = dc_connect.collection_names.get("template_metadata")
@@ -173,13 +173,12 @@ class NewTemplate(APIView):
                 "message": "",
                 "approval": False,
                 "collection_name": collection_name,
-                "template_database": new_db,
+                # "template_database": new_db, # not needed done on each insertion
             }
 
             res = dc_connect.save_to_template_collection(data=template_data, no_template_id=True)
             if res["success"]:
                 collection_id = res["data"]["inserted_id"]
-                dc_connect.template_id = collection_id
                 res_metadata = dc_connect.save_to_template_metadata_collection(
                     {
                         "template_name": template_name,
@@ -190,26 +189,10 @@ class NewTemplate(APIView):
                         "auth_viewers": viewers,
                         "template_state": "draft",
                         "approval": False,
-                        "template_database": new_metadata_db,
+                        # "template_database": new_metadata_db, # not needed done on each insertion
                     },
                     database=new_metadata_db,
                 )
-
-                master_db_data = {
-                    "template_name": template_name,
-                    # NOTE might be a duplication since on all insertions template_id is added unless
-                    "template_id": collection_id,
-                    "template_metadata_id": res_metadata["data"].get("inserted_id"),
-                    "template_database": new_db,
-                    "approval": False
-                }
-                master_res = dc_connect.save_template_to_master_db(
-                    data=master_db_data
-                )
-
-                if not master_res["success"]:
-                    # FIXME what happens here
-                    pass
 
                 payload = {
                     "product_name": "workflowai",
@@ -264,16 +247,14 @@ class NewTemplate(APIView):
             return CustomResponse(False, str(e), None, status.HTTP_401_UNAUTHORIZED)
         workspace_id = request.GET.get("workspace_id")
 
-        database = form.get("template_database")
+        database = form.get("database")
         collection_id = form["collection_id"] # template_id
         metadata_id = form["metadata_id"] # template_metadata_id
         
         if not database:
-            return CustomResponse(False, "template_database is required", status.HTTP_400_BAD_REQUEST)
+            return CustomResponse(False, "database is required", status.HTTP_400_BAD_REQUEST)
         
-        dc_connect = DatacubeConnection(
-            api_key=api_key, workspace_id=workspace_id, database=database, template_id=collection_id
-        )
+        dc_connect = DatacubeConnection(api_key=api_key, workspace_id=workspace_id, database=database)
         # NOTE compare
         update_data = {"approval": True}
 
@@ -303,12 +284,12 @@ class TemplateDetail(APIView):
             return CustomResponse(False, str(e), None, status.HTTP_401_UNAUTHORIZED)
 
         workspace_id = request.GET.get("workspace_id")
-        database = request.GET.get("template_database")
+        database = request.GET.get("database")
         if not database:
-            return CustomResponse(False, "template_database is required", status.HTTP_400_BAD_REQUEST)
+            return CustomResponse(False, "database is required", status.HTTP_400_BAD_REQUEST)
         
         dc_connect = DatacubeConnection(
-            api_key=api_key, workspace_id=workspace_id, database=database, template_id=template_id
+            api_key=api_key, workspace_id=workspace_id, database=database
         )
         # NOTE do we need to pass this filter being that only one template will exist in the template collection of each db?
         res = dc_connect.get_templates_from_collection({"_id": template_id})
@@ -475,7 +456,7 @@ class NewDocument(APIView):
         created_by = request.data.get("created_by")
         data_type = request.data.get("data_type")
         template_id = request.data.get("template_id")
-        template_database = request.data.get("template_database")
+        database = request.data.get("database")
 
         # NOTE please confirm this flow
         try:
@@ -484,11 +465,11 @@ class NewDocument(APIView):
         except InvalidTokenException as e:
             return CustomResponse(False, str(e), None, status.HTTP_401_UNAUTHORIZED)
 
-        if not template_id or not template_database:
-            return CustomResponse(False, "template_database and template_id is required", status.HTTP_400_BAD_REQUEST)
+        if not template_id or not database:
+            return CustomResponse(False, "database and template_id is required", status.HTTP_400_BAD_REQUEST)
 
         dc_connect = DatacubeConnection(
-            api_key=api_key, workspace_id=workspace_id, database=template_database, template_id=template_id
+            api_key=api_key, workspace_id=workspace_id, database=database
         )
 
         isapproved = dc_connect.master_template_data["approval"]
@@ -528,24 +509,12 @@ class NewDocument(APIView):
             "folders": [],
         }
 
-        # NOTE please confirm
-        # db_0_res = dc_connect.save_to_document_collection(document_data)
-
-        # if not db_0_res["success"]:
-        #     return CustomResponse(
-        #         False,
-        #         "An error occured while trying to save document",
-        #         None,
-        #         status.HTTP_500_INTERNAL_SERVER_ERROR,
-        #     )
-
-        # using a different db here?
         res = dc_connect.save_to_document_collection(document_data)
 
         if res["success"]:
             collection_id = res["data"]["inserted_id"]
             # NOTE compare
-            metadata = dc_connect.save_to_document_metadata_collection(
+            res_metadata = dc_connect.save_to_document_metadata_collection(
                 {
                     "document_name": "Untitled Document",
                     "created_by": request.data["created_by"],
@@ -555,12 +524,6 @@ class NewDocument(APIView):
                     "auth_viewers": viewers,
                     "document_state": "draft",
                 }
-            )
-
-            # Confirm flow
-            res_metadata = dc_connect.save_to_document_metadata_collection(
-                metadata,
-                # will use different db here?
             )
 
             if not res_metadata["success"]:
@@ -588,9 +551,9 @@ class Document(APIView):
         member = request.query_params.get("member")
         portfolio = request.query_params.get("portfolio")
         template_id = request.query_params.get("template_id")
-        template_database = request.query_params.get("template_database")
+        database = request.query_params.get("database")
 
-        # FIXME add checks for template id and database
+        # FIXME add checks for database
 
         try:
             api_key = authorization_check(request.headers.get("Authorization"))
@@ -598,9 +561,23 @@ class Document(APIView):
         except InvalidTokenException as e:
             return CustomResponse(False, str(e), None, status.HTTP_401_UNAUTHORIZED)
 
+
+        if not database:
+            dc_connect = DatacubeConnection(
+                api_key=api_key, workspace_id=workspace_id, database=get_master_db(workspace_id), check=False
+            )
+            document_list = dc_connect.get_documents_from_master_db()
+            return Response(
+                {"documents": document_list},
+                status=status.HTTP_200_OK,
+            )
+
+
+
         dc_connect = DatacubeConnection(
-            api_key=api_key, workspace_id=workspace_id, database=template_database, template_id=template_id
+            api_key=api_key, workspace_id=workspace_id, database=database
         )
+
 
         if not document_type or not document_state or not workspace_id:
             return CustomResponse(
@@ -667,7 +644,7 @@ class DocumentLink(APIView):
         template_id = request.query_params.get("template_id")
         template_database = request.query_params.get("template_database")
 
-        # FIXME add checks for template id and database
+        # FIXME add checks for database
 
         try:
             api_key = authorization_check(request.headers.get("Authorization"))
@@ -721,7 +698,7 @@ class DocumentDetail(APIView):
         template_id = request.query_params.get("template_id")
         template_database = request.query_params.get("template_database")
 
-        # FIXME add checks for template id and database
+        # FIXME add checks for database
 
         try:
             api_key = authorization_check(request.headers.get("Authorization"))
@@ -767,7 +744,7 @@ class ItemContent(APIView):
         template_id = request.query_params.get("template_id")
         template_database = request.query_params.get("template_database")
 
-        # FIXME add checks for template id and database
+        # FIXME add checks for database
 
         try:
             api_key = authorization_check(request.headers.get("Authorization"))
@@ -1055,7 +1032,7 @@ class FinalizeOrRejectEducation(APIView):
         template_id = request.query_params.get("template_id")
         template_database = request.query_params.get("template_database")
 
-        # FIXME add checks for template id and database
+        # FIXME add checks for database
 
         # NOTE compare; Why was PROCESS_DB_0 used?
         dc_connect = DatacubeConnection(
@@ -1138,7 +1115,7 @@ class Folders(APIView):
         template_id = request.query_params.get("template_id")
         template_database = request.query_params.get("template_database")
 
-        # FIXME add checks for template id and database
+        # FIXME add checks for database
 
         # NOTE compare; Why was PROCESS_DB_0 used?
         dc_connect = DatacubeConnection(api_key=api_key, workspace_id=None, database=template_database, template_id=template_id)
@@ -1184,7 +1161,7 @@ class FolderDetail(APIView):
         template_id = request.query_params.get("template_id")
         template_database = request.query_params.get("template_database")
 
-        # FIXME add checks for template id and database
+        # FIXME add checks for database
 
         # NOTE compare; Why was PROCESS_DB_0 used?
         dc_connect = DatacubeConnection(api_key=api_key, workspace_id=None, database=template_database, template_id=template_id)
@@ -1229,7 +1206,7 @@ class DocumentOrTemplateProcessing(APIView):
         template_id = request.query_params.get("template_id")
         template_database = request.query_params.get("template_database")
 
-        # FIXME add checks for template id and database
+        # FIXME add checks for database
         dc_connect = DatacubeConnection(
             api_key=api_key, workspace_id=workspace_id, database=template_database, template_id=template_id
         )
@@ -1389,7 +1366,7 @@ class Process(APIView):
         template_id = request.query_params.get("template_id")
         template_database = request.query_params.get("template_database")
 
-        # FIXME add checks for template id and database
+        # FIXME add checks for database
         dc_connect = DatacubeConnection(
             api_key=api_key, workspace_id=workspace_id, database=template_database, template_id=template_id
         )
@@ -1429,7 +1406,7 @@ class ProcessDetail(APIView):
         template_id = request.query_params.get("template_id")
         template_database = request.query_params.get("template_database")
 
-        # FIXME add checks for template id and database
+        # FIXME add checks for database
 
         try:
             api_key = authorization_check(request.headers.get("Authorization"))
@@ -1490,7 +1467,7 @@ class ProcessDetail(APIView):
         template_id = request.query_params.get("template_id")
         template_database = request.query_params.get("template_database")
 
-        # FIXME add checks for template id and database
+        # FIXME add checks for database
 
         try:
             api_key = authorization_check(request.headers.get("Authorization"))
@@ -1554,7 +1531,7 @@ class ProcessLink(APIView):
         template_id = request.query_params.get("template_id")
         template_database = request.query_params.get("template_database")
 
-        # FIXME add checks for template id and database
+        # FIXME add checks for database
         try:
             api_key = authorization_check(request.headers.get("Authorization"))
 
@@ -1612,7 +1589,7 @@ class ProcessVerification(APIView):
         template_id = request.query_params.get("template_id")
         template_database = request.query_params.get("template_database")
 
-        # FIXME add checks for template id and database
+        # FIXME add checks for database
 
         try:
             api_key = authorization_check(request.headers.get("Authorization"))
@@ -1732,7 +1709,7 @@ class TriggerProcess(APIView):
         template_id = request.query_params.get("template_id")
         template_database = request.query_params.get("template_database")
 
-        # FIXME add checks for template id and database
+        # FIXME add checks for database
 
         try:
             api_key = authorization_check(request.headers.get("Authorization"))
@@ -1796,7 +1773,7 @@ class ProcessImport(APIView):
         template_id = request.query_params.get("template_id")
         template_database = request.query_params.get("template_database")
 
-        # FIXME add checks for template id and database
+        # FIXME add checks for database
 
         try:
             api_key = authorization_check(request.headers.get("Authorization"))
@@ -1950,7 +1927,7 @@ class ProcessCopies(APIView):
         template_id = request.query_params.get("template_id")
         template_database = request.query_params.get("template_database")
 
-        # FIXME add checks for template id and database
+        # FIXME add checks for database
 
         try:
             api_key = authorization_check(request.headers.get("Authorization"))
