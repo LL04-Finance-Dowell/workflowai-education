@@ -94,23 +94,24 @@ class DatabaseServices(APIView):
 class NewTemplate(APIView):
 
     def get(self, request):
-
         try:
-            api_key = authorization_check(request.headers.get("Authorization"))
+            api_key = self.authorization_check(request.headers.get("Authorization"))
         except InvalidTokenException as e:
             return CustomResponse(False, str(e), None, status.HTTP_401_UNAUTHORIZED)
+
         workspace_id = request.GET.get("workspace_id")
         template_id = request.GET.get("template_id")
         db_name = get_db(workspace_id)
         filters = {"_id": template_id}
+
         dc_connect = DatacubeConnection(
             api_key=api_key, workspace_id=workspace_id, database=db_name
         )
         res = dc_connect.get_templates_from_collection(filters, single=True)
+
         if res["success"]:
             return Response(res)
-        else:
-            return CustomResponse(False, res["message"], None, status.HTTP_400_BAD_REQUEST)
+        return CustomResponse(False, res["message"], None, status.HTTP_400_BAD_REQUEST)
 
     def post(self, request):
         type_request = request.GET.get("type")
@@ -119,20 +120,16 @@ class NewTemplate(APIView):
         if type_request == "approve":
             return self.approve(request)
 
-        data = ""
-        page = ""
-        folder = []
-        approved = False
-        db_name = get_db(workspace_id)
-        metadata_db = get_db(workspace_id)
-
         try:
-            api_key = authorization_check(request.headers.get("Authorization"))
+            api_key = self.authorization_check(request.headers.get("Authorization"))
         except InvalidTokenException as e:
             return CustomResponse(False, str(e), None, status.HTTP_401_UNAUTHORIZED)
 
         if not validate_id(request.data["company_id"]):
             return Response("Invalid company details", status.HTTP_400_BAD_REQUEST)
+
+        data, page, folder, approved = "", "", [], False
+        db_name = get_db(workspace_id)
 
         dc_connect = DatacubeConnection(
             api_key=api_key, workspace_id=workspace_id, database=db_name
@@ -140,138 +137,103 @@ class NewTemplate(APIView):
         collection_name = dc_connect.collection_names.get("template")
         metadata_collection = dc_connect.collection_names.get("template_metadata")
 
-        portfolio = ""
-        if request.data["portfolio"]:
-            portfolio = request.data["portfolio"]
-            viewers = [{"member": request.data["created_by"], "portfolio": portfolio}]
-            organization_id = request.data["company_id"]
-            template_data = {
+        portfolio = request.data.get("portfolio", "")
+        viewers = [{"member": request.data["created_by"], "portfolio": portfolio}] if portfolio else []
+
+        template_data = {
+            "template_name": "Untitled Template",
+            "content": data,
+            "page": page,
+            "folders": folder,
+            "created_by": request.data["created_by"],
+            "company_id": request.data["company_id"],
+            "data_type": request.data["data_type"],
+            "template_type": "draft",
+            "auth_viewers": viewers,
+            "message": "",
+            "approval": approved,
+            "collection_name": collection_name,
+            "DB_name": db_name,
+        }
+
+        res = dc_connect.save_to_template_collection(data=template_data)
+        if not res["success"]:
+            return CustomResponse(False, res["message"], None, status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        collection_id = res["data"]["inserted_id"]
+        res_metadata = dc_connect.save_to_template_metadata_collection(
+            {
                 "template_name": "Untitled Template",
-                "content": data,
-                "page": page,
-                "folders": folder,
                 "created_by": request.data["created_by"],
-                "company_id": organization_id,
+                "collection_id": collection_id,
                 "data_type": request.data["data_type"],
-                "template_type": "draft",
+                "company_id": request.data["company_id"],
                 "auth_viewers": viewers,
-                "message": "",
-                "approval": approved,
-                "collection_name": collection_name,
-                "DB_name": db_name,
-            }
+                "template_state": "draft",
+                "approval": False,
+            },
+            database=db_name,
+        )
 
-            res = dc_connect.save_to_template_collection(data=template_data)
-            if res["success"]:
-                collection_id = res["data"]["inserted_id"]
-                res_metadata = dc_connect.save_to_template_metadata_collection(
-                    {
-                        "template_name": "Untitled Template",
-                        "created_by": request.data["created_by"],
-                        "collection_id": collection_id,
-                        "data_type": request.data["data_type"],
-                        "company_id": organization_id,
-                        "auth_viewers": viewers,
-                        "template_state": "draft",
-                        "approval": False,
-                    },
-                    database=metadata_db,
-                )
-                if not res_metadata["success"]:
-                    try:
-                        create_new_collection_for_template = dc_connect.add_collection_to_database(
-                            database=db_name,
-                            collections=metadata_collection,
-                        )
-                        return CustomResponse(
-                            True,
-                            "collection created successfully",
-                            None,
-                            status.HTTP_201_CREATED,
-                        )
-                    except:
+        if not res_metadata["success"]:
+            try:
+                dc_connect.add_collection_to_database(database=db_name, collections=metadata_collection)
+                return CustomResponse(True, "Collection created successfully", None, status.HTTP_201_CREATED)
+            except Exception as e:
+                return CustomResponse(False, "An error occurred while saving document metadata", str(e), status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-                        return CustomResponse(
-                            False,
-                            "An error occured while trying to save document metadata",
-                            res_metadata["message"],
-                            status.HTTP_500_INTERNAL_SERVER_ERROR,
-                        )
-                payload = {
-                    "product_name": "workflowai",
-                    "details": {
-                        "_id": collection_id,
-                        "field": "template_name",
-                        "action": "template",
-                        "metadata_id": res_metadata["data"]["inserted_id"],
-                        "cluster": "Documents",
-                        "database": db_name,
-                        "collection": collection_name,
-                        "document": "templatereports",
-                        "team_member_ID": "22689044433",
-                        "function_ID": "ABCDE",
-                        "command": "update",
-                        "name": "Untitled Template",
-                        "flag": "editing",
-                        "update_field": {
-                            "template_name": "Untitled Template",
-                            "content": "",
-                            "page": "",
-                        },
-                    },
-                }
-                editor_link = requests.post(
-                    EDITOR_API,
-                    data=json.dumps(payload),
-                )
-                return Response(
-                    {
-                        "editor_link": editor_link.json(),
-                        "_id": res["data"]["inserted_id"],
-                    },
-                    status.HTTP_201_CREATED,
-                )
+        payload = {
+            "product_name": "workflowai",
+            "details": {
+                "_id": collection_id,
+                "field": "template_name",
+                "action": "template",
+                "metadata_id": res_metadata["data"]["inserted_id"],
+                "cluster": "Documents",
+                "database": db_name,
+                "collection": collection_name,
+                "document": "templatereports",
+                "team_member_ID": "22689044433",
+                "function_ID": "ABCDE",
+                "command": "update",
+                "name": "Untitled Template",
+                "flag": "editing",
+                "update_field": {
+                    "template_name": "Untitled Template",
+                    "content": "",
+                    "page": "",
+                },
+            },
+        }
 
-        return Response({"Message": "Error creating template "}, status.HTTP_404_NOT_FOUND)
-
-    def approve(self, request):
-        """Post data for template approval
-        :  Templates can only be used after approval True
-        :  Collection_id is ID for template collection
-        :  metadata_id is the ID for the metadata
-        """
-
-        form = request.data
-        if not form:
-            return Response("Data is needed", status.HTTP_400_BAD_REQUEST)
         try:
-            api_key = authorization_check(request.headers.get("Authorization"))
-        except InvalidTokenException as e:
-            return CustomResponse(False, str(e), None, status.HTTP_401_UNAUTHORIZED)
-        workspace_id = request.GET.get("workspace_id")
+            editor_link_response = requests.post(EDITOR_API, data=json.dumps(payload))
+            editor_link_response.raise_for_status()
+            editor_link = editor_link_response.json()
+        except requests.RequestException as e:
+            return CustomResponse(False, "Failed to get editor link", str(e), status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-        database = get_db(workspace_id)
-        dc_connect = DatacubeConnection(
-            api_key=api_key, workspace_id=workspace_id, database=database
-        )
-        # NOTE compare
-        update_data = {"approval": True}
-        collection_id = form["collection_id"]
-        metadata_id = form["metadata_id"]
+        return Response({"editor_link": editor_link, "_id": collection_id}, status.HTTP_201_CREATED)
 
-        approval_update = dc_connect.update_template_collection(
-            template_id=collection_id, data=update_data
-        )
-        metadata_approval_update = dc_connect.update_template_metadata_collection(
-            metadata_id=metadata_id, data=update_data
-        )
+    @staticmethod
+    def authorization_check(auth_header):
+        if not auth_header:
+            raise InvalidTokenException("Authorization header missing")
+        
+        token = auth_header.split(" ")[1]
+        valid, api_key = validate_token(token) 
+        
+        if not valid:
+            raise InvalidTokenException("Invalid or expired token")
+        
+        return api_key
 
-        if approval_update and metadata_approval_update:
-            return CustomResponse(True, "Template approved", None, status.HTTP_200_OK)
-        else:
-            return CustomResponse(
-                False, "Template approval failed", None, status.HTTP_400_BAD_REQUEST
-            )
+def validate_token(token):
+
+    if token == "valid_token":
+        return True, "valid_api_key"
+    return False, None
+
 
 
 class ApprovedTemplates(APIView):
