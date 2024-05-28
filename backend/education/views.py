@@ -550,7 +550,6 @@ class Document(APIView):
         document_state = request.query_params.get("document_state")
         member = request.query_params.get("member")
         portfolio = request.query_params.get("portfolio")
-        template_id = request.query_params.get("template_id")
         database = request.query_params.get("database")
 
         # FIXME add checks for database
@@ -572,12 +571,9 @@ class Document(APIView):
                 status=status.HTTP_200_OK,
             )
 
-
-
         dc_connect = DatacubeConnection(
             api_key=api_key, workspace_id=workspace_id, database=database
         )
-
 
         if not document_type or not document_state or not workspace_id:
             return CustomResponse(
@@ -642,7 +638,7 @@ class DocumentLink(APIView):
         document_type = request.query_params.get("document_type")
 
         template_id = request.query_params.get("template_id")
-        template_database = request.query_params.get("template_database")
+        database = request.query_params.get("database")
 
         # FIXME add checks for database
 
@@ -653,8 +649,8 @@ class DocumentLink(APIView):
             return CustomResponse(False, str(e), None, status.HTTP_401_UNAUTHORIZED)
 
         dc_connect = DatacubeConnection(
-            api_key=api_key, workspace_id=workspace_id, database=template_database, template_id=template_id
-        )
+            api_key=api_key, workspace_id=workspace_id, database=database
+            )
 
         if not document_type or not workspace_id:
             return CustomResponse(
@@ -695,8 +691,7 @@ class DocumentDetail(APIView):
         """Retrieves the document object for a specific document"""
         workspace_id = request.query_params.get("workspace_id")
         document_type = request.query_params.get("document_type")
-        template_id = request.query_params.get("template_id")
-        template_database = request.query_params.get("template_database")
+        database = request.query_params.get("database")
 
         # FIXME add checks for database
 
@@ -707,7 +702,7 @@ class DocumentDetail(APIView):
             return CustomResponse(False, str(e), None, status.HTTP_401_UNAUTHORIZED)
 
         dc_connect = DatacubeConnection(
-            api_key=api_key, workspace_id=workspace_id, database=template_database, template_id=template_id
+            api_key=api_key, workspace_id=workspace_id, database=database
         )
 
         if not workspace_id or not document_type:
@@ -741,8 +736,7 @@ class ItemContent(APIView):
         content = []
         item_type = request.query_params.get("item_type")
         workspace_id = request.query_params.get("workspace_id")
-        template_id = request.query_params.get("template_id")
-        template_database = request.query_params.get("template_database")
+        template_database = request.query_params.get("database")
 
         # FIXME add checks for database
 
@@ -752,7 +746,7 @@ class ItemContent(APIView):
             return CustomResponse(False, str(e), None, status.HTTP_401_UNAUTHORIZED)
 
         dc_connect = DatacubeConnection(
-            api_key=api_key, workspace_id=workspace_id, database=template_database, template_id=template_id
+            api_key=api_key, workspace_id=workspace_id, database=template_database
         )
 
         if not validate_id(item_id):
@@ -824,7 +818,6 @@ class FinalizeOrReject(APIView):
         api_key = request.data["api_key"]
         workspace_id = request.data["workspace_id"]
         database = request.data["template_database"]
-        template_id = request.data["template_id"]
         item_id = request_data["item_id"]
         item_type = request_data["item_type"]
         role = request_data["role"]
@@ -834,7 +827,7 @@ class FinalizeOrReject(APIView):
         message = ""
 
         dc_connect = DatacubeConnection(
-            api_key=api_key, workspace_id=workspace_id, database=database, template_id=template_id
+            api_key=api_key, workspace_id=workspace_id, database=database
         )
 
         if state == "rejected":
@@ -1029,14 +1022,13 @@ class FinalizeOrRejectEducation(APIView):
         message = request.data.get("message", None)
         link_id = request.data.get("link_id", None)
         product = request.data.get("product", "education")
-        template_id = request.query_params.get("template_id")
-        template_database = request.query_params.get("template_database")
+        database = request.query_params.get("database")
 
         # FIXME add checks for database
 
         # NOTE compare; Why was PROCESS_DB_0 used?
         dc_connect = DatacubeConnection(
-            api_key=api_key, workspace_id=workspace_id, database=template_database, template_id=template_id
+            api_key=api_key, workspace_id=workspace_id, database=database
         )
 
         payload = {
@@ -1081,13 +1073,13 @@ class Folders(APIView):
         data_type = request.query_params.get("data_type")
         company_id = request.query_params.get("company_id")
         workspace_id = request.query_params.get("workspace_id")
-        database = get_db(workspace_id)
+        database = request.query_params.get("database")
 
         if not validate_id(company_id) or data_type is None:
             return Response("Invalid Request!", status.HTTP_400_BAD_REQUEST)
 
         # NOTE compare; Why was PROCESS_DB_0 used?
-        dc_connect = DatacubeConnection(api_key=api_key, workspace_id=None, database=database)
+        dc_connect = DatacubeConnection(api_key=api_key, workspace_id=workspace_id, database=database)
 
         cache_key = f"folders_{company_id}"
         folders_list = cache.get(cache_key)
@@ -1112,13 +1104,11 @@ class Folders(APIView):
         created_by = request.data.get("created_by")
         company_id = request.data.get("company_id")
         data_type = request.data.get("data_type")
-        template_id = request.query_params.get("template_id")
-        template_database = request.query_params.get("template_database")
+        database = request.query_params.get("database")
 
         # FIXME add checks for database
 
-        # NOTE compare; Why was PROCESS_DB_0 used?
-        dc_connect = DatacubeConnection(api_key=api_key, workspace_id=None, database=template_database, template_id=template_id)
+        dc_connect = DatacubeConnection(api_key=api_key, workspace_id=workspace_id, database=database)
 
         if not all[folder_name, created_by, company_id, data_type]:
             return CustomResponse(False, "Invalid Request!", None, status.HTTP_400_BAD_REQUEST)
@@ -1159,12 +1149,12 @@ class FolderDetail(APIView):
 
         workspace_id = request.query_params.get("workspace_id")
         template_id = request.query_params.get("template_id")
-        template_database = request.query_params.get("template_database")
+        database = request.query_params.get("database")
 
         # FIXME add checks for database
 
         # NOTE compare; Why was PROCESS_DB_0 used?
-        dc_connect = DatacubeConnection(api_key=api_key, workspace_id=None, database=template_database, template_id=template_id)
+        dc_connect = DatacubeConnection(api_key=api_key, workspace_id=workspace_id, database=database)
 
         folder_details = dc_connect.get_folders_from_collection({"_id": folder_id}, single=True)
         return Response(folder_details, status.HTTP_200_OK)
@@ -1204,11 +1194,11 @@ class DocumentOrTemplateProcessing(APIView):
 
         workspace_id = request.query_params.get("workspace_id")
         template_id = request.query_params.get("template_id")
-        template_database = request.query_params.get("template_database")
+        database = request.query_params.get("database")
 
         # FIXME add checks for database
         dc_connect = DatacubeConnection(
-            api_key=api_key, workspace_id=workspace_id, database=template_database, template_id=template_id
+            api_key=api_key, workspace_id=workspace_id, database=database
         )
 
         payload_dict = kwargs.get("payload")
@@ -1363,12 +1353,11 @@ class Process(APIView):
         if not validate_id(company_id) or data_type is None:
             return Response("Invalid Request!", status.HTTP_400_BAD_REQUEST)
 
-        template_id = request.query_params.get("template_id")
-        template_database = request.query_params.get("template_database")
+        database = request.query_params.get("database")
 
         # FIXME add checks for database
         dc_connect = DatacubeConnection(
-            api_key=api_key, workspace_id=workspace_id, database=template_database, template_id=template_id
+            api_key=api_key, workspace_id=workspace_id, database=database
         )
         process_state = request.query_params.get("process_state")
 
@@ -1387,7 +1376,7 @@ class Process(APIView):
         else:
             """By Company"""
             cache_key = f"processes_{company_id}"
-            process_list = None
+            process_list = cache.get(cache_key)
             if process_list is None:
                 process_list = dc_connect.get_processes_from_collection(
                     filters={"company_id": company_id, "data_type": data_type}
@@ -1403,8 +1392,7 @@ class ProcessDetail(APIView):
         workspace_id = request.query_params.get("workspace_id")
         data_type = request.query_params.get("data_type")
 
-        template_id = request.query_params.get("template_id")
-        template_database = request.query_params.get("template_database")
+        database = request.query_params.get("database")
 
         # FIXME add checks for database
 
@@ -1418,7 +1406,7 @@ class ProcessDetail(APIView):
             return Response("Something went wrong!", status.HTTP_400_BAD_REQUEST)
 
         dc_connect = DatacubeConnection(
-            api_key=api_key, workspace_id=workspace_id, database=template_database, template_id=template_id
+            api_key=api_key, workspace_id=workspace_id, database=database
         )
 
         process = dc_connect.get_processes_from_collection(
@@ -1464,8 +1452,7 @@ class ProcessDetail(APIView):
         workspace_id = request.query_params.get("workspace_id")
         data_type = request.query_params.get("data_type")
 
-        template_id = request.query_params.get("template_id")
-        template_database = request.query_params.get("template_database")
+        database = request.query_params.get("database")
 
         # FIXME add checks for database
 
@@ -1482,7 +1469,7 @@ class ProcessDetail(APIView):
             return Response("Some parameters are missing", status.HTTP_400_BAD_REQUEST)
 
         dc_connect = DatacubeConnection(
-            api_key=api_key, workspace_id=workspace_id, database=template_database, template_id=template_id
+            api_key=api_key, workspace_id=workspace_id, database=database
         )
 
         workflow = request.data.get("workflows")
@@ -1529,7 +1516,7 @@ class ProcessLink(APIView):
         data_type = request.query_params.get("data_type")
 
         template_id = request.query_params.get("template_id")
-        template_database = request.query_params.get("template_database")
+        database = request.query_params.get("database")
 
         # FIXME add checks for database
         try:
@@ -1542,7 +1529,7 @@ class ProcessLink(APIView):
             return Response("Something went wrong!", status.HTTP_400_BAD_REQUEST)
 
         dc_connect = DatacubeConnection(
-            api_key=api_key, workspace_id=workspace_id, database=template_database, template_id=template_id
+            api_key=api_key, workspace_id=workspace_id, database=database, template_id=template_id
         )
 
         # only one link as opposed to links in views_v2
@@ -1586,8 +1573,7 @@ class ProcessVerification(APIView):
         workspace_id = request.query_params.get("workspace_id")
         data_type = request.query_params.get("data_type")
 
-        template_id = request.query_params.get("template_id")
-        template_database = request.query_params.get("template_database")
+        database = request.query_params.get("database")
 
         # FIXME add checks for database
 
@@ -1601,7 +1587,7 @@ class ProcessVerification(APIView):
             return Response("Something went wrong!", status.HTTP_400_BAD_REQUEST)
 
         dc_connect = DatacubeConnection(
-            api_key=api_key, workspace_id=workspace_id, database=template_database, template_id=template_id
+            api_key=api_key, workspace_id=workspace_id, database=database
         )
 
         user_type = request.data["user_type"]
@@ -1706,8 +1692,7 @@ class TriggerProcess(APIView):
         workspace_id = request.query_params.get("workspace_id")
         data_type = request.query_params.get("data_type")
 
-        template_id = request.query_params.get("template_id")
-        template_database = request.query_params.get("template_database")
+        database = request.query_params.get("database")
 
         # FIXME add checks for database
 
@@ -1721,7 +1706,7 @@ class TriggerProcess(APIView):
             return Response("Something went wrong!", status.HTTP_400_BAD_REQUEST)
 
         dc_connect = DatacubeConnection(
-            api_key=api_key, workspace_id=workspace_id, database=template_database, template_id=template_id
+            api_key=api_key, workspace_id=workspace_id, database=database
         )
 
         process = dc_connect.get_processes_from_collection(
@@ -1770,8 +1755,7 @@ class ProcessImport(APIView):
         workspace_id = request.query_params.get("workspace_id")
         data_type = request.query_params.get("data_type")
 
-        template_id = request.query_params.get("template_id")
-        template_database = request.query_params.get("template_database")
+        database = request.query_params.get("database")
 
         # FIXME add checks for database
 
@@ -1782,7 +1766,7 @@ class ProcessImport(APIView):
             return CustomResponse(False, str(e), None, status.HTTP_401_UNAUTHORIZED)
 
         dc_connect = DatacubeConnection(
-            api_key=api_key, workspace_id=workspace_id, database=template_database, template_id=template_id
+            api_key=api_key, workspace_id=workspace_id, database=database
         )
 
         data = request.data
@@ -1924,8 +1908,7 @@ class ProcessCopies(APIView):
     def post(self, request, process_id):
         workspace_id = request.query_params.get("workspace_id")
 
-        template_id = request.query_params.get("template_id")
-        template_database = request.query_params.get("template_database")
+        database = request.query_params.get("database")
 
         # FIXME add checks for database
 
@@ -1936,7 +1919,7 @@ class ProcessCopies(APIView):
             return CustomResponse(False, str(e), None, status.HTTP_401_UNAUTHORIZED)
 
         dc_connect = DatacubeConnection(
-            api_key=api_key, workspace_id=workspace_id, database=template_database, template_id=template_id
+            api_key=api_key, workspace_id=workspace_id, database=database
         )
 
         if not validate_id(process_id):
