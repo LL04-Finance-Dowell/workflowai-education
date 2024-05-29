@@ -45,12 +45,14 @@ export const testTemplateApi = "http://localhost:8000/v3/education/templates/";
 export const testDocApi = "http://localhost:8000/v3/education/documents/";
 export const testWorkflowApi = "http://localhost:8000/v3/education/workflows/";
 export const testFolderApi = "http://localhost:8000/v3/education/folders/";
+export const testDatabaseApi = "http://localhost:8000/v3/education/database/";
 
 // export const httpApiUrl = axios.create({ baseURL: api_url });
 
 export const httpApiUrlV2 = axios.create({ baseURL: api_url_v2 });
 export const httpApiUrlFolderV2 = axios.create({ baseURL: testFolderApi });
 export const httpApiUrlnewV2 = axios.create({ baseURL: testTemplateApi });
+export const httpApiDbV2 = axios.create({ baseURL: testDatabaseApi });
 
 // export const httpTemplate = axios.create({ baseURL: api_url_v2 + "templates" });
 export const httpTemplate = axios.create({ baseURL: testTemplateApi });
