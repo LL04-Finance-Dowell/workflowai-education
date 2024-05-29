@@ -81,12 +81,13 @@ class DatabaseServices(APIView):
 class NewTemplate(APIView):
 
     def get(self, request):
-
+        workspace_id = request.query_params.get("workspace_id")
+        
         try:
             api_key = authorization_check(request.headers.get("Authorization"))
         except InvalidTokenException as e:
             return CustomResponse(False, str(e), None, status.HTTP_401_UNAUTHORIZED)
-        workspace_id = request.GET.get("workspace_id")
+        
         db_name = get_master_db(workspace_id)
         dc_connect = DatacubeConnection(
             api_key=api_key, workspace_id=workspace_id, database=db_name
@@ -98,9 +99,15 @@ class NewTemplate(APIView):
             return CustomResponse(False, res["message"], None, status.HTTP_400_BAD_REQUEST)
 
     def post(self, request):
-        type_request = request.GET.get("type")
-        workspace_id = request.data.get("workspace_id")
-        database = request.data.get("database")
+        workspace_id = request.query_params.get("workspace_id")
+        database = request.query_params.get("database")
+        type_request = request.query_params.get("type")
+        created_by = request.data.get("created_by")
+        data_type = request.data.get("data_type")
+        portfolio = request.data.get("portfolio")
+        template_name = request.data.get("template_name", "Untitled Template")
+        if not database:
+            return CustomResponse(False, "database is required", status.HTTP_400_BAD_REQUEST)
 
         if type_request == "approve":
             return self.approve(request)
@@ -117,11 +124,10 @@ class NewTemplate(APIView):
         except InvalidTokenException as e:
             return CustomResponse(False, str(e), None, status.HTTP_401_UNAUTHORIZED)
 
-        if not validate_id(request.data["company_id"]):
+        if not validate_id(company_id):
             return Response("Invalid company details", status.HTTP_400_BAD_REQUEST)
 
-        portfolio = request.data.get("portfolio")
-        template_name = request.data.get("template_name", "Untitled Template")
+        
         if portfolio:
 
             new_db = create_db(api_key=api_key, database=database, workspace_id=workspace_id)
@@ -139,16 +145,15 @@ class NewTemplate(APIView):
             )
             collection_name = dc_connect.collection_names.get("template")
 
-            viewers = [{"member": request.data["created_by"], "portfolio": portfolio}]
-            organization_id = request.data["company_id"]
+            viewers = [{"member": created_by, "portfolio": portfolio}]
             template_data = {
                 "template_name": template_name,
                 "content": data,
                 "page": page,
                 "folders": folder,
-                "created_by": request.data["created_by"],
-                "company_id": organization_id,
-                "data_type": request.data["data_type"],
+                "created_by": created_by,
+                "company_id": workspace_id,
+                "data_type": data_type,
                 "template_type": "draft",
                 "auth_viewers": viewers,
                 "message": "",
@@ -163,10 +168,10 @@ class NewTemplate(APIView):
                 res_metadata = dc_connect.save_to_template_metadata_collection(
                     {
                         "template_name": template_name,
-                        "created_by": request.data["created_by"],
+                        "created_by": created_by,
                         "collection_id": collection_id,
-                        "data_type": request.data["data_type"],
-                        "company_id": organization_id,
+                        "data_type": data_type,
+                        "company_id": workspace_id,
                         "auth_viewers": viewers,
                         "template_state": "draft",
                         "approval": False,
@@ -218,20 +223,16 @@ class NewTemplate(APIView):
         :  Collection_id is ID for template collection
         :  metadata_id is the ID for the metadata
         """
-
-        form = request.data
-        if not form:
-            return Response("Data is needed", status.HTTP_400_BAD_REQUEST)
+        database = request.query_params.get("database")
+        workspace_id = request.query_params.get("workspace_id")
+        if not database:
+            return CustomResponse(False, "database is required", status.HTTP_400_BAD_REQUEST)
+        
         try:
             api_key = authorization_check(request.headers.get("Authorization"))
         except InvalidTokenException as e:
             return CustomResponse(False, str(e), None, status.HTTP_401_UNAUTHORIZED)
-        workspace_id = request.GET.get("workspace_id")
 
-        database = form.get("database")
-        
-        if not database:
-            return CustomResponse(False, "database is required", status.HTTP_400_BAD_REQUEST)
         
         dc_connect = DatacubeConnection(api_key=api_key, workspace_id=workspace_id, database=database)
         # NOTE compare
@@ -254,15 +255,16 @@ class NewTemplate(APIView):
 
 class TemplateDetail(APIView):
     def get(self, request, template_id):
+        workspace_id = request.query_params.get("workspace_id")
+        database = request.query_params.get("database")
+        if not database:
+            return CustomResponse(False, "database is required", status.HTTP_400_BAD_REQUEST)
+        
         try:
             api_key = authorization_check(request.headers.get("Authorization"))
         except InvalidTokenException as e:
             return CustomResponse(False, str(e), None, status.HTTP_401_UNAUTHORIZED)
 
-        workspace_id = request.GET.get("workspace_id")
-        database = request.GET.get("database")
-        if not database:
-            return CustomResponse(False, "database is required", status.HTTP_400_BAD_REQUEST)
         
         dc_connect = DatacubeConnection(
             api_key=api_key, workspace_id=workspace_id, database=database
@@ -278,12 +280,13 @@ class TemplateDetail(APIView):
 class Workflow(APIView):
     def get(self, request):
         """Get Workflows Created in a collection"""
+        workspace_id = request.query_params.get("workspace_id")
+        
         try:
             api_key = authorization_check(request.headers.get("Authorization"))
         except InvalidTokenException as e:
             return CustomResponse(False, str(e), None, status.HTTP_401_UNAUTHORIZED)
 
-        workspace_id = request.GET.get("workspace_id")
         dc_connect = DatacubeConnection(
             api_key=api_key, workspace_id=workspace_id, workflow=True
         )
@@ -302,37 +305,34 @@ class Workflow(APIView):
 
     def post(self, request):
         """Creates a new workflow"""
-        form = request.data
+        workspace_id = request.query_params.get("workspace_id")
+        wf_title = request.data.get("wf_title")
+        steps = request.data.get("steps")
+        created_by = request.data.get("created_by")
+        portfolio = request.data.get("portfolio")
+        data_type = request.data.get("data_type")
+        
         try:
             api_key = authorization_check(request.headers.get("Authorization"))
         except InvalidTokenException as e:
             return CustomResponse(False, str(e), None, status.HTTP_401_UNAUTHORIZED)
 
-        if not form:
-            return Response("Workflow Data required", status.HTTP_400_BAD_REQUEST)
-
-        workspace_id = request.GET.get("workspace_id")
         dc_connect = DatacubeConnection(
             api_key=api_key, workspace_id=workspace_id, workflow=True
         )
 
-        organization_id = form["company_id"]
         data = {
-            "workflow_title": form["wf_title"],
-            "steps": form["steps"],
+            "workflow_title": wf_title,
+            "steps": steps,
         }
-        """ workflow_unique_name = generate_unique_collection_name(
-            collection_name, "workflow_collection"""
-
-        # if workflow_unique_name["success"]:
 
         res = dc_connect.save_to_workflow_collection(
             {
                 "workflows": data,
-                "company_id": organization_id,
-                "created_by": form["created_by"],
-                "portfolio": form["portfolio"],
-                "data_type": form["data_type"],
+                "company_id": workspace_id,
+                "created_by": created_by,
+                "portfolio": portfolio,
+                "data_type": data_type,
                 "workflow_type": "original",
             },
         )
@@ -341,10 +341,10 @@ class Workflow(APIView):
                 {
                     "_id": res["data"]["inserted_id"],
                     "workflows": data,
-                    "created_by": form["created_by"],
-                    "company_id": form["company_id"],
+                    "created_by": created_by,
+                    "company_id": workspace_id,
                     "workflow_type": "original",
-                    "data_type": form["data_type"],
+                    "data_type": data_type,
                 },
                 status.HTTP_201_CREATED,
             )
@@ -357,28 +357,24 @@ class Workflow(APIView):
             )
 
     def put(self, request):
-        form = request.data
+        workspace_id = request.query_params.get("workspace_id")
+        workflow_id = request.data.get("workflow_id")
+        update_data = request.data.get("update_data")
+        
         try:
             api_key = authorization_check(request.headers.get("Authorization"))
         except InvalidTokenException as e:
             return CustomResponse(False, str(e), None, status.HTTP_401_UNAUTHORIZED)
 
-        if not form:
-            return CustomResponse(
-                False, "Workflow Data is required", None, status.HTTP_400_BAD_REQUEST
-            )
-        workspace_id = request.GET.get("workspace_id")
-        workflow_id = form["workflow_id"]
+
         query = {"_id": workflow_id}
         dc_connect = DatacubeConnection(
             api_key=api_key, workspace_id=workspace_id, workflow=True
         )
         collection = dc_connect.collection_names.get("workflow")
-        update_data = form["workflow_update"]
         update_workflow = dc_connect.post_data_to_collection(
             collection, update_data, "update", query
         )
-        # print(update_workflow)
         if update_workflow:
             return CustomResponse(
                 True, "Workflow updated successfully", None, status.HTTP_201_CREATED
@@ -391,10 +387,10 @@ class Workflow(APIView):
 
 class CollectionData(APIView):
     def post(self, request):
-        api_key = request.data["api_key"]
-        database = request.data["db_name"]
-        collection = request.data["coll_name"]
-        filters = request.data["filters"]
+        api_key = request.data.get("api_key")
+        database = request.data.get("db_name")
+        collection = request.data.get("coll_name")
+        filters = request.data.get("filters")
         limit = request.data.get("limit")
         offset = request.data.get("offset")
 
@@ -407,10 +403,10 @@ class CollectionData(APIView):
 
 class AddToCollection(APIView):
     def post(self, request):
-        api_key = request.data["api_key"]
-        database = request.data["db_name"]
-        collection = request.data["coll_name"]
-        filters = request.data["filters"]
+        api_key = request.data.get("api_key")
+        database = request.data.get("db_name")
+        collection = request.data.get("coll_name")
+        filters = request.data.get("filters")
         limit = request.data.get("limit")
         offset = request.data.get("offset")
 
@@ -424,11 +420,11 @@ class AddToCollection(APIView):
 class NewDocument(APIView):
 
     def post(self, request):
-        workspace_id = request.data.get("workspace_id")
-        organization_id = request.data.get("company_id")
+        workspace_id = request.query_params.get("workspace_id")
+        database = request.query_params.get("database")
         created_by = request.data.get("created_by")
         data_type = request.data.get("data_type")
-        database = request.data.get("database")
+        portfolio = request.data.get("portfolio")
 
         if not workspace_id or not created_by or not data_type:
             return CustomResponse(
@@ -459,17 +455,16 @@ class NewDocument(APIView):
             )
         
         template_id = dc_connect.master_template_data["template_id"]
-        portfolio = request.data.get("portfolio")
         viewers = [{"member": created_by, "portfolio": portfolio}]
         template = dc_connect.get_templates_from_collection({"_id": template_id})
 
         document_data = {
             "document_name": "Untitled Document",
             "content": template["data"][0].get("content"),
-            "created_by": request.data["created_by"],
-            "company_id": organization_id,
+            "created_by": created_by,
+            "company_id": workspace_id,
             "page": template["data"][0]["page"],
-            "data_type": request.data["data_type"],
+            "data_type": data_type,
             "document_state": "draft",
             "auth_viewers": viewers,
             "document_type": "original",
@@ -486,10 +481,10 @@ class NewDocument(APIView):
             res_metadata = dc_connect.save_to_document_metadata_collection(
                 {
                     "document_name": "Untitled Document",
-                    "created_by": request.data["created_by"],
+                    "created_by": created_by,
                     "collection_id": collection_id,
-                    "data_type": request.data["data_type"],
-                    "company_id": organization_id,
+                    "data_type": data_type,
+                    "company_id": workspace_id,
                     "auth_viewers": viewers,
                     "document_state": "draft",
                 }
