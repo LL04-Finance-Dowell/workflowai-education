@@ -5,6 +5,7 @@ from datetime import UTC, datetime
 import bson
 import requests
 from rest_framework.response import Response
+from rest_framework.exceptions import APIException
 
 from app import processing
 from app.constants import MASTERLINK_URL, PUBLIC_LOGIN_API
@@ -13,6 +14,15 @@ from app.models import ProcessReminder
 
 class InvalidTokenException(Exception):
     pass
+
+
+class CustomAPIException(APIException):
+    def __init__(self, detail=None, status_code=None):
+        if detail is not None:
+            self.detail = detail
+        if status_code is not None:
+            self.status_code = status_code
+
 
 
 def CustomResponse(success=True, message=None, response=None, status_code=None):
