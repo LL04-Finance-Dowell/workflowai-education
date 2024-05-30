@@ -9,13 +9,17 @@ import {
 // where is get doc is it detail doc
 
 export class DocumentServices {
-  createDocument = (data) => {
+  createDocument = (data, workspace_id) => {
     // return httpDocument.post("documents/", data);
-    return httpDocument.post("/", data, {
-      headers: {
-        Authorization: "Bearer 1b834e07-c68b-4bf6-96dd-ab7cdc62f07f",
-      },
-    });
+    return httpDocument.post(
+      `/?workspace_id=${workspace_id}&database=miketestdatabase_0`,
+      data,
+      {
+        headers: {
+          Authorization: "Bearer 1b834e07-c68b-4bf6-96dd-ab7cdc62f07f",
+        },
+      }
+    );
   };
 
   detailDocument = (data, collection_id) => {
@@ -98,14 +102,30 @@ export class DocumentServices {
       `companies/6385c0f38eca0fb652c9457e/documents/knowledge-centre/?data_type=Real_Data&page=${pageCount}`
     );
 
-  singleDocumentDetail = async (documentId, documentType) => {
+  singleDocumentDetail = async (documentId, workspace_id) => {
+    // return await httpDocument.get(
+    //   `documents/${documentId}/link/?document_type=document`
+    // );
     return await httpDocument.get(
-      `documents/${documentId}/link/?document_type=document`
+      `/${documentId}/detail/?workspace_id=${workspace_id}&database=miketestdatabase_0&document_type=document`,
+      {
+        headers: {
+          Authorization: "Bearer 1b834e07-c68b-4bf6-96dd-ab7cdc62f07f",
+        },
+      }
     );
   };
 
-  singleDecumentLink = async (documentId) => {
-    return await httpDocument.get(`documents/${documentId}/link/`);
+  singleDecumentLink = async (documentId, workspace_id) => {
+    // return await httpDocument.get(`documents/${documentId}/link/`)
+    return await httpDocument.get(
+      `/${documentId}/link/?workspace_id=${workspace_id}&database=miketestdatabase_0&document_type=document`,
+      {
+        headers: {
+          Authorization: "Bearer 1b834e07-c68b-4bf6-96dd-ab7cdc62f07f",
+        },
+      }
+    );
   };
 
   getNotifications = async (companyId, dataType, member, portfolio) => {

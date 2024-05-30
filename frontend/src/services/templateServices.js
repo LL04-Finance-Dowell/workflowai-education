@@ -10,10 +10,17 @@ import {
 // approve template is post here but get on the read me ?
 
 export class TemplateServices {
-  createTemplate = (data) => {
-    return httpTemplate.post("/", data, {
-      headers: { Authorization: "Bearer 1b834e07-c68b-4bf6-96dd-ab7cdc62f07f" },
-    });
+  createTemplate = (data, companyId) => {
+    return httpTemplate.post(
+      `/?workspace_id=${companyId}&database=miketestdatabase_0&item_type=template`,
+      // `/?workspace_id=${companyId}&database=miketestdatabase_1&item_type=template`,
+      data,
+      {
+        headers: {
+          Authorization: "Bearer 1b834e07-c68b-4bf6-96dd-ab7cdc62f07f",
+        },
+      }
+    );
     // return httpTemplate.post(
     //   `http://localhost:8000/education/templates/`,
     //   data
@@ -25,9 +32,11 @@ export class TemplateServices {
     // return httpTemplate.get('https://100094.pythonanywhere.com/v2/templates/65cdf4074db13cf4ccdbe023/link/');
   };
 
-  approvedTemplate = (data) => {
+  approvedTemplate = (data, companyId) => {
     // return httpTemplate.post("/approved/", data);
-    return httpTemplate.get("/approved/", data);
+    return httpTemplate.get(`/approved/?workspace_id=${companyId}`, data, {
+      headers: { Authorization: "Bearer 1b834e07-c68b-4bf6-96dd-ab7cdc62f07f" },
+    });
   };
 
   approveTemplate = (templateId) => {
@@ -54,9 +63,14 @@ export class TemplateServices {
     // return httpApiUrlV2.get(
     //   `/metadata/${companyId}/organisations/?data_type=${dataType}&item_type=template`
     // );
-    return httpApiUrlnewV2.get(`/approved/?workspace_id=${companyId}`, {
-      headers: { Authorization: "Bearer 1b834e07-c68b-4bf6-96dd-ab7cdc62f07f" },
-    });
+    return httpApiUrlnewV2.get(
+      `/?workspace_id=${companyId}&template_id=6658cb934c151f7b5bb32aaf`,
+      {
+        headers: {
+          Authorization: "Bearer 1b834e07-c68b-4bf6-96dd-ab7cdc62f07f",
+        },
+      }
+    );
   };
 
   // * The company id for demoTemplates is hard coded to that of Dowell Knowledge Centre
@@ -65,8 +79,16 @@ export class TemplateServices {
       `companies/6385c0f38eca0fb652c9457e/templates/knowledge-centre/?data_type=Real_Data&page=${count}`
     );
 
-  singleTemplateDetail = async (templateId) => {
-    return await httpTemplate.get(`/${templateId}/`);
+  singleTemplateDetail = async (templateId, companyId) => {
+    return httpApiUrlnewV2.get(
+      `/${templateId}/detail/?workspace_id=${companyId}&template_id=6658cb934c151f7b5bb32aaf&database=miketestdatabase_0`,
+      {
+        headers: {
+          Authorization: "Bearer 1b834e07-c68b-4bf6-96dd-ab7cdc62f07f",
+        },
+      }
+    );
+    // return await httpTemplate.get(`/${templateId}/`);
   };
 
   getTemplateReports = (companyId, dataType, member, portfolioName) => {

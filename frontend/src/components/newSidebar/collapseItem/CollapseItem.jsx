@@ -1,20 +1,23 @@
-import { useState } from 'react';
-import styles from './collapseItem.module.css';
-import Collapse from '../../../layouts/collapse/Collapse';
-import { HashLink } from 'react-router-hash-link';
-import { IoMdArrowDropright, IoMdArrowDropdown } from 'react-icons/io';
-import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { detailTemplate } from '../../../features/template/asyncThunks';
-import { detailDocument } from '../../../features/document/asyncThunks';
-import { setToggleManageFileForm } from '../../../features/app/appSlice';
-import { detailWorkflow } from '../../../features/workflow/asyncTHunks';
-import { useDispatch } from 'react-redux';
-import React from 'react';
-import { useTranslation } from 'react-i18next';
-import { useAppContext } from '../../../contexts/AppContext';
+import { useState } from "react";
+import styles from "./collapseItem.module.css";
+import Collapse from "../../../layouts/collapse/Collapse";
+import { HashLink } from "react-router-hash-link";
+import { IoMdArrowDropright, IoMdArrowDropdown } from "react-icons/io";
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { detailTemplate } from "../../../features/template/asyncThunks";
+import { detailDocument } from "../../../features/document/asyncThunks";
+import { setToggleManageFileForm } from "../../../features/app/appSlice";
+import { detailWorkflow } from "../../../features/workflow/asyncTHunks";
+import { useDispatch } from "react-redux";
+import React from "react";
+import { useTranslation } from "react-i18next";
+import { useAppContext } from "../../../contexts/AppContext";
+import { useSelector } from "react-redux";
+import { productName } from "../../../utils/helpers";
 
 function ListItem({ item, toggleSidebar, isMobile }) {
+  const { userDetail } = useSelector((state) => state.auth);
   let children = null;
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -45,19 +48,28 @@ function ListItem({ item, toggleSidebar, isMobile }) {
         return;
       }
       if (searchItemObj.template_name) {
-        dispatch(detailTemplate(searchItemObj.collection_id));
+        dispatch(
+          detailTemplate(
+            searchItemObj.collection_id,
+            userDetail?.portfolio_info?.length > 1
+              ? userDetail?.portfolio_info.find(
+                  (portfolio) => portfolio.product === productName
+                )?.org_id
+              : userDetail?.portfolio_info[0].org_id
+          )
+        );
         return;
       }
       if (searchItemObj.workflows) {
         dispatch(setToggleManageFileForm(true));
-        navigate('/workflows/saved#saved-workflows')
+        navigate("/workflows/saved#saved-workflows");
         dispatch(detailWorkflow(searchItemObj._id));
         return;
       }
       return;
     }
-    if(isMobile == true){
-      toggleSidebar()
+    if (isMobile == true) {
+      toggleSidebar();
     }
     navigate(item.href);
   };
@@ -65,7 +77,7 @@ function ListItem({ item, toggleSidebar, isMobile }) {
   return (
     // <a key={item.id}>
     <>
-      <li  key={item.id} style={{ color: item.asParent && styles.as__parent }}>
+      <li key={item.id} style={{ color: item.asParent && styles.as__parent }}>
         <HashLink
           className={styles.hash__link}
           to={item.href}
@@ -74,14 +86,20 @@ function ListItem({ item, toggleSidebar, isMobile }) {
           {t(item.child)}
         </HashLink>
       </li>
-      <HashLink className={styles.hash__link} to={item.href ? item.href : '#'}>
+      <HashLink className={styles.hash__link} to={item.href ? item.href : "#"}>
         {children}
       </HashLink>
-      </>
+    </>
   );
 }
 
-const CollapseItem = ({ items, listType, exception, toggleSidebar, isMobile }) => {
+const CollapseItem = ({
+  items,
+  listType,
+  exception,
+  toggleSidebar,
+  isMobile,
+}) => {
   const { t } = useTranslation();
   const { customDocName, customTempName, customWrkfName } = useAppContext();
 
@@ -114,39 +132,43 @@ const CollapseItem = ({ items, listType, exception, toggleSidebar, isMobile }) =
               {t(
                 exception
                   ? item.parent
-                  : item.parent.toLowerCase().includes('documents') &&
+                  : item.parent.toLowerCase().includes("documents") &&
                     customDocName
-                    ? item.parent
+                  ? item.parent
                       .toLowerCase()
-                      .replace('documents', customDocName)
-                    : item.parent.toLowerCase().includes('templates') &&
-                      customTempName
-                      ? item.parent
-                        .toLowerCase()
-                        .replace('templates', customTempName)
-                      : item.parent.toLowerCase().includes('workflows') &&
-                        customWrkfName
-                        ? item.parent
-                          .toLowerCase()
-                          .replace('workflows', customWrkfName)
-                        : item.parent
-              )}{' '}
+                      .replace("documents", customDocName)
+                  : item.parent.toLowerCase().includes("templates") &&
+                    customTempName
+                  ? item.parent
+                      .toLowerCase()
+                      .replace("templates", customTempName)
+                  : item.parent.toLowerCase().includes("workflows") &&
+                    customWrkfName
+                  ? item.parent
+                      .toLowerCase()
+                      .replace("workflows", customWrkfName)
+                  : item.parent
+              )}{" "}
               {item.count
-                ? item.count === '000'
+                ? item.count === "000"
                   ? `(${item.count})`
-                  : `(${item.count?.toString().padStart(3, '0')})`
-                : ''}
+                  : `(${item.count?.toString().padStart(3, "0")})`
+                : ""}
             </TagSetter>
             {item.children ? (
               <div className={styles.children__item__container}>
                 <Collapse open={item.isOpen}>
                   <div className={styles.children__item__box}>
                     {item.children.length ? (
-                      listType && listType === 'ol' ? (
+                      listType && listType === "ol" ? (
                         <ol>
                           {React.Children.toArray(
                             item.children.map((item) => (
-                              <ListItem item={item} toggleSidebar={toggleSidebar} isMobile={isMobile} />
+                              <ListItem
+                                item={item}
+                                toggleSidebar={toggleSidebar}
+                                isMobile={isMobile}
+                              />
                             ))
                           )}
                         </ol>
@@ -160,15 +182,15 @@ const CollapseItem = ({ items, listType, exception, toggleSidebar, isMobile }) =
                         </ul>
                       )
                     ) : (
-                      <span style={{ marginLeft: '25px' }}>
-                        {t('No results found!')}
+                      <span style={{ marginLeft: "25px" }}>
+                        {t("No results found!")}
                       </span>
                     )}
                   </div>
                 </Collapse>
               </div>
             ) : (
-              ''
+              ""
             )}
           </>
         ))
@@ -177,23 +199,26 @@ const CollapseItem = ({ items, listType, exception, toggleSidebar, isMobile }) =
   );
 };
 
-
-
-const TagSetter = ({ item, children, handleParentClick }) => (
-  item.href ?
+const TagSetter = ({ item, children, handleParentClick }) =>
+  item.href ? (
     <HashLink
       to={item.href}
       key={item.id}
-      className={`${styles.parent__item__box} ${item.isOpen && styles.active
-        }`}
+      className={`${styles.parent__item__box} ${item.isOpen && styles.active}`}
       onClick={() => handleParentClick(item.id)}
-    >{children}</HashLink>
-    : <button style={{ backgroundColor: 'transparent' }}
+    >
+      {children}
+    </HashLink>
+  ) : (
+    <button
+      style={{ backgroundColor: "transparent" }}
       key={item.id}
-      className={`${styles.parent__item__box} ${item.isOpen && styles.active
-        }`}
+      className={`${styles.parent__item__box} ${item.isOpen && styles.active}`}
       onClick={() => handleParentClick(item.id)}
-    > {children} </button>
-)
+    >
+      {" "}
+      {children}{" "}
+    </button>
+  );
 
 export default CollapseItem;

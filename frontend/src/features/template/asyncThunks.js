@@ -33,9 +33,9 @@ const templateServices = new TemplateServices();
 
 export const createTemplate = createAsyncThunk(
   "template/create",
-  async (data, thunkAPI) => {
+  async ({ data, workspace_id }, thunkAPI) => {
     try {
-      const res = await templateServices.createTemplate(data);
+      const res = await templateServices.createTemplate(data, workspace_id);
       const newTemplate = {
         template_name: "New Template",
         newly_created: true,
@@ -68,9 +68,9 @@ export const createTemplate = createAsyncThunk(
 
 export const detailTemplate = createAsyncThunk(
   "template/detail",
-  async (data, thunkAPI) => {
+  async ({ data, workspace_id }, thunkAPI) => {
     try {
-      const res = await templateServices.detailTemplate(data);
+      const res = await templateServices.detailTemplate(data, workspace_id);
 
       thunkAPI.dispatch(setEditorLink(res.data));
 
@@ -120,8 +120,12 @@ export const allTemplates = createAsyncThunk(
         data.data_type
       );
 
-      const templates = filterTemplates(res.data.data, thunkAPI);
-      console.log("appr TEmplate " + templates[0].template_name);
+      // const templates = filterTemplates(res.data.templates, thunkAPI);
+      // const templates = await filterTemplates(res.data.data, thunkAPI);
+      const templates = await res.data.data;
+
+      console.log("temp " + templates);
+
       return templates;
     } catch (error) {
       console.log(error);

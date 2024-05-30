@@ -1,47 +1,54 @@
-import React from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { json, useNavigate } from 'react-router-dom';
-import { toast } from 'react-toastify';
-import { setEditorLink } from '../../../features/app/appSlice';
-import HoverCard from '../HoverCard';
-import { Button } from '../styledComponents';
-import { detailDocument, documentReport } from '../../../features/document/asyncThunks';
-import { useState } from 'react';
-import axios from 'axios';
-import { LoadingSpinner } from '../../LoadingSpinner/LoadingSpinner';
+import React from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { json, useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
+import { setEditorLink } from "../../../features/app/appSlice";
+import HoverCard from "../HoverCard";
+import { Button } from "../styledComponents";
+import {
+  detailDocument,
+  documentReport,
+} from "../../../features/document/asyncThunks";
+import { useState } from "react";
+import axios from "axios";
+import { LoadingSpinner } from "../../LoadingSpinner/LoadingSpinner";
 import {
   verifyProcessForUser,
   getVerifiedProcessLink,
-} from '../../../services/processServices';
-import { useAppContext } from '../../../contexts/AppContext';
+} from "../../../services/processServices";
+import { useAppContext } from "../../../contexts/AppContext";
 import {
   SetShowDocumentReport,
-  SetSingleDocument
+  SetSingleDocument,
 } from "../../../features/app/appSlice";
 
 import {
   addNewFavoriteForUser,
   deleteFavoriteForUser,
-} from '../../../services/favoritesServices';
-import { RiDeleteBin6Line } from 'react-icons/ri';
-import { moveItemToArchive } from '../../../services/archiveServices';
-import { setAllDocuments } from '../../../features/document/documentSlice';
-import { BsBookmark, BsFillBookmarkFill, BsArrowBarRight } from 'react-icons/bs';
+} from "../../../services/favoritesServices";
+import { RiDeleteBin6Line } from "react-icons/ri";
+import { moveItemToArchive } from "../../../services/archiveServices";
+import { setAllDocuments } from "../../../features/document/documentSlice";
+import {
+  BsBookmark,
+  BsFillBookmarkFill,
+  BsArrowBarRight,
+} from "react-icons/bs";
 import {
   extractTokenFromVerificationURL,
   productName,
   updateVerificationDataWithTimezone,
-} from '../../../utils/helpers';
-import { useTranslation } from 'react-i18next';
-import { DocumentServices } from '../../../services/documentServices';
-import { MdOutlineFiberNew } from 'react-icons/md';
-import { IoIosRefresh } from 'react-icons/io';
-import { Tooltip } from 'react-tooltip';
+} from "../../../utils/helpers";
+import { useTranslation } from "react-i18next";
+import { DocumentServices } from "../../../services/documentServices";
+import { MdOutlineFiberNew } from "react-icons/md";
+import { IoIosRefresh } from "react-icons/io";
+import { Tooltip } from "react-tooltip";
 
-import AddRemoveBtn from '../AddRemoveBtn';
-import PdfViewer from '../../documentViewer/PdfViewer';
-import html2canvas from 'html2canvas';
-import jsPDF from 'jspdf';
+import AddRemoveBtn from "../AddRemoveBtn";
+import PdfViewer from "../../documentViewer/PdfViewer";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
 
 const DocumentCard = ({
   cardItem,
@@ -58,8 +65,7 @@ const DocumentCard = ({
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [showPdfViewer, setShowPdfViewer] = useState(false);
-  const [pdfUrl, setPdfUrl] = useState('');
-
+  const [pdfUrl, setPdfUrl] = useState("");
 
   const [dataLoading, setDataLoading] = useState(false);
   const { userDetail } = useSelector((state) => state.auth);
@@ -74,13 +80,10 @@ const DocumentCard = ({
   const { allDocuments } = useSelector((state) => state.document);
   const [documentLoading, setDocumentLoading] = useState(false);
 
-  const [errorMessage, setErrorMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState("");
   const [showErrorModal, setShowErrorModal] = useState(false);
-  const [pdfUrlLink, setPdfUrlLink] = useState('');
+  const [pdfUrlLink, setPdfUrlLink] = useState("");
   const [contentHTML, setContentHTML] = useState([]);
-
-
-
 
   // console.log("cardItem", cardItem, isReport)
 
@@ -91,8 +94,8 @@ const DocumentCard = ({
     };
     dispatch(handleFavorites(data)); */
     // // console.log('the data to be bookmarked is ', item)
-    if (actionType === 'add') {
-      addToFavoritesState('documents', {
+    if (actionType === "add") {
+      addToFavoritesState("documents", {
         ...item,
         favourited_by: userDetail?.userinfo?.username,
       });
@@ -102,33 +105,33 @@ const DocumentCard = ({
             _id: item._id,
             company_id: item.company_id,
             document_name: item.document_name,
-            collection_id: item.collection_id
+            collection_id: item.collection_id,
           },
-          item_type: 'document',
+          item_type: "document",
           username: userDetail?.userinfo?.username,
         };
         const response = await (await addNewFavoriteForUser(data)).data;
         toast.success(response);
       } catch (error) {
-        toast.info('Failed to add document to bookmarks');
-        removeFromFavoritesState('documents', item._id);
+        toast.info("Failed to add document to bookmarks");
+        removeFromFavoritesState("documents", item._id);
       }
     }
 
-    if (actionType === 'remove') {
-      removeFromFavoritesState('documents', item._id);
+    if (actionType === "remove") {
+      removeFromFavoritesState("documents", item._id);
       try {
         await (
           await deleteFavoriteForUser(
             item._id,
-            'document',
+            "document",
             userDetail?.userinfo?.username
           )
         ).data;
-        toast.success('Item removed from bookmarks');
+        toast.success("Item removed from bookmarks");
       } catch (error) {
-        toast.info('Failed to remove document from bookmarks');
-        addToFavoritesState('documents', {
+        toast.info("Failed to remove document from bookmarks");
+        addToFavoritesState("documents", {
           ...item,
           favourited_by: userDetail?.userinfo?.username,
         });
@@ -146,23 +149,23 @@ const DocumentCard = ({
     const copyOfDocumentToUpdate = {
       ...copyOfAllDocuments[foundDocumentIndex],
     };
-    copyOfDocumentToUpdate.data_type = 'Archive_Data';
+    copyOfDocumentToUpdate.data_type = "Archive_Data";
     copyOfAllDocuments[foundDocumentIndex] = copyOfDocumentToUpdate;
     dispatch(setAllDocuments(copyOfAllDocuments));
 
     try {
-      await removeFromFavoritesState('documents', cardItem._id);
+      await removeFromFavoritesState("documents", cardItem._id);
       await deleteFavoriteForUser(
         cardItem._id,
-        'document',
+        "document",
         userDetail?.userinfo?.username
-      )
+      );
       const response = await (
-        await moveItemToArchive(cardItem._id, 'document')
+        await moveItemToArchive(cardItem._id, "document")
       ).data;
       toast.success(response);
     } catch (error) {
-      copyOfDocumentToUpdate.data_type = 'Real_Data';
+      copyOfDocumentToUpdate.data_type = "Real_Data";
       copyOfAllDocuments[foundDocumentIndex] = copyOfDocumentToUpdate;
       dispatch(setAllDocuments(copyOfAllDocuments));
     }
@@ -172,8 +175,8 @@ const DocumentCard = ({
     // console.log("handle detail doc hit ", item)
     if (dataLoading) return;
     if (documentLoading)
-      return toast.info('Please wait for this document to be refreshed first');
-    if (item.type === 'sign-document') {
+      return toast.info("Please wait for this document to be refreshed first");
+    if (item.type === "sign-document") {
       setDataLoading(true);
       try {
         setIsNoPointerEvents(true);
@@ -189,7 +192,7 @@ const DocumentCard = ({
         /*  dispatch(setEditorLink(response)); */
 
         // setDataLoading(false);
-        console.log("response", response, item)
+        console.log("response", response, item);
         handleGoToEditor(response, item);
       } catch (error) {
         setDataLoading(false);
@@ -204,62 +207,67 @@ const DocumentCard = ({
           // Handle specific error responses
           setErrorMessage(error.response.data || error.message);
         } else {
-          setErrorMessage('Cannot fetch this document at the moment, please try again later!');
+          setErrorMessage(
+            "Cannot fetch this document at the moment, please try again later!"
+          );
         }
         setShowErrorModal(true);
       } finally {
         setIsNoPointerEvents(false);
       }
       return;
-    };
-
+    }
 
     const data = {
       document_name: item.document_name,
       collection_id: item.collection_id,
-      document_state: item.document_state
+      document_state: item.document_state,
     };
 
     if (isCompletedDoc || isRejectedDoc) {
-      dispatch(documentReport(data.collection_id))
-      return
+      dispatch(documentReport(data.collection_id));
+      return;
     }
 
-    console.log("data", data)
+    console.log("data", data);
     dispatch(detailDocument(data));
   };
 
   const closeModal = () => {
     setShowErrorModal(false);
-    setErrorMessage('');
+    setErrorMessage("");
   };
 
   const viewAsPDF = async (item) => {
-    console.log("view as Preview")
-    setPdfUrl('https://dowellfileuploader.uxlivinglab.online/view-pdf/Morvin%20Nov%20Inv<br>.pdf');
+    console.log("view as Preview");
+    setPdfUrl(
+      "https://dowellfileuploader.uxlivinglab.online/view-pdf/Morvin%20Nov%20Inv<br>.pdf"
+    );
     // setPdfUrl(pdfUrl);
     setOpenPdfDrawer(!openPdfDrawer);
   };
 
   const viewAsPdfLink = async (url) => {
-    console.log("view as Preview", url)
+    console.log("view as Preview", url);
     // setPdfUrl('https://dowellfileuploader.uxlivinglab.online/view-pdf/Morvin%20Nov%20Inv<br>.pdf');
     // setPdfUrl(url);
     setOpenPdfDrawer(!openPdfDrawer);
-    console.log("pdfUrl, openpdfDrawer", openPdfDrawer, pdfUrl)
+    console.log("pdfUrl, openpdfDrawer", openPdfDrawer, pdfUrl);
   };
 
   const handleShowDocument = async (item) => {
-    console.log("itemhandleMubeen", item)
+    console.log("itemhandleMubeen", item);
     dispatch(SetSingleDocument(item));
-    getDocumentDetail(item.collection_id)
+    getDocumentDetail(item.collection_id);
     // navigate("/documents/document-detail");
   };
 
   function getDocumentDetail(document_id) {
     axios
       // .get(`https://100094.pythonanywhere.com/v2/documents/${document_id}/reports/`)
-      .get(`https://100094.pythonanywhere.com/v2/documents/${document_id}/reports/`)
+      .get(
+        `https://100094.pythonanywhere.com/v2/documents/${document_id}/reports/`
+      )
       .then((response) => {
         dispatch(SetShowDocumentReport(response.data));
         // setProcessDetailLoading(false);
@@ -283,42 +291,42 @@ const DocumentCard = ({
       portfolio:
         userDetail?.portfolio_info?.length > 1
           ? userDetail?.portfolio_info.find(
-            (portfolio) => portfolio.product === productName
-          )?.portfolio_name
+              (portfolio) => portfolio.product === productName
+            )?.portfolio_name
           : userDetail?.portfolio_info[0]?.portfolio_name,
       city: userDetail?.userinfo?.city,
       country: userDetail?.userinfo?.country,
-      continent: userDetail?.userinfo?.timezone?.split('/')[0],
-      collection_id: item.collection_id
+      continent: userDetail?.userinfo?.timezone?.split("/")[0],
+      collection_id: item.collection_id,
     };
 
     const sanitizedDataToPost = updateVerificationDataWithTimezone(dataToPost);
 
     // NEWER VERIFICATION LINKS
-    if (link.includes('?') && link.includes('=')) {
+    if (link.includes("?") && link.includes("=")) {
       const shortenedLinkToExtractParamsFrom =
-        new URL(link).origin + '/' + link.split('verify/')[1]?.split('/')[1];
+        new URL(link).origin + "/" + link.split("verify/")[1]?.split("/")[1];
       const paramsPassed = new URL(shortenedLinkToExtractParamsFrom)
         .searchParams;
 
-      const auth_username = paramsPassed.get('username');
-      const auth_portfolio = paramsPassed.get('portfolio');
-      const auth_role = paramsPassed.get('auth_role');
-      const user_type = paramsPassed.get('user_type');
-      const org_name = paramsPassed.get('org');
+      const auth_username = paramsPassed.get("username");
+      const auth_portfolio = paramsPassed.get("portfolio");
+      const auth_role = paramsPassed.get("auth_role");
+      const user_type = paramsPassed.get("user_type");
+      const org_name = paramsPassed.get("org");
 
       const currentUserPortfolioName =
         userDetail?.portfolio_info?.length > 1
           ? userDetail?.portfolio_info.find(
-            (portfolio) => portfolio.product === productName
-          )?.portfolio_name
+              (portfolio) => portfolio.product === productName
+            )?.portfolio_name
           : userDetail?.portfolio_info[0]?.portfolio_name;
 
       if (
         auth_username !== userDetail?.userinfo?.username ||
         auth_portfolio !== currentUserPortfolioName
       ) {
-        toast.info('You are not authorized to view this');
+        toast.info("You are not authorized to view this");
         return setDataLoading(false);
       }
 
@@ -346,9 +354,9 @@ const DocumentCard = ({
       toast.info(
         err.response
           ? err.response.status === 500
-            ? 'Process verification failed'
+            ? "Process verification failed"
             : err.response.data
-          : 'Process verification failed'
+          : "Process verification failed"
       );
     }
   };
@@ -357,7 +365,7 @@ const DocumentCard = ({
     // console.log("chkeinggggggggg")
     if (documentLoading) return;
     if (dataLoading)
-      return toast.info('Please wait for this document to open first');
+      return toast.info("Please wait for this document to open first");
 
     const copyOfAllDocuments = [...allDocuments];
     const foundDocumentIndex = copyOfAllDocuments.findIndex(
@@ -370,8 +378,17 @@ const DocumentCard = ({
 
     try {
       const documentService = new DocumentServices();
-      const response = (await documentService.singleDocumentDetail(documentId))
-        .data;
+      const response = (
+        await documentService.singleDocumentDetail({
+          documentId,
+          workspace_id:
+            userDetail?.portfolio_info?.length > 1
+              ? userDetail?.portfolio_info.find(
+                  (portfolio) => portfolio.product === productName
+                )?.org_id
+              : userDetail?.portfolio_info[0].org_id,
+        })
+      ).data;
 
       copyOfAllDocuments[foundDocumentIndex] = response;
       dispatch(setAllDocuments(copyOfAllDocuments));
@@ -379,52 +396,55 @@ const DocumentCard = ({
       setDocumentLoading(false);
     } catch (error) {
       // // console.log(error.response ? error.response.data : error.message);
-      toast.info('Refresh for document failed');
+      toast.info("Refresh for document failed");
       setDocumentLoading(false);
     }
   };
 
   const generatePdfLink = async (item) => {
     console.log("cardItem", item);
-    const apiUrl = 'https://100058.pythonanywhere.com/api/generate-pdf-link/';
+    const apiUrl = "https://100058.pythonanywhere.com/api/generate-pdf-link/";
     const collectionId = item?.collection_id || "653b5ba638ec7dcbdb556a38";
 
     // First, try to retrieve the download URL from localStorage
     const storedData = localStorage.getItem(collectionId);
     if (storedData) {
       const storedJson = JSON.parse(storedData);
-      console.log('Using cached PDF link:', storedJson.download_url);
+      console.log("Using cached PDF link:", storedJson.download_url);
       setPdfUrlLink(storedJson.download_url);
       viewAsPdfLink(storedJson.download_url);
-      toast.info('PDF loaded from cache successfully');
+      toast.info("PDF loaded from cache successfully");
       return; // Stop execution here as we already have the PDF link
     }
-    
+
     const payload = {
       item_type: "document",
       item_id: item?.collection_id || "653b5ba638ec7dcbdb556a38",
       // item_id: "653b5ba638ec7dcbdb556a38",
     };
 
-    console.log("generate pdf link", apiUrl, payload)
-    await axios.post(apiUrl, payload)
+    console.log("generate pdf link", apiUrl, payload);
+    await axios
+      .post(apiUrl, payload)
       .then((response) => {
         // Handle the API response here
-        console.log('Pdf generated successfully', response);
+        console.log("Pdf generated successfully", response);
         setPdfUrlLink(response.data.download_url);
-        localStorage.setItem(item?.collection_id, JSON.stringify({ download_url: response.data.download_url }));
+        localStorage.setItem(
+          item?.collection_id,
+          JSON.stringify({ download_url: response.data.download_url })
+        );
         // Assuming response.data contains the PDF link
-        viewAsPdfLink(pdfUrlLink)
-        toast.info('Pdf generated successfully');
+        viewAsPdfLink(pdfUrlLink);
+        toast.info("Pdf generated successfully");
         // window.open(pdfLink, '_blank');
       })
       .catch((error) => {
         // Handle any errors
-        console.error('facing issue generating Pdf', error);
-        toast.error('Pdf is not generated');
+        console.error("facing issue generating Pdf", error);
+        toast.error("Pdf is not generated");
       });
   };
-
 
   // const generatePDF = (jsonData) => {
   //   if (!jsonData) {
@@ -483,21 +503,19 @@ const DocumentCard = ({
   //   generatePDF(jsonData);
   // };
 
-
-  const handleSaveFile = async () => {
-  }
+  const handleSaveFile = async () => {};
 
   const FrontSide = () => {
     return (
-      <div style={{ wordWrap: 'break-word', width: '100%' }}>
+      <div style={{ wordWrap: "break-word", width: "100%" }}>
         {cardItem.newly_created && (
           <div
             style={{
-              position: 'absolute',
-              left: '10px',
-              top: '0',
-              fontSize: '1.5rem',
-              color: '#ff0000',
+              position: "absolute",
+              left: "10px",
+              top: "0",
+              fontSize: "1.5rem",
+              color: "#ff0000",
             }}
           >
             <MdOutlineFiberNew />
@@ -505,10 +523,10 @@ const DocumentCard = ({
         )}
         {cardItem.document_name
           ? cardItem.document_name
-          : typeof cardItem.document_name === 'string' &&
+          : typeof cardItem.document_name === "string" &&
             cardItem.document_name.length < 1
-            ? ''
-            : 'no item'}
+          ? ""
+          : "no item"}
       </div>
     );
   };
@@ -526,15 +544,21 @@ const DocumentCard = ({
             onClick={() => generatePdfClick(cardItem)}
           >{<BsArrowBarRight />}</div> */}
 
-        <Tooltip id={`generatePdf-${cardItem._id}`} content="generate pdf" direction="up" arrowSize={10} style={{ backgroundColor: 'rgb(97, 206, 112)', color: 'white' }}></Tooltip>
+        <Tooltip
+          id={`generatePdf-${cardItem._id}`}
+          content='generate pdf'
+          direction='up'
+          arrowSize={10}
+          style={{ backgroundColor: "rgb(97, 206, 112)", color: "white" }}
+        ></Tooltip>
         <div
           anchorId={cardItem._id}
           data-tooltip-id={`generatePdf-${cardItem._id}`}
           style={{
-            cursor: 'pointer',
-            position: 'absolute',
-            left: '0',
-            top: '0',
+            cursor: "pointer",
+            position: "absolute",
+            left: "0",
+            top: "0",
           }}
           onClick={() => generatePdfLink(cardItem)}
         >
@@ -543,15 +567,21 @@ const DocumentCard = ({
 
         {!hideFavoriteIcon && (
           <>
-            <Tooltip id={`faviorates-${cardItem._id}`} content="Add to Bookmark" direction="up" arrowSize={10} style={{ backgroundColor: 'rgb(97, 206, 112)', color: 'white' }}></Tooltip>
+            <Tooltip
+              id={`faviorates-${cardItem._id}`}
+              content='Add to Bookmark'
+              direction='up'
+              arrowSize={10}
+              style={{ backgroundColor: "rgb(97, 206, 112)", color: "white" }}
+            ></Tooltip>
             <div
               anchorId={cardItem._id}
               data-tooltip-id={`faviorates-${cardItem._id}`}
               style={{
-                cursor: 'pointer',
-                position: 'absolute',
-                right: '0',
-                top: '0',
+                cursor: "pointer",
+                position: "absolute",
+                right: "0",
+                top: "0",
               }}
               onClick={() =>
                 handleFavoritess(
@@ -559,12 +589,11 @@ const DocumentCard = ({
                   favoriteItems.documents.find(
                     (item) => item._id === cardItem._id
                   )
-                    ? 'remove'
-                    : 'add'
+                    ? "remove"
+                    : "add"
                 )
               }
             >
-
               {favoriteItems.documents.find(
                 (item) => item._id === cardItem._id
               ) ? (
@@ -576,49 +605,55 @@ const DocumentCard = ({
           </>
         )}
         {cardItem._id ? (
-          isReport ?
+          isReport ? (
             <Button onClick={() => handleShowDocument(cardItem)}>
-              {dataLoading ? (
-                <LoadingSpinner />
-              ) : (
-                t('Show Report')
-              )}
+              {dataLoading ? <LoadingSpinner /> : t("Show Report")}
             </Button>
-            : <> <Button onClick={() => handleDetailDocumnet(cardItem)}>
-              {dataLoading ? (
-                <LoadingSpinner />
-              ) : cardItem.type === 'sign-document' ? (
-                'Sign Here'
-              ) : (
-                t('Open Document')
-              )}
-            </Button>
-              <br />
-              <Button onClick={() => generatePdfLink(cardItem)}>
-              {/* <Button onClick={() => viewAsPDF(cardItem)}> */}
+          ) : (
+            <>
+              {" "}
+              <Button onClick={() => handleDetailDocumnet(cardItem)}>
                 {dataLoading ? (
                   <LoadingSpinner />
-                ) : cardItem.type === 'sign-document' ? (
-                  'Sign Here'
+                ) : cardItem.type === "sign-document" ? (
+                  "Sign Here"
                 ) : (
-                  t('Preview Document')
+                  t("Open Document")
+                )}
+              </Button>
+              <br />
+              <Button onClick={() => generatePdfLink(cardItem)}>
+                {/* <Button onClick={() => viewAsPDF(cardItem)}> */}
+                {dataLoading ? (
+                  <LoadingSpinner />
+                ) : cardItem.type === "sign-document" ? (
+                  "Sign Here"
+                ) : (
+                  t("Preview Document")
                 )}
               </Button>
             </>
+          )
         ) : (
-          'no item'
+          "no item"
         )}
         {!hideDeleteIcon && (
           <>
-            <Tooltip id={`delete-${cardItem._id}`} content="Delete Document" direction="up" arrowSize={10} style={{ backgroundColor: 'rgb(97, 206, 112)', color: 'white' }}></Tooltip>
+            <Tooltip
+              id={`delete-${cardItem._id}`}
+              content='Delete Document'
+              direction='up'
+              arrowSize={10}
+              style={{ backgroundColor: "rgb(97, 206, 112)", color: "white" }}
+            ></Tooltip>
             <div
               anchorId={cardItem._id}
               data-tooltip-id={`delete-${cardItem._id}`}
               style={{
-                cursor: 'pointer',
-                position: 'absolute',
-                right: '0',
-                bottom: '0',
+                cursor: "pointer",
+                position: "absolute",
+                right: "0",
+                bottom: "0",
               }}
               onClick={() => handleTrashDocument(cardItem)}
             >
@@ -629,39 +664,39 @@ const DocumentCard = ({
         {cardItem.newly_created && (
           <div
             style={{
-              position: 'absolute',
-              left: '10px',
-              top: '0',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
+              position: "absolute",
+              left: "10px",
+              top: "0",
+              display: "flex",
+              alignItems: "center",
+              gap: "0.5rem",
             }}
           >
             <div
               id={cardItem._id}
               style={{
-                color: '#ff0000',
-                fontSize: '1.5rem',
+                color: "#ff0000",
+                fontSize: "1.5rem",
               }}
             >
               <MdOutlineFiberNew />
               <Tooltip
                 anchorId={cardItem._id}
                 content={
-                  'This is a new document. Refresh right here to see its actual title'
+                  "This is a new document. Refresh right here to see its actual title"
                 }
                 style={{
-                  fontStyle: 'normal',
-                  fontSize: '0.7rem',
-                  width: '8rem',
-                  wordWrap: 'break-word',
+                  fontStyle: "normal",
+                  fontSize: "0.7rem",
+                  width: "8rem",
+                  wordWrap: "break-word",
                 }}
               />
             </div>
             <div
               style={{
-                fontSize: '0.7rem',
-                cursor: 'pointer',
+                fontSize: "0.7rem",
+                cursor: "pointer",
               }}
               onClick={() => handleFetchNewDocumentDetail(cardItem._id)}
             >
@@ -669,50 +704,62 @@ const DocumentCard = ({
                 <IoIosRefresh />
               ) : (
                 <LoadingSpinner
-                  color={'#000'}
-                  width={'0.7rem'}
-                  height={'0.7rem'}
+                  color={"#000"}
+                  width={"0.7rem"}
+                  height={"0.7rem"}
                 />
               )}
             </div>
           </div>
         )}
 
-        <Tooltip id={`add-${cardItem._id}`} content="Add doc to folder" direction="up" arrowSize={10} style={{ backgroundColor: 'rgb(97, 206, 112)', color: 'white' }}></Tooltip>
+        <Tooltip
+          id={`add-${cardItem._id}`}
+          content='Add doc to folder'
+          direction='up'
+          arrowSize={10}
+          style={{ backgroundColor: "rgb(97, 206, 112)", color: "white" }}
+        ></Tooltip>
         <div
           anchorId={cardItem._id}
           data-tooltip-id={`add-${cardItem._id}`}
           style={{
-            position: 'absolute',
-            bottom: '0',
-            left: '0',
-            display: 'flex',
-            alignItems: 'center',
+            position: "absolute",
+            bottom: "0",
+            left: "0",
+            display: "flex",
+            alignItems: "center",
           }}
         >
-          <AddRemoveBtn type={'add'} item={{ ...cardItem, type: 'document' }} />
+          <AddRemoveBtn type={"add"} item={{ ...cardItem, type: "document" }} />
           {isFolder && (
-            <AddRemoveBtn type={'remove'} item={cardItem} folderId={folderId} />
+            <AddRemoveBtn type={"remove"} item={cardItem} folderId={folderId} />
           )}
         </div>
-        {pdfUrl && <PdfViewer
-          open={openPdfDrawer}
-          onClose={() => setOpenPdfDrawer(false)}
-          pdfUrl={pdfUrl}
-          onSave={handleSaveFile}
-        />}
-        {pdfUrlLink && <PdfViewer
-          open={openPdfDrawer}
-          onClose={() => setOpenPdfDrawer(false)}
-          pdfUrl={pdfUrlLink}
-          onSave={handleSaveFile}
-        />}
-         {/* Render PdfViewer only if showPdfViewer is true */}
+        {pdfUrl && (
+          <PdfViewer
+            open={openPdfDrawer}
+            onClose={() => setOpenPdfDrawer(false)}
+            pdfUrl={pdfUrl}
+            onSave={handleSaveFile}
+          />
+        )}
+        {pdfUrlLink && (
+          <PdfViewer
+            open={openPdfDrawer}
+            onClose={() => setOpenPdfDrawer(false)}
+            pdfUrl={pdfUrlLink}
+            onSave={handleSaveFile}
+          />
+        )}
+        {/* Render PdfViewer only if showPdfViewer is true */}
 
         {showErrorModal && (
-          <div className="modal">
-            <div className="modal-content">
-              <span className="close" onClick={closeModal}>&times;</span>
+          <div className='modal'>
+            <div className='modal-content'>
+              <span className='close' onClick={closeModal}>
+                &times;
+              </span>
               <p>{errorMessage}</p>
             </div>
           </div>

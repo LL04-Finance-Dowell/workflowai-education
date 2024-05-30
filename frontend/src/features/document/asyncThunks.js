@@ -1,9 +1,13 @@
-import { createAsyncThunk } from '@reduxjs/toolkit';
-import { DocumentServices } from '../../services/documentServices';
-import { setEditorLink, setShowProfileSpinner, setError } from '../app/appSlice';
-import { productName } from '../../utils/helpers';
-import { setAllDocuments } from './documentSlice';
-import { toast } from 'react-toastify';
+import { createAsyncThunk } from "@reduxjs/toolkit";
+import { DocumentServices } from "../../services/documentServices";
+import {
+  setEditorLink,
+  setShowProfileSpinner,
+  setError,
+} from "../app/appSlice";
+import { productName } from "../../utils/helpers";
+import { setAllDocuments } from "./documentSlice";
+import { toast } from "react-toastify";
 
 const filterDocuments = (documents, thunkAPI) => {
   let filteredDocuments = [];
@@ -11,10 +15,10 @@ const filterDocuments = (documents, thunkAPI) => {
   const userThunkPortfolioDataTypeState =
     thunkAPI.getState().auth?.userDetail?.portfolio_info?.length > 1
       ? thunkAPI
-        .getState()
-        .auth?.userDetail?.portfolio_info.find(
-          (portfolio) => portfolio.product === productName
-        )?.data_type
+          .getState()
+          .auth?.userDetail?.portfolio_info.find(
+            (portfolio) => portfolio.product === productName
+          )?.data_type
       : thunkAPI.getState().auth?.userDetail?.portfolio_info[0]?.data_type;
 
   if (documents && documents.length && documents?.length > 0) {
@@ -32,28 +36,29 @@ const filterDocuments = (documents, thunkAPI) => {
 const documentServices = new DocumentServices();
 
 export const createDocument = createAsyncThunk(
-  'document/create',
+  "document/create",
   async (data, thunkAPI) => {
     try {
-      const res = await documentServices.createDocument(data);
+      const workspace_id = data.workspace_id;
+      const res = await documentServices.createDocument(data, workspace_id);
 
       const newDocument = {
-        document_name: 'New Document',
+        document_name: "New Document",
         newly_created: true,
         _id: res.data._id,
         created_by: thunkAPI.getState().auth?.userDetail?.userinfo?.username,
         data_type:
           thunkAPI.getState().auth?.userDetail?.portfolio_info?.length > 1
             ? thunkAPI
-              .getState()
-              .auth?.userDetail?.portfolio_info.find(
-                (portfolio) => portfolio.product === productName
-              )?.data_type
+                .getState()
+                .auth?.userDetail?.portfolio_info.find(
+                  (portfolio) => portfolio.product === productName
+                )?.data_type
             : thunkAPI.getState().auth?.userDetail?.portfolio_info[0]
-              ?.data_type,
+                ?.data_type,
         created_on: new Date().toString(),
-        document_type: 'original',
-        document_state: 'draft',
+        document_type: "original",
+        document_state: "draft",
       };
 
       const existingDocuments = [...thunkAPI.getState().document?.allDocuments];
@@ -65,15 +70,14 @@ export const createDocument = createAsyncThunk(
       return res.data;
     } catch (error) {
       console.log(error.response.data.message);
-      toast.info('Document Creation Failed');
+      toast.info("Document Creation Failed");
     }
   }
 );
 
 export const detailDocument = createAsyncThunk(
-  'document/detail',
+  "document/detail",
   async (data, thunkAPI) => {
-    
     try {
       const res = await documentServices.detailDocument(data);
       thunkAPI.dispatch(setEditorLink(res.data));
@@ -82,14 +86,17 @@ export const detailDocument = createAsyncThunk(
     } catch (error) {
       // console.log(error);
 
-      thunkAPI.dispatch(setError("Cannot fetch the data of this document, please try again later"));
+      thunkAPI.dispatch(
+        setError(
+          "Cannot fetch the data of this document, please try again later"
+        )
+      );
       throw error;
     }
-     
   }
 );
 
-export const signDocument = createAsyncThunk('document/sign', async (data) => {
+export const signDocument = createAsyncThunk("document/sign", async (data) => {
   try {
     const res = await documentServices.signDocument(data);
 
@@ -100,7 +107,7 @@ export const signDocument = createAsyncThunk('document/sign', async (data) => {
 });
 
 export const mineDocuments = createAsyncThunk(
-  'document/mine',
+  "document/mine",
   async (data, thunkAPI) => {
     try {
       const res = await documentServices.mineDocuments(data);
@@ -115,7 +122,7 @@ export const mineDocuments = createAsyncThunk(
 );
 
 export const rejectedDocuments = createAsyncThunk(
-  'document/rejected',
+  "document/rejected",
   async (data) => {
     try {
       const res = await documentServices.rejectedDocuments(data);
@@ -128,7 +135,7 @@ export const rejectedDocuments = createAsyncThunk(
 );
 
 export const savedDocuments = createAsyncThunk(
-  'document/saved',
+  "document/saved",
   async (data, thunkAPI) => {
     try {
       const res = await documentServices.savedDocuments(data);
@@ -143,7 +150,7 @@ export const savedDocuments = createAsyncThunk(
 );
 
 export const contentDocument = createAsyncThunk(
-  'document/contentDocument',
+  "document/contentDocument",
   async ({ collection_id, item }) => {
     try {
       // console.log(collection_id, item)
@@ -152,40 +159,44 @@ export const contentDocument = createAsyncThunk(
       // console.log(res.data)
       return res.data;
     } catch (error) {
-      console.log('Content document fetch error: ', error);
+      console.log("Content document fetch error: ", error);
     }
   }
 );
 
 export const contentDocumentStep = createAsyncThunk(
-  'document/contentDocument',
+  "document/contentDocument",
   async ({ collection_id, item }) => {
     try {
       // console.log(collection_id, item)
-      const res = await documentServices.contentDocumentStep(collection_id, item);
+      const res = await documentServices.contentDocumentStep(
+        collection_id,
+        item
+      );
 
       // console.log(res.data)
       return res.data;
     } catch (error) {
-      console.log('Content document fetch error: ', error);
+      console.log("Content document fetch error: ", error);
     }
   }
 );
 
 export const allDocuments = createAsyncThunk(
-  'document/all',
+  "document/all",
   async (data, thunkAPI) => {
     try {
       const res = await documentServices.allDocuments(
         data.company_id,
         data.data_type,
         data.member
-      )
+      );
 
       const documents = filterDocuments(
-        res.data.documents ?? []
-          .reverse()
-          .filter((document) => document.document_state !== 'trash'),
+        res.data.documents ??
+          []
+            .reverse()
+            .filter((document) => document.document_state !== "trash"),
         thunkAPI
       );
 
@@ -197,7 +208,7 @@ export const allDocuments = createAsyncThunk(
 );
 
 export const documentReport = createAsyncThunk(
-  'document/report',
+  "document/report",
   async (data, thunkAPI) => {
     thunkAPI.dispatch(setShowProfileSpinner(true));
     try {

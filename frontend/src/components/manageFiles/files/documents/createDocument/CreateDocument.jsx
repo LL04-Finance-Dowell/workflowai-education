@@ -87,7 +87,25 @@ const CreateDocument = ({ handleToggleOverlay }) => {
         if (res.data.success === true) {
           toast.success(res?.data?.message);
 
-          const response = await dispatch(createTemplate(data));
+          console.log(
+            "create wid  " + userDetail?.portfolio_info?.length > 1
+              ? userDetail?.portfolio_info.find(
+                  (portfolio) => portfolio.product === productName
+                )?.org_id
+              : userDetail?.portfolio_info[0].org_id
+          );
+
+          const response = await dispatch(
+            createTemplate({
+              data,
+              workspace_id:
+                userDetail?.portfolio_info?.length > 1
+                  ? userDetail?.portfolio_info.find(
+                      (portfolio) => portfolio.product === productName
+                    )?.org_id
+                  : userDetail?.portfolio_info[0].org_id,
+            })
+          );
 
           if (response?.meta?.requestStatus === "fulfilled") {
             if (response?.payload?.editor_link) {
@@ -274,6 +292,7 @@ const CreateDocument = ({ handleToggleOverlay }) => {
               (portfolio) => portfolio.product === productName
             )?.data_type
           : userDetail?.portfolio_info[0].data_type,
+      // template_id: template,
     };
 
     dispatch(allTemplates(data));
@@ -281,6 +300,7 @@ const CreateDocument = ({ handleToggleOverlay }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const reversedArray = [...allTemplatesArray].reverse();
+  console.log("allT " + reversedArray);
   const options = reversedArray.map((item) => ({
     value: item._id,
     label: item.template_name || item.document_name,
@@ -288,7 +308,7 @@ const CreateDocument = ({ handleToggleOverlay }) => {
 
   // console.log("all template array " + options);
 
-  // console.log("appr rev " + reversedArray[0].template_name);
+  console.log("appr rev " + reversedArray[0].template_name);
 
   return (
     <Overlay title='Create Document' handleToggleOverlay={handleToggleOverlay}>
