@@ -66,7 +66,8 @@ const FoldersModal = () => {
     const folderServices = new FolderServices();
     try {
       setIsCreating(true);
-      await folderServices.createFolderV2(data);
+      const resss = await folderServices.createFolderV2(data);
+      console.log("Folder ress " + resss);
       const res = await folderServices.getAllFolders(
         userCompanyId,
         userDataType
@@ -77,7 +78,7 @@ const FoldersModal = () => {
       setIsCreating(false);
       setShowFoldersActionModal(false);
     } catch (err) {
-      // // console.log(err);
+      console.log("floder err " + err);
       toast.error("Folder creating failed!");
       setIsCreating(false);
     }
@@ -288,18 +289,20 @@ const FoldersModal = () => {
 
   useEffect(() => {
     if (allDocuments)
-    // // console.log("allDocuments", allDocuments
-    // .filter((doc) => doc.document_type === 'original')
-    // .map((doc) => ({
-    //   name: doc.document_name,
-    //   id: doc._id,
-    //   category: 'document',
-    // })))
-    setDocsList(allDocuments.map((doc) => ({
-      name: doc.document_name,
-      id: doc._id,
-      category: 'document',
-    })));
+      // // console.log("allDocuments", allDocuments
+      // .filter((doc) => doc.document_type === 'original')
+      // .map((doc) => ({
+      //   name: doc.document_name,
+      //   id: doc._id,
+      //   category: 'document',
+      // })))
+      setDocsList(
+        allDocuments.map((doc) => ({
+          name: doc.document_name,
+          id: doc._id,
+          category: "document",
+        }))
+      );
     // setDocsList(
     //   allDocuments
     //     .filter((doc) => doc.document_type === "original")
@@ -405,12 +408,12 @@ const FoldersModal = () => {
                 {isCreating ? "Creating new folder." : "Create new folder?"}
               </h3>
               <input
-                type="text"
+                type='text'
                 value={folderName}
                 onChange={handleFolderNameChange} // Handle the empty input
                 // onChange={handleFolderChange}
-                placeholder="Enter Folder Name"
-                id="folder_name"
+                placeholder='Enter Folder Name'
+                id='folder_name'
               />
               {/* <input
                 type='text'
@@ -435,9 +438,7 @@ const FoldersModal = () => {
                       Cancel
                     </button>
 
-                     
-
-                      {isFolderNameEmpty ? null : (
+                    {isFolderNameEmpty ? null : (
                       <button
                         className={`${styles.opt_btn} ${styles.affirm_btn}`}
                         onClick={handleCreateFolder}
@@ -446,7 +447,7 @@ const FoldersModal = () => {
                         Done
                       </button>
                     )}
-                    
+
                     {/* <button
                       className={`${styles.opt_btn} ${styles.affirm_btn}`}
                       onClick={handleCreateFolder}
@@ -491,11 +492,11 @@ const FoldersModal = () => {
 
               <form className={styles.folder_form} onSubmit={handleSubmit}>
                 <div className={styles.form_opt}>
-                  <label htmlFor="folder_name">Name</label>
+                  <label htmlFor='folder_name'>Name</label>
                   <input
-                    type="text"
-                    placeholder="Enter folder name"
-                    id="folder_name"
+                    type='text'
+                    placeholder='Enter folder name'
+                    id='folder_name'
                     value={folderName}
                     onChange={(e) => setFolderName(e.target.value)}
                   />
@@ -504,7 +505,7 @@ const FoldersModal = () => {
                 <div className={styles.form_opt}>
                   <SelectInput
                     list={docsListToDisplay}
-                    type="docs"
+                    type='docs'
                     selDocs={selectedDocs}
                     setSelDocs={setSelectedDocs}
                     folder={folder}
@@ -517,7 +518,7 @@ const FoldersModal = () => {
                 <div className={styles.form_opt}>
                   <SelectInput
                     list={tempsListToDisplay}
-                    type="temps"
+                    type='temps'
                     selTemps={selectedTemps}
                     setSelTemps={setSelectedTemps}
                     folder={folder}
@@ -530,7 +531,7 @@ const FoldersModal = () => {
                 {isEditing ? (
                   <LoadingSpinner />
                 ) : (
-                  <button type="submit" className={styles.edit_btn}>
+                  <button type='submit' className={styles.edit_btn}>
                     Done
                   </button>
                 )}
@@ -618,12 +619,12 @@ const FoldersModal = () => {
               <form className={styles.folder_form} onSubmit={handleSubmit}>
                 <div className={styles.form_opt}>
                   <select
-                    name="folders"
-                    id=""
-                    defaultValue="Select folder"
+                    name='folders'
+                    id=''
+                    defaultValue='Select folder'
                     onChange={(e) => setAddFolderId(e.target.value)}
                   >
-                    <option value="Select folder" disabled>
+                    <option value='Select folder' disabled>
                       Select Folder
                     </option>
                     {folders.map((folder) => (
@@ -643,7 +644,7 @@ const FoldersModal = () => {
                 {isAdding ? (
                   <LoadingSpinner />
                 ) : (
-                  <button type="submit" className={styles.edit_btn}>
+                  <button type='submit' className={styles.edit_btn}>
                     Add
                   </button>
                 )}
@@ -746,7 +747,7 @@ const SelectInput = ({
   return (
     <>
       <button
-        type="button"
+        type='button'
         className={styles.select_drop_btn}
         onClick={() =>
           type === "docs"
@@ -789,7 +790,7 @@ const SelectInput = ({
                 >
                   <input
                     id={id}
-                    type="checkbox"
+                    type='checkbox'
                     value={name}
                     name={type}
                     onChange={
@@ -822,7 +823,7 @@ const SelectInput = ({
                 {type === "docs"
                   ? totalPageCount.docPageArr.map((page) => (
                       <button
-                        type="button"
+                        type='button'
                         className={`${styles.page_btn} ${
                           docsListCurrentPage === page ? styles.active : ""
                         }`}
@@ -835,7 +836,7 @@ const SelectInput = ({
                   : type === "temps"
                   ? totalPageCount.tempPageArr.map((page) => (
                       <button
-                        type="button"
+                        type='button'
                         className={`${styles.page_btn} ${
                           tempsListCurrentPage === page ? styles.active : ""
                         }`}

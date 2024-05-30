@@ -1,34 +1,45 @@
-import { useDispatch, useSelector } from 'react-redux';
-import SideBar from '../../components/newSidebar/Sidebar';
-import './style.css';
-import styles from './workflowLayout.module.css';
-import Editor from '../../components/editor/Editor';
-import { useEffect, useState } from 'react';
-import DowellLogo from '../../assets/dowell.png';
-import Spinner from '../../components/spinner/Spinner';
-import useCloseElementOnEscapekeyClick from '../../../src/hooks/useCloseElementOnEscapeKeyClick';
-import UserDetail from '../../components/newSidebar/userDetail/UserDetail';
-import { AiOutlineClose } from 'react-icons/ai';
-import { RxHamburgerMenu } from 'react-icons/rx';
-import { IoIosCloseCircle } from 'react-icons/io';
-import { LoadingSpinner } from '../../components/LoadingSpinner/LoadingSpinner';
-import Chat from '../../components/Chat/Chat';
-import ProcessDetail from '../../components/manageFiles/ProcessDetail/ProcessDetail';
-import { formatDateAndTime, productName } from '../../utils/helpers';
-import { workflowRegistrationEventId } from '../../services/legalService';
-import { AuthServices } from '../../services/authServices';
-import { updateUserDetail } from '../../features/auth/authSlice';
-import { getAllProcessesV2 } from '../../services/processServices';
-import { useAppContext } from '../../contexts/AppContext';
-import FoldersModal from '../../pages/Folders/modals/FoldersModal';
+import { useDispatch, useSelector } from "react-redux";
+import SideBar from "../../components/newSidebar/Sidebar";
+import "./style.css";
+import styles from "./workflowLayout.module.css";
+import Editor from "../../components/editor/Editor";
+import { useEffect, useState } from "react";
+import DowellLogo from "../../assets/dowell.png";
+import Spinner from "../../components/spinner/Spinner";
+import useCloseElementOnEscapekeyClick from "../../../src/hooks/useCloseElementOnEscapeKeyClick";
+import UserDetail from "../../components/newSidebar/userDetail/UserDetail";
+import { AiOutlineClose } from "react-icons/ai";
+import { RxHamburgerMenu } from "react-icons/rx";
+import { IoIosCloseCircle } from "react-icons/io";
+import { LoadingSpinner } from "../../components/LoadingSpinner/LoadingSpinner";
+import Chat from "../../components/Chat/Chat";
+import ProcessDetail from "../../components/manageFiles/ProcessDetail/ProcessDetail";
+import { formatDateAndTime, productName } from "../../utils/helpers";
+import { workflowRegistrationEventId } from "../../services/legalService";
+import { AuthServices } from "../../services/authServices";
+import { updateUserDetail } from "../../features/auth/authSlice";
+import { getAllProcessesV2 } from "../../services/processServices";
+import { useAppContext } from "../../contexts/AppContext";
+import FoldersModal from "../../pages/Folders/modals/FoldersModal";
 
-import { useTranslation } from 'react-i18next';
+import { useTranslation } from "react-i18next";
 
-import LanguageDropdown from '../../components/LanguageSelector/LanguageDropdown';
-import { toast } from 'react-toastify';
-import axios from 'axios';
-import { setAllProcesses, setProcessesLoaded, setProcessesLoading } from '../../features/processes/processesSlice';
-import { setAdminUser, setAdminUserPortfolioLoaded, setLanguageSelectPosition, setLegalAgreePageLoading, setShowLegalStatusPopup, setUserDetailPosition } from '../../features/app/appSlice';
+import LanguageDropdown from "../../components/LanguageSelector/LanguageDropdown";
+import { toast } from "react-toastify";
+import axios from "axios";
+import {
+  setAllProcesses,
+  setProcessesLoaded,
+  setProcessesLoading,
+} from "../../features/processes/processesSlice";
+import {
+  setAdminUser,
+  setAdminUserPortfolioLoaded,
+  setLanguageSelectPosition,
+  setLegalAgreePageLoading,
+  setShowLegalStatusPopup,
+  setUserDetailPosition,
+} from "../../features/app/appSlice";
 
 const WorkflowLayout = ({ children }) => {
   const dispatch = useDispatch();
@@ -47,11 +58,9 @@ const WorkflowLayout = ({ children }) => {
     legalArgeePageLoading,
     adminUserPortfolioLoaded,
     ShowProfileSpinner,
-    temLoading
+    temLoading,
   } = useSelector((state) => state.app);
-  const {
-    processesLoaded,
-  } = useSelector((state) => state.processes);
+  const { processesLoaded } = useSelector((state) => state.processes);
 
   const [createNewPortfolioLoading, setCreateNewPortfolioLoading] =
     useState(false);
@@ -59,12 +68,18 @@ const WorkflowLayout = ({ children }) => {
   const { allDocuments } = useSelector((state) => state.document);
   const { allTemplates } = useSelector((state) => state.template);
   const { allWorkflows } = useSelector((state) => state.workflow);
-  const { searchItemsStatus, setSearchItems, updateSearchItemStatus,demoTemplates,fetchDemoTemplates, demoDocuments, fetchDemoDocuments } =
-    useAppContext();
+  const {
+    searchItemsStatus,
+    setSearchItems,
+    updateSearchItemStatus,
+    demoTemplates,
+    fetchDemoTemplates,
+    demoDocuments,
+    fetchDemoDocuments,
+  } = useAppContext();
 
   const [showUserDetail, setShowUserDetail] = useState(false);
 
-  
   ///credits
   const { creditResponse } = useSelector((state) => state.app);
   const handleActivateWorkspace = () => {
@@ -80,12 +95,14 @@ const WorkflowLayout = ({ children }) => {
         toast.success(response.data);
       })
       .catch((error) => {
-        toast.error('Error activating workspace:', error);
+        toast.error("Error activating workspace:", error);
       });
-      
   };
   const handleBuyCredits = () => {
-    window.open('https://ll05-ai-dowell.github.io/100105-DowellApiKeySystem/', '_blank');
+    window.open(
+      "https://ll05-ai-dowell.github.io/100105-DowellApiKeySystem/",
+      "_blank"
+    );
   };
 
   const handleClick = () => {
@@ -101,15 +118,15 @@ const WorkflowLayout = ({ children }) => {
   useCloseElementOnEscapekeyClick(() => setCreateNewPortfolioLoading(false));
 
   const handleMouseEnter = (e) => {
-  //   const top = e.target.getBoundingClientRect().top;
-  //   const left = e.target.getBoundingClientRect().left + 25;
+    //   const top = e.target.getBoundingClientRect().top;
+    //   const left = e.target.getBoundingClientRect().left + 25;
 
-  //   dispatch(
-  //     setUserDetailPosition({
-  //       top,
-  //       left,
-  //     })
-  //   );
+    //   dispatch(
+    //     setUserDetailPosition({
+    //       top,
+    //       left,
+    //     })
+    //   );
 
     // console.log(userDetailPosition)
     dispatch(setUserDetailPosition(userDetailPosition));
@@ -153,11 +170,12 @@ const WorkflowLayout = ({ children }) => {
             )?.data_type
           : userDetail?.portfolio_info[0]?.data_type,
       ];
+      console.log("User comanyID" + userCompanyId);
       // Fetching processes
       getAllProcessesV2(userCompanyId, userPortfolioDataType)
         .then((res) => {
           const savedProcessesInLocalStorage = JSON.parse(
-            localStorage.getItem('user-saved-processes')
+            localStorage.getItem("user-saved-processes")
           );
           if (savedProcessesInLocalStorage) {
             const processes = [
@@ -181,15 +199,10 @@ const WorkflowLayout = ({ children }) => {
     }
 
     const workflowProduct = userDetail?.portfolio_info?.find(
-      (item) => item.product === 'Workflow AI' &&
-        item.member_type === 'owner'
+      (item) => item.product === "Workflow AI" && item.member_type === "owner"
     );
 
-    if (
-      !workflowProduct ||
-      adminUserPortfolioLoaded
-    )
-      return;
+    if (!workflowProduct || adminUserPortfolioLoaded) return;
 
     // admin user
     dispatch(setAdminUser(true));
@@ -227,45 +240,51 @@ const WorkflowLayout = ({ children }) => {
     )
       return;
 
-      if (!demoTemplates) {
-        fetchDemoTemplates();
-      }
-      // // console.log('the demoTemplates in layout are ', demoTemplates)
-      if(demoTemplates !== null){
-        setSearchItems((prevItems) => {
-          return [...prevItems, ...demoTemplates];
-        });
-      }
+    if (!demoTemplates) {
+      fetchDemoTemplates();
+    }
+    // // console.log('the demoTemplates in layout are ', demoTemplates)
+    if (demoTemplates !== null) {
+      setSearchItems((prevItems) => {
+        return [...prevItems, ...demoTemplates];
+      });
+    }
 
-      if (!demoDocuments) fetchDemoDocuments();
-      if(demoDocuments !== null){
-        setSearchItems((prevItems) => {
-          return [...prevItems, ...demoDocuments];
-        });
-      }
+    if (!demoDocuments) fetchDemoDocuments();
+    if (demoDocuments !== null) {
+      setSearchItems((prevItems) => {
+        return [...prevItems, ...demoDocuments];
+      });
+    }
 
     if (!searchItemsStatus.documentsAdded) {
       setSearchItems((prevItems) => {
         return [...prevItems, ...allDocuments];
       });
-      updateSearchItemStatus('documentsAdded', true);
+      updateSearchItemStatus("documentsAdded", true);
     }
 
     if (!searchItemsStatus.templatesAdded) {
       setSearchItems((prevItems) => {
         return [...prevItems, ...allTemplates];
       });
-      updateSearchItemStatus('templatesAdded', true);
+      updateSearchItemStatus("templatesAdded", true);
     }
 
     if (!searchItemsStatus.workflowsAdded) {
       setSearchItems((prevItems) => {
         return [...prevItems, ...allWorkflows];
       });
-      updateSearchItemStatus('workflowsAdded', true);
+      updateSearchItemStatus("workflowsAdded", true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [allDocuments, allTemplates, allWorkflows, searchItemsStatus, demoTemplates]);
+  }, [
+    allDocuments,
+    allTemplates,
+    allWorkflows,
+    searchItemsStatus,
+    demoTemplates,
+  ]);
 
   function toggleSidebar() {
     setIsSidebarOpen(!isSidebarOpen);
@@ -280,8 +299,8 @@ const WorkflowLayout = ({ children }) => {
           (userDetail.portfolio_info?.length > 0 &&
             !id &&
             !userDetail.portfolio_info.find(
-              (item) => item.product === 'Workflow AI' &&
-                item.member_type === 'owner'
+              (item) =>
+                item.product === "Workflow AI" && item.member_type === "owner"
             )) ? (
             <div className={styles.redirect__container}>
               <div className={styles.img__container}>
@@ -289,7 +308,7 @@ const WorkflowLayout = ({ children }) => {
               </div>
               <div className={styles.typewriter}>
                 <h1>
-                  You don't have portfolio,{' '}
+                  You don't have portfolio,{" "}
                   <span onClick={handleClick}> create here</span>
                 </h1>
               </div>
@@ -308,12 +327,12 @@ const WorkflowLayout = ({ children }) => {
                   <>
                     <div
                       className={`${styles.sidebar__box} hide-scrollbar`}
-                      style={{ display: isSidebarOpen ? 'block' : 'none' }}
+                      style={{ display: isSidebarOpen ? "block" : "none" }}
                     >
                       <SideBar toggleSidebar={toggleSidebar} isMobile={true} />
                     </div>
                     <div
-                      style={{ position: 'fixed', top: 4, left: 4, zIndex: 2 }}
+                      style={{ position: "fixed", top: 4, left: 4, zIndex: 2 }}
                     >
                       {isSidebarOpen ? (
                         <IoIosCloseCircle size={40} onClick={toggleSidebar} />
@@ -333,76 +352,86 @@ const WorkflowLayout = ({ children }) => {
                 )}
 
                 <div className={styles.children__box}>
-                <p className={styles.beta__Info__Text}>
+                  <p className={styles.beta__Info__Text}>
                     {t("You are on the beta version of workflow.ai")}
                   </p>
-                  {
-                    creditResponse?.is_active == false   || creditResponse?.total_credits < 100 ?
+                  {creditResponse?.is_active == false ||
+                  creditResponse?.total_credits < 100 ? (
                     <p className={styles.workflow_check}>
-                    <span>
-                      {
-                         creditResponse?.is_active == false ? <>
-                         <span className={styles.title}>{t('Activate your Workflow AI')}:</span>{' '}
-                         <button 
-                          className={styles.activate__button} 
-                          onClick={handleActivateWorkspace}
-                          
-                          style={{
-                            marginLeft: 'auto',
-                            border: '1px solid green',
-                            padding: '5px 10px',  // Adjusted padding for smaller size
-                            cursor: 'pointer',
-                            fontSize: '10px',  // Adjusted font size for smaller size
-                            // borderRadius: '50%',
-                            backgroundColor:'green',
-                            color:'white',
-                            marginRight:"10px",
-                            borderRadius:'6px'
-                          }}
-                          >Activate Workspace</button>
-                         </> :<></>
-                      }
-                    </span>
+                      <span>
+                        {creditResponse?.is_active == false ? (
+                          <>
+                            <span className={styles.title}>
+                              {t("Activate your Workflow AI")}:
+                            </span>{" "}
+                            <button
+                              className={styles.activate__button}
+                              onClick={handleActivateWorkspace}
+                              style={{
+                                marginLeft: "auto",
+                                border: "1px solid green",
+                                padding: "5px 10px", // Adjusted padding for smaller size
+                                cursor: "pointer",
+                                fontSize: "10px", // Adjusted font size for smaller size
+                                // borderRadius: '50%',
+                                backgroundColor: "green",
+                                color: "white",
+                                marginRight: "10px",
+                                borderRadius: "6px",
+                              }}
+                            >
+                              Activate Workspace
+                            </button>
+                          </>
+                        ) : (
+                          <></>
+                        )}
+                      </span>
 
-                    <span>
-                      {
-                        creditResponse?.total_credits < 100 ? <>
-                        <span className={styles.title}>{t('Your Credits are very low')}:</span>{' '}
-                        <button
-                          onClick={handleBuyCredits}
-                          style={{
-                            marginLeft: 'auto',
-                            border: '1px solid green',
-                            padding: '5px 10px',  // Adjusted padding for smaller size
-                            cursor: 'pointer',
-                            fontSize: '10px',  // Adjusted font size for smaller size
-                            backgroundColor:'green',
-                            color:'white',
-                            borderRadius:'6px'
-                          }}
-                        >
-                          Buy Credits
-                        </button>
-                        </>:<></>
-                      }
-                    </span>
-                  </p> : <></>
-                  }
-                 
+                      <span>
+                        {creditResponse?.total_credits < 100 ? (
+                          <>
+                            <span className={styles.title}>
+                              {t("Your Credits are very low")}:
+                            </span>{" "}
+                            <button
+                              onClick={handleBuyCredits}
+                              style={{
+                                marginLeft: "auto",
+                                border: "1px solid green",
+                                padding: "5px 10px", // Adjusted padding for smaller size
+                                cursor: "pointer",
+                                fontSize: "10px", // Adjusted font size for smaller size
+                                backgroundColor: "green",
+                                color: "white",
+                                borderRadius: "6px",
+                              }}
+                            >
+                              Buy Credits
+                            </button>
+                          </>
+                        ) : (
+                          <></>
+                        )}
+                      </span>
+                    </p>
+                  ) : (
+                    <></>
+                  )}
+
                   {children}
                 </div>
                 <div className={styles.chat_container}>
-                <Chat />
+                  <Chat />
                 </div>
               </div>
               <div className={styles.editor_container}>
-              <Editor />
+                <Editor />
               </div>
-             
             </>
           )
         ) : (
-          <div style={{ margin: 'auto' }}>
+          <div style={{ margin: "auto" }}>
             <Spinner />
           </div>
         )}
@@ -414,8 +443,8 @@ const WorkflowLayout = ({ children }) => {
             onClick={HandleLanBtnClk}
             onMouseLeave={handleLanClose}
             style={{
-              position: 'fixed',
-              zIndex: '10000000',
+              position: "fixed",
+              zIndex: "10000000",
               top: `${languageSelectPosition.top}px`,
               left: `${languageSelectPosition.left}px`,
             }}
@@ -429,8 +458,8 @@ const WorkflowLayout = ({ children }) => {
             onMouseOver={(e) => handleMouseEnter(e)}
             onMouseLeave={handleMouseLeave}
             style={{
-              position: 'fixed',
-              zIndex: '10000000',
+              position: "fixed",
+              zIndex: "10000000",
               top: `${userDetailPosition.top}px`,
               left: `${userDetailPosition.left}px`,
             }}
@@ -447,7 +476,7 @@ const WorkflowLayout = ({ children }) => {
               >
                 <AiOutlineClose />
               </div>
-              <h3>{t('Agree to terms')}</h3>
+              <h3>{t("Agree to terms")}</h3>
               {legalStatusLoading ? (
                 <LoadingSpinner />
               ) : (
@@ -455,7 +484,7 @@ const WorkflowLayout = ({ children }) => {
                   {dateAgreedToLegalStatus &&
                     dateAgreedToLegalStatus.length > 1 && (
                       <span className={styles.date__Agreed}>
-                        {t('You agreed on')}:{' '}
+                        {t("You agreed on")}:{" "}
                         {formatDateAndTime(dateAgreedToLegalStatus)}
                       </span>
                     )}
@@ -466,7 +495,7 @@ const WorkflowLayout = ({ children }) => {
                       onChange={handleAgreeCheckBoxClick}
                     />
                     {t(
-                      'I agree with the privacy policy and terms and conditions'
+                      "I agree with the privacy policy and terms and conditions"
                     )}
                   </label>
                   <button
@@ -474,7 +503,7 @@ const WorkflowLayout = ({ children }) => {
                     className={`${styles.legal__Register__Btn} ${styles.continue__Btn}`}
                     onClick={() => dispatch(setShowLegalStatusPopup(false))}
                   >
-                    {t('Continue')}
+                    {t("Continue")}
                   </button>
                   {legalArgeePageLoading ? (
                     <div className='loading__Spinner__New__Portfolio abs__Pos'>
@@ -491,24 +520,24 @@ const WorkflowLayout = ({ children }) => {
       </div>
 
       <FoldersModal />
-      
+
       {ShowProfileSpinner && (
         <div
           style={{
-            background: 'rgba(0, 0, 0, 0.12)',
-            backdropFilter: 'blur(5px)',
-            animation: 'fadeIn 0.2s ease-in-out',
+            background: "rgba(0, 0, 0, 0.12)",
+            backdropFilter: "blur(5px)",
+            animation: "fadeIn 0.2s ease-in-out",
             zIndex: 99999,
-            overflow: 'hidden',
-            display: 'flex',
-            height: '100%',
-            width: '100%',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: '#000',
-            position: 'fixed',
-            top: '0%',
-            left: '0%',
+            overflow: "hidden",
+            display: "flex",
+            height: "100%",
+            width: "100%",
+            alignItems: "center",
+            justifyContent: "center",
+            color: "#000",
+            position: "fixed",
+            top: "0%",
+            left: "0%",
           }}
         >
           <Spinner />

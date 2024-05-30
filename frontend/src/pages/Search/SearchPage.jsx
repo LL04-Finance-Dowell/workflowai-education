@@ -1,47 +1,47 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from "react";
 
-import { FaSearch } from 'react-icons/fa';
-import { useDispatch, useSelector } from 'react-redux';
-import { useLocation } from 'react-router-dom';
+import { FaSearch } from "react-icons/fa";
+import { useDispatch, useSelector } from "react-redux";
+import { useLocation } from "react-router-dom";
 
-import { Tooltip } from 'react-tooltip';
-import { LoadingSpinner } from '../../components/LoadingSpinner/LoadingSpinner';
-import { setToggleManageFileForm } from '../../features/app/appSlice';
-import { detailDocument } from '../../features/document/asyncThunks';
-import { detailTemplate } from '../../features/template/asyncThunks';
-import { detailWorkflow } from '../../features/workflow/asyncTHunks';
+import { Tooltip } from "react-tooltip";
+import { LoadingSpinner } from "../../components/LoadingSpinner/LoadingSpinner";
+import { setToggleManageFileForm } from "../../features/app/appSlice";
+import { detailDocument } from "../../features/document/asyncThunks";
+import { detailTemplate } from "../../features/template/asyncThunks";
+import { detailWorkflow } from "../../features/workflow/asyncTHunks";
 // import { searchForItem } from "../../services/searchServices";
-import WorkflowLayout from '../../layouts/WorkflowLayout/WorkflowLayout';
-import ManageFiles from '../../components/manageFiles/ManageFiles';
-import styles from './style.module.css';
-import { searchItemByKeyAndGroupResults } from './util';
-import { useAppContext } from '../../contexts/AppContext';
-import { IoIosRefresh } from 'react-icons/io';
-import { DocumentServices } from '../../services/documentServices';
-import { TemplateServices } from '../../services/templateServices';
-import { WorkflowServices } from '../../services/workflowServices';
-import { setAllDocuments } from '../../features/document/documentSlice';
-import { setAllTemplates } from '../../features/template/templateSlice';
-import { setAllWorkflows } from '../../features/workflow/workflowsSlice';
-import { useMediaQuery } from 'react-responsive';
+import WorkflowLayout from "../../layouts/WorkflowLayout/WorkflowLayout";
+import ManageFiles from "../../components/manageFiles/ManageFiles";
+import styles from "./style.module.css";
+import { searchItemByKeyAndGroupResults } from "./util";
+import { useAppContext } from "../../contexts/AppContext";
+import { IoIosRefresh } from "react-icons/io";
+import { DocumentServices } from "../../services/documentServices";
+import { TemplateServices } from "../../services/templateServices";
+import { WorkflowServices } from "../../services/workflowServices";
+import { setAllDocuments } from "../../features/document/documentSlice";
+import { setAllTemplates } from "../../features/template/templateSlice";
+import { setAllWorkflows } from "../../features/workflow/workflowsSlice";
+import { useMediaQuery } from "react-responsive";
 
-import { MdFilterList } from 'react-icons/md';
-import DisplaySearch from './DisplaySearch';
-import { productName } from '../../utils/helpers';
-import { useNavigate } from 'react-router-dom';
+import { MdFilterList } from "react-icons/md";
+import DisplaySearch from "./DisplaySearch";
+import { productName } from "../../utils/helpers";
+import { useNavigate } from "react-router-dom";
 
 const searchCategories = {
-  documents: 'documents',
-  templates: 'templates',
-  workflows: 'workflows',
-  all: 'all',
+  documents: "documents",
+  templates: "templates",
+  workflows: "workflows",
+  all: "all",
 };
 
 const SearchPage = () => {
   const [searchResults, setSearchResults] = useState([]);
   const [searchResultsToDisplay, setSearchResultsToDisplay] = useState([]);
   const { state } = useLocation();
-  const [currentSearch, setCurrentSearch] = useState('');
+  const [currentSearch, setCurrentSearch] = useState("");
   const [searchLoading, setSearchLoading] = useState(false);
   const { userDetail } = useSelector((state) => state.auth);
   const [currentSearchOption, setCurrentSearchOption] = useState(
@@ -58,7 +58,7 @@ const SearchPage = () => {
   const [filterWorks, setFilterWorks] = useState([]);
   const [isDropdown, setIsDropdown] = useState(false);
   const nonDesktop = useMediaQuery({
-    query: '(max-width: 750px)',
+    query: "(max-width: 750px)",
   });
 
   const navigate = useNavigate();
@@ -93,7 +93,7 @@ const SearchPage = () => {
       const data = {
         workflow_id: item._id,
       };
-      navigate('/workflows/saved#saved-workflows')
+      navigate("/workflows/saved#saved-workflows");
       dispatch(detailWorkflow(item._id));
     }
   };
@@ -114,9 +114,9 @@ const SearchPage = () => {
     setSearchLoading(true);
 
     if (
-      allDocumentsStatus === 'pending' ||
-      allTemplatesStatus === 'pending' ||
-      allWorkflowsStatus === 'pending' ||
+      allDocumentsStatus === "pending" ||
+      allTemplatesStatus === "pending" ||
+      allWorkflowsStatus === "pending" ||
       refreshLoading
     )
       return;
@@ -126,7 +126,7 @@ const SearchPage = () => {
         currentSearch,
         searchItems
       );
-      
+
       setSearchLoading(false);
       setSearchResults(results);
     } catch (error) {
@@ -198,17 +198,19 @@ const SearchPage = () => {
 
     setRefreshLoading(true);
 
-    const [ currentUserportfolioDataType, currentUserCompanyId ] = [
-      userDetail?.portfolio_info?.length > 1 ? 
-        userDetail?.portfolio_info.find(portfolio => portfolio.product === productName)?.data_type
-        :
-      userDetail?.portfolio_info[0]?.data_type,
-        
-      userDetail?.portfolio_info?.length > 1 ? 
-        userDetail?.portfolio_info.find(portfolio => portfolio.product === productName)?.org_id
-        :
-      userDetail?.portfolio_info[0].org_id
-    ]
+    const [currentUserportfolioDataType, currentUserCompanyId] = [
+      userDetail?.portfolio_info?.length > 1
+        ? userDetail?.portfolio_info.find(
+            (portfolio) => portfolio.product === productName
+          )?.data_type
+        : userDetail?.portfolio_info[0]?.data_type,
+
+      userDetail?.portfolio_info?.length > 1
+        ? userDetail?.portfolio_info.find(
+            (portfolio) => portfolio.product === productName
+          )?.org_id
+        : userDetail?.portfolio_info[0].org_id,
+    ];
 
     const data = {
       company_id: currentUserCompanyId,
@@ -232,7 +234,7 @@ const SearchPage = () => {
             .reverse()
             .filter(
               (document) =>
-                document.document_state !== 'trash' &&
+                document.document_state !== "trash" &&
                 document.data_type &&
                 document.data_type === currentUserportfolioDataType
             )
@@ -241,7 +243,8 @@ const SearchPage = () => {
 
       dispatch(
         setAllTemplates(
-          templatesData.data.templates
+          // templatesData.data.templates
+          templatesData.data.data
             .reverse()
             .filter(
               (template) =>
@@ -256,11 +259,9 @@ const SearchPage = () => {
           workflowsData.data.workflows.filter(
             (workflow) =>
               (workflow?.data_type &&
-                workflow?.data_type ===
-                  currentUserportfolioDataType) ||
+                workflow?.data_type === currentUserportfolioDataType) ||
               (workflow.workflows.data_type &&
-                workflow.workflows.data_type ===
-                  currentUserportfolioDataType)
+                workflow.workflows.data_type === currentUserportfolioDataType)
           )
         )
       );
@@ -284,22 +285,22 @@ const SearchPage = () => {
         ...[filterDocs.length, filterTemps.length, filterWorks.length]
       );
       const filterArr = [
-        { title: 'docs', arr: filterDocs },
-        { title: 'temps', arr: filterTemps },
-        { title: 'works', arr: filterWorks },
+        { title: "docs", arr: filterDocs },
+        { title: "temps", arr: filterTemps },
+        { title: "works", arr: filterWorks },
       ];
       filterArr.forEach(({ title, arr }) => {
         if (arr.length < maxLength) {
           let spaces = [];
-          for (let i = maxLength - arr.length; i > 0; i--) spaces.push('');
+          for (let i = maxLength - arr.length; i > 0; i--) spaces.push("");
           switch (title) {
-            case 'docs':
+            case "docs":
               setFilterDocs([...filterDocs, ...spaces]);
               break;
-            case 'temps':
+            case "temps":
               setFilterTemps([...filterTemps, ...spaces]);
               break;
-            case 'works':
+            case "works":
               setFilterWorks([...filterWorks, ...spaces]);
               break;
             default:
@@ -327,9 +328,9 @@ const SearchPage = () => {
                 <button type='submit'>
                   {searchLoading ? (
                     <LoadingSpinner
-                      color={'#61ce70'}
-                      width={'1rem'}
-                      height={'1rem'}
+                      color={"#61ce70"}
+                      width={"1rem"}
+                      height={"1rem"}
                     />
                   ) : (
                     <>
@@ -351,36 +352,36 @@ const SearchPage = () => {
                   <button
                     className={styles.search_drop_btn}
                     onClick={() => setIsDropdown(!isDropdown)}
-                    style={isDropdown ? { borderRadius: '5px 5px 0 0' } : {}}
+                    style={isDropdown ? { borderRadius: "5px 5px 0 0" } : {}}
                   >
                     <span
                       className='filter_icon'
-                      style={{ marginRight: '10px' }}
+                      style={{ marginRight: "10px" }}
                     >
                       <MdFilterList />
                     </span>
-                    {currentSearchOption === 'documents'
-                      ? 'Documents'
-                      : currentSearchOption === 'templates'
-                      ? 'Templates'
-                      : currentSearchOption === 'workflows'
-                      ? 'Workflows'
-                      : 'All'}
+                    {currentSearchOption === "documents"
+                      ? "Documents"
+                      : currentSearchOption === "templates"
+                      ? "Templates"
+                      : currentSearchOption === "workflows"
+                      ? "Workflows"
+                      : "All"}
                   </button>
                   <div
                     style={
                       isDropdown
                         ? {
-                            height: '130px',
+                            height: "130px",
                           }
-                        : { height: '0' }
+                        : { height: "0" }
                     }
                     className={styles.search_drop_opts_super_wrapper}
                   >
                     <div className={styles.search_drop_opts_wrapper}>
                       <label>
                         <input
-                          type={'radio'}
+                          type={"radio"}
                           checked={
                             currentSearchOption === searchCategories.all
                               ? true
@@ -396,7 +397,7 @@ const SearchPage = () => {
                       </label>
                       <label>
                         <input
-                          type={'radio'}
+                          type={"radio"}
                           checked={
                             currentSearchOption === searchCategories.documents
                               ? true
@@ -412,7 +413,7 @@ const SearchPage = () => {
                       </label>
                       <label>
                         <input
-                          type={'radio'}
+                          type={"radio"}
                           checked={
                             currentSearchOption === searchCategories.templates
                               ? true
@@ -428,7 +429,7 @@ const SearchPage = () => {
                       </label>
                       <label>
                         <input
-                          type={'radio'}
+                          type={"radio"}
                           checked={
                             currentSearchOption === searchCategories.workflows
                               ? true
@@ -449,9 +450,9 @@ const SearchPage = () => {
                 <button className={styles.refresh__btn} onClick={handleRefresh}>
                   {refreshLoading ? (
                     <LoadingSpinner
-                      color={'white'}
-                      width={'1rem'}
-                      height={'1rem'}
+                      color={"white"}
+                      width={"1rem"}
+                      height={"1rem"}
                     />
                   ) : (
                     <IoIosRefresh />
@@ -465,8 +466,8 @@ const SearchPage = () => {
               {searchLoading ? (
                 <p>{`Please wait.${
                   refreshLoading
-                    ? ' It might take awhile as items are being refreshed'
-                    : ''
+                    ? " It might take awhile as items are being refreshed"
+                    : ""
                 }...`}</p>
               ) : currentSearch.length < 1 ? (
                 <></>
@@ -474,10 +475,10 @@ const SearchPage = () => {
                 <>
                   {searchResultsToDisplay.length < 1 ? (
                     <p>
-                      No{' '}
+                      No{" "}
                       {currentSearchOption === searchCategories.all
-                        ? 'items'
-                        : currentSearchOption}{' '}
+                        ? "items"
+                        : currentSearchOption}{" "}
                       found matching {currentSearch}
                     </p>
                   ) : currentSearchOption === searchCategories.all ? (
@@ -489,23 +490,21 @@ const SearchPage = () => {
                           >
                             <span
                               style={{
-                                backgroundColor: 'var(--e-global-color-accent)',
+                                backgroundColor: "var(--e-global-color-accent)",
                               }}
                             >
                               documents
                             </span>
                             <span
                               style={{
-                                backgroundColor:
-                                  'var(--e-global-color-accent)',
+                                backgroundColor: "var(--e-global-color-accent)",
                               }}
                             >
                               templates
                             </span>
                             <span
                               style={{
-                                backgroundColor:
-                                  'var(--e-global-color-accent)',
+                                backgroundColor: "var(--e-global-color-accent)",
                               }}
                             >
                               workflows
@@ -607,16 +606,16 @@ const SearchPage = () => {
                                                         ? styles.search__Item__Temp
                                                         : searchResultItem.workflows
                                                         ? styles.search__Item__Workf
-                                                        : ''
+                                                        : ""
                                                     }`}
                               >
                                 {searchResultItem.document_name
-                                  ? 'Document'
+                                  ? "Document"
                                   : searchResultItem.template_name
-                                  ? 'Template'
+                                  ? "Template"
                                   : searchResultItem.workflows
-                                  ? 'Workflow'
-                                  : ''}
+                                  ? "Workflow"
+                                  : ""}
                               </span>
                               <span>
                                 {searchResultItem.document_name
@@ -625,7 +624,7 @@ const SearchPage = () => {
                                   ? searchResultItem.template_name
                                   : searchResultItem.workflows
                                   ? searchResultItem.workflows?.workflow_title
-                                  : ''}
+                                  : ""}
                                 <Tooltip
                                   anchorId={searchResultItem._id}
                                   content={
@@ -637,7 +636,7 @@ const SearchPage = () => {
                                           ?.workflow_title
                                       ? searchResultItem.workflows
                                           ?.workflow_title
-                                      : ''
+                                      : ""
                                   }
                                   place='top'
                                 />

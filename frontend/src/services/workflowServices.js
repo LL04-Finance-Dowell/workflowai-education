@@ -1,8 +1,11 @@
 import { httpApiUrl, httpApiUrlV2, httpWorkflow, httpWorkflowNew } from '../httpCommon/httpCommon';
 
 export class WorkflowServices {
-  createWorkflow = (data) => {
-    return httpWorkflow.post('/', data);
+  createWorkflow = (data, companyId) => {
+    // return httpWorkflow.post('/', data);
+    return httpWorkflow.post(`/?workspace_id=${companyId}`, data,{
+      headers: { Authorization: "Bearer 1b834e07-c68b-4bf6-96dd-ab7cdc62f07f" },
+    });
   };
 
   mineWorkflows = (data) => {

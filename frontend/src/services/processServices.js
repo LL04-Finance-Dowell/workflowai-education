@@ -6,7 +6,11 @@ import { httpApiUrl, httpApiUrlV2, httpProcess, processReport } from '../httpCom
 // }
 
 export const startNewProcess = async (data) => {
-  return await httpProcess.post('/', data);
+  return await httpProcess.post('/', data, {
+    headers: {
+      Authorization: "Bearer 1b834e07-c68b-4bf6-96dd-ab7cdc62f07f"
+    }
+  });
 };
 
 export const getVerifiedProcessLink = async (processId, data) => {
@@ -23,20 +27,23 @@ export const getSingleProcessV2 = async (processId) => {
 
 export const getAllProcessesV2 = async (companyId, dataType) => {
   return await httpApiUrlV2.get(
-    `processes/${companyId}/organisations/?data_type=${dataType}`
+    // `processes/${companyId}/organisations/?data_type=${dataType}`
+    `${companyId}/organisations/?data_type=${dataType}`
     // https://100094.pythonanywhere.com/v2/processes/65ad8a28c9038ff4498672c9/organisations/?data_type=Real_Data
   );
 };
 
 export const getCompletedProcesses = (companyId, dataType, processState) => {
   return httpApiUrlV2.get(
-    `/processes/${companyId}/organisations/?data_type=${dataType}&process_state=${processState}`
+    // `/processes/${companyId}/organisations/?data_type=${dataType}&process_state=${processState}`
+    `/${companyId}/organisations/?data_type=${dataType}&process_state=${processState}`
   );
 };
 
 export const getActiveProcesses = (companyId, dataType, processState) => {
   return httpApiUrlV2.get(
-    `/processes/${companyId}/organisations/?data_type=${dataType}&process_state=${processState}`
+    // `/processes/${companyId}/organisations/?data_type=${dataType}&process_state=${processState}`
+    `/${companyId}/organisations/?data_type=${dataType}&process_state=${processState}`
   );
 };
 

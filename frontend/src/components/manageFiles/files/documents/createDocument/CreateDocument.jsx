@@ -1,28 +1,27 @@
-import styles from './createDocument.module.css';
-import { v4 as uuidv4 } from 'uuid';
-import { useRef, useState } from 'react';
-import { useForm } from 'react-hook-form';
-import Overlay from '../../../overlay/Overlay';
-import { BsArrowRightShort } from 'react-icons/bs';
-import Collapse from '../../../../../layouts/collapse/Collapse';
-import { useDispatch, useSelector } from 'react-redux';
-import { allTemplates } from '../../../../../features/template/asyncThunks';
-import { useEffect } from 'react';
-import { createDocument } from '../../../../../features/document/asyncThunks';
-import { setToggleManageFileForm } from '../../../../../features/app/appSlice';
-import Spinner from '../../../../spinner/Spinner';
-import { useTranslation } from 'react-i18next';
-import { productName } from '../../../../../utils/helpers';
-import axios from 'axios';
-import { toast } from 'react-toastify';
-import { FaPlus } from 'react-icons/fa';
-import Select from 'react-select'
-import { createTemplate } from '../../../../../features/template/asyncThunks';
-import addImage from '../../../../../../src/assets/carbon_add-filled.jpg';
-import { BsArrowRight } from 'react-icons/bs';
-import { Tooltip } from 'react-tooltip';
-import { api_url_v3 } from '../../../../../httpCommon/httpCommon';
-
+import styles from "./createDocument.module.css";
+import { v4 as uuidv4 } from "uuid";
+import { useRef, useState } from "react";
+import { useForm } from "react-hook-form";
+import Overlay from "../../../overlay/Overlay";
+import { BsArrowRightShort } from "react-icons/bs";
+import Collapse from "../../../../../layouts/collapse/Collapse";
+import { useDispatch, useSelector } from "react-redux";
+import { allTemplates } from "../../../../../features/template/asyncThunks";
+import { useEffect } from "react";
+import { createDocument } from "../../../../../features/document/asyncThunks";
+import { setToggleManageFileForm } from "../../../../../features/app/appSlice";
+import Spinner from "../../../../spinner/Spinner";
+import { useTranslation } from "react-i18next";
+import { productName } from "../../../../../utils/helpers";
+import axios from "axios";
+import { toast } from "react-toastify";
+import { FaPlus } from "react-icons/fa";
+import Select from "react-select";
+import { createTemplate } from "../../../../../features/template/asyncThunks";
+import addImage from "../../../../../../src/assets/carbon_add-filled.jpg";
+import { BsArrowRight } from "react-icons/bs";
+import { Tooltip } from "react-tooltip";
+import { api_url_v3 } from "../../../../../httpCommon/httpCommon";
 
 const CreateDocument = ({ handleToggleOverlay }) => {
   const { userDetail } = useSelector((state) => state.auth);
@@ -47,59 +46,95 @@ const CreateDocument = ({ handleToggleOverlay }) => {
       e.preventDefault();
       const data = {
         created_by: userDetail?.userinfo.username,
+        workspace_id:
+          userDetail?.portfolio_info?.length > 1
+            ? userDetail?.portfolio_info.find(
+                (portfolio) => portfolio.product === productName
+              )?.org_id
+            : userDetail?.portfolio_info[0].org_id,
         company_id:
           userDetail?.portfolio_info?.length > 1
             ? userDetail?.portfolio_info.find(
                 (portfolio) => portfolio.product === productName
               )?.org_id
             : userDetail?.portfolio_info[0].org_id,
-        data_type:
-          userDetail?.portfolio_info?.length > 1
-            ? userDetail?.portfolio_info.find(
-                (portfolio) => portfolio.product === productName
-              )?.data_type
-            : userDetail?.portfolio_info[0].data_type,
+        // data_type:
+        //   userDetail?.portfolio_info?.length > 1
+        //     ? userDetail?.portfolio_info.find(
+        //         (portfolio) => portfolio.product === productName
+        //       )?.data_type
+        //     : userDetail?.portfolio_info[0].data_type,
+        data_type: "Real_Data",
         portfolio:
           userDetail?.portfolio_info?.length > 1
             ? userDetail?.portfolio_info.find(
                 (portfolio) => portfolio.product === productName
               )?.portfolio_name
             : userDetail?.portfolio_info[0].portfolio_name,
-        email: userDetail.userinfo.email,
+        // email: userDetail.userinfo.email,
       };
-      const response = await dispatch(createTemplate(data));
-      if (response?.meta?.requestStatus === "fulfilled") {
-        const Api_key = creditResponse?.api_key;
-        axios
-          .post(
-            `${api_url_v3}process-services/?type=product_service&api_key=${Api_key}`,
-            {
-              service_id: "DOWELL10026",
-              sub_service_ids: ["DOWELL100262"],
-            }
-          )
-  
-          .then((res) => {
-            if (res.data.success === true) {
-              toast.success(res?.data?.message)
 
-              //open new window here
-              if (response?.payload?.editor_link){
-                console.info('\nEDITOR LINK:', response.payload.editor_link)
-                window.open(response.payload.editor_link)
-              }
-              // dispatch(setEditorLink(response?.payload?.editor_link));
+      try {
+        const Api_key = creditResponse?.api_key;
+        const res = await axios.post(
+          `${api_url_v3}process-services/?type=product_service&api_key=${Api_key}`,
+          {
+            service_id: "DOWELL10026",
+            sub_service_ids: ["DOWELL100262"],
+          }
+        );
+
+        if (res.data.success === true) {
+          toast.success(res?.data?.message);
+
+          const response = await dispatch(createTemplate(data));
+
+          if (response?.meta?.requestStatus === "fulfilled") {
+            if (response?.payload?.editor_link) {
+              console.info("\nEDITOR LINK:", response.payload.editor_link);
+              window.open(response.payload.editor_link);
             }
-          })
-    
-          .catch((error) => {
-            // console.log(error.response?.data?.message);
-            toast.info(error.response?.data?.message);
-          });
+          } else {
+            dispatch(setToggleManageFileForm(true));
+          }
+        }
+      } catch (error) {
+        console.error("Error:", error);
+        toast.info(error.response?.data?.message);
       }
-    } else {
-      dispatch(setToggleManageFileForm(true));
+
+      // if (response?.meta?.requestStatus === "fulfilled") {
+      //         const Api_key = creditResponse?.api_key;
+      //         axios
+      //           .post(
+      //             `${api_url_v3}process-services/?type=product_service&api_key=${Api_key}`,
+      //             {
+      //               service_id: "DOWELL10026",
+      //               sub_service_ids: ["DOWELL100262"],
+      //             }
+      //           )
+
+      //           .then((res) => {
+      //             if (res.data.success === true) {
+      //               toast.success(res?.data?.message);
+
+      //               //open new window here
+      //               if (response?.payload?.editor_link) {
+      //                 console.info("\nEDITOR LINK:", response.payload.editor_link);
+      //                 window.open(response.payload.editor_link);
+      //               }
+      //               // dispatch(setEditorLink(response?.payload?.editor_link));
+      //             }
+      //           })
+
+      //           .catch((error) => {
+      //             // console.log(error.response?.data?.message);
+      //             toast.info(error.response?.data?.message);
+      //           });
     }
+    // } else {
+    //   dispatch(setToggleManageFileForm(true));
+    // }
   };
 
   const onSubmit = async (data) => {
@@ -112,47 +147,96 @@ const CreateDocument = ({ handleToggleOverlay }) => {
     );
     if (!foundTemplateObj) return;
 
-
     const createDocumentData = {
-      company_id: userDetail?.portfolio_info?.length > 1 ? userDetail?.portfolio_info.find(portfolio => portfolio.product === productName)?.org_id : userDetail?.portfolio_info[0].org_id,
-      template_id: foundTemplateObj.collection_id,
+      workspace_id:
+        userDetail?.portfolio_info?.length > 1
+          ? userDetail?.portfolio_info.find(
+              (portfolio) => portfolio.product === productName
+            )?.org_id
+          : userDetail?.portfolio_info[0].org_id,
+      company_id:
+        userDetail?.portfolio_info?.length > 1
+          ? userDetail?.portfolio_info.find(
+              (portfolio) => portfolio.product === productName
+            )?.org_id
+          : userDetail?.portfolio_info[0].org_id,
       created_by: userDetail?.userinfo.username,
-      data_type: userDetail?.portfolio_info?.length > 1 ? userDetail?.portfolio_info.find(portfolio => portfolio.product === productName)?.data_type : userDetail?.portfolio_info[0].data_type,
+
+      // data_type: "Real_Data",
+      // template_id: foundTemplateObj.collection_id,
+      template_id: template,
+      data_type:
+        userDetail?.portfolio_info?.length > 1
+          ? userDetail?.portfolio_info.find(
+              (portfolio) => portfolio.product === productName
+            )?.data_type
+          : userDetail?.portfolio_info[0].data_type,
       // page: foundTemplateObj?.page,
       // content: foundTemplateObj?.content,
-      portfolio: userDetail?.portfolio_info?.length > 1 ? userDetail?.portfolio_info.find((portfolio) => portfolio.product === productName)?.portfolio_name : userDetail?.portfolio_info[0].portfolio_name,
-      email: userDetail.userinfo.email,
+      portfolio:
+        userDetail?.portfolio_info?.length > 1
+          ? userDetail?.portfolio_info.find(
+              (portfolio) => portfolio.product === productName
+            )?.portfolio_name
+          : userDetail?.portfolio_info[0].portfolio_name,
+      // email: userDetail.userinfo.email,
     };
-    
+
     const Api_key = creditResponse?.api_key;
 
-    const response = await dispatch(createDocument(createDocumentData));
-
-    if (response?.meta?.requestStatus === 'fulfilled') {
-      axios
-      .post(
+    try {
+      const res = await axios.post(
         `https://100105.pythonanywhere.com/api/v3/process-services/?type=product_service&api_key=${Api_key}`,
         {
-          "service_id": "DOWELL10026",
-          "sub_service_ids": ["DOWELL100261"],
-        },
-      )
-      .then((res) => {
-        // console.log(res)
-        if (res.data.success === true) {
-          //open new window here//
-          if (response?.payload?.editor_link) {
-            console.info('\nEDITOR LINK:', response.payload.editor_link)
-            window.open(response.payload.editor_link)
-          }
-          // dispatch(setEditorLink(response?.payload?.editor_link));
+          service_id: "DOWELL10026",
+          sub_service_ids: ["DOWELL100261"],
         }
-      })
-      .catch((error) => {
-        // console.log(error);
-        toast.info(error.response?.data?.message)
-      });
+      );
+
+      if (res.data.success === true) {
+        toast.success(res?.data?.message);
+
+        const response = await dispatch(createDocument(createDocumentData));
+
+        if (response?.meta?.requestStatus === "fulfilled") {
+          if (response?.payload?.editor_link) {
+            console.info("\nEDITOR LINK:", response.payload.editor_link);
+            window.open(response.payload.editor_link);
+          }
+        } else {
+          dispatch(setToggleManageFileForm(true));
+        }
+      }
+    } catch (error) {
+      //   console.error("Error:", error);
+      toast.info(error.response?.data?.message);
     }
+
+    // if (response?.meta?.requestStatus === "fulfilled") {
+    // axios
+    //   .post(
+    //     `https://100105.pythonanywhere.com/api/v3/process-services/?type=product_service&api_key=${Api_key}`,
+    //     {
+    //       service_id: "DOWELL10026",
+    //       sub_service_ids: ["DOWELL100261"],
+    //     }
+    //   )
+    //     .then((res) => {
+    //       // console.log(res)
+    // if (res.data.success === true) {
+    //   //open new window here//
+    //   if (response?.payload?.editor_link) {
+    //     console.info("\nEDITOR LINK:", response.payload.editor_link);
+    //     window.open(response.payload.editor_link);
+    //   }
+    //   // dispatch(setEditorLink(response?.payload?.editor_link));
+    // }
+    //     })
+    //     .catch((error) => {
+    //       // console.log(error);
+    //       toast.info(error.response?.data?.message);
+    //     });
+    // }
   };
 
   const handleDropdown = () => {
@@ -164,8 +248,8 @@ const CreateDocument = ({ handleToggleOverlay }) => {
     // console.log("handleOptionClick", item)
     setToggleDropdown(false);
     setCurrentOption(item.label);
-    setCurrentItem(item.value)
-    setValue('template', item.value);
+    setCurrentItem(item.value);
+    setValue("template", item.value);
     ref.current?.focus();
     // console.log("handleOptionClick", currentOption)
 
@@ -178,55 +262,77 @@ const CreateDocument = ({ handleToggleOverlay }) => {
 
   useEffect(() => {
     const data = {
-      company_id: userDetail?.portfolio_info?.length > 1 ? userDetail?.portfolio_info.find(portfolio => portfolio.product === productName)?.org_id : userDetail?.portfolio_info[0].org_id,
-      data_type: userDetail?.portfolio_info?.length > 1 ? userDetail?.portfolio_info.find(portfolio => portfolio.product === productName)?.data_type : userDetail?.portfolio_info[0].data_type,
+      company_id:
+        userDetail?.portfolio_info?.length > 1
+          ? userDetail?.portfolio_info.find(
+              (portfolio) => portfolio.product === productName
+            )?.org_id
+          : userDetail?.portfolio_info[0].org_id,
+      data_type:
+        userDetail?.portfolio_info?.length > 1
+          ? userDetail?.portfolio_info.find(
+              (portfolio) => portfolio.product === productName
+            )?.data_type
+          : userDetail?.portfolio_info[0].data_type,
     };
 
     dispatch(allTemplates(data));
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const reversedArray = [...allTemplatesArray].reverse();
-  const options = reversedArray.map(item => ({
+  const options = reversedArray.map((item) => ({
     value: item._id,
-    label: item.template_name
+    label: item.template_name || item.document_name,
   }));
 
+  // console.log("all template array " + options);
+
+  // console.log("appr rev " + reversedArray[0].template_name);
 
   return (
     <Overlay title='Create Document' handleToggleOverlay={handleToggleOverlay}>
-      {allTemplatesStatus === 'pending' ? (
+      {allTemplatesStatus === "pending" ? (
         <Spinner />
       ) : reversedArray ? (
         <>
-
-          <div className={styles.create__button__template1} onClick={(e) => handleNewItemClick(e, "template")}>
-            <img src={addImage} alt="Descriptive text about the image"></img>
+          <div
+            className={styles.create__button__template1}
+            onClick={(e) => handleNewItemClick(e, "template")}
+          >
+            <img src={addImage} alt='Descriptive text about the image'></img>
             <div
-              to="/templates/#newTemplate"
+              to='/templates/#newTemplate'
               key={uuidv4()}
               className={styles.create__button__inner}
-            // style={{backgroundColor: "#f1f7ff"}}
+              // style={{backgroundColor: "#f1f7ff"}}
             >
-              {t('Create New Template')}
+              {t("Create New Template")}
             </div>
           </div>
           <br />
-          <Tooltip id={`alltemplates`} content="select an existing template to create a document from" direction="up" arrowSize={10} style={{ backgroundColor: 'rgb(97, 206, 112)', color: 'white' }}></Tooltip>
-          <div className={styles.all_templates_title}>Select Templates {<BsArrowRight data-tooltip-id={`alltemplates`} />}</div>
-
-
+          <Tooltip
+            id={`alltemplates`}
+            content='select an existing template to create a document from'
+            direction='up'
+            arrowSize={10}
+            style={{ backgroundColor: "rgb(97, 206, 112)", color: "white" }}
+          ></Tooltip>
+          <div className={styles.all_templates_title}>
+            Select Templates {<BsArrowRight data-tooltip-id={`alltemplates`} />}
+          </div>
 
           <div className={styles.create__button__template}>
             <form onSubmit={handleSubmit(onSubmit)}>
               <Select
-                value={options.find(option => option.value === currentOption)}
+                value={options.find((option) => option.value === currentOption)}
                 onChange={handleOptionClick}
                 options={options}
-                classNamePrefix="dropdown" // for custom styling
+                classNamePrefix='dropdown' // for custom styling
               />
               {/* <div className={styles.createDocument_dropdown__container__qZtlW}> */}
-              <button className={styles.create__button__document} type="submit">
-                <span>{t('Create Document')}</span>
+              <button className={styles.create__button__document} type='submit'>
+                <span>{t("Create Document")}</span>
               </button>
               {/* </div> */}
             </form>
@@ -244,9 +350,8 @@ const CreateDocument = ({ handleToggleOverlay }) => {
             </button>
           </div> */}
         </>
-
       ) : (
-        <h4>{t('No Template')}</h4>
+        <h4>{t("No Template")}</h4>
       )}
     </Overlay>
   );
@@ -255,8 +360,8 @@ const CreateDocument = ({ handleToggleOverlay }) => {
 export default CreateDocument;
 
 export const templates = [
-  { id: uuidv4(), option: '__template batu__' },
-  { id: uuidv4(), option: '__template batu__' },
-  { id: uuidv4(), option: '__template batu__' },
-  { id: uuidv4(), option: '__template batu__' },
+  { id: uuidv4(), option: "__template batu__" },
+  { id: uuidv4(), option: "__template batu__" },
+  { id: uuidv4(), option: "__template batu__" },
+  { id: uuidv4(), option: "__template batu__" },
 ];

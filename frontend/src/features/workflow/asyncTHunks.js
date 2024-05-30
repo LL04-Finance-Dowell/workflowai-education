@@ -48,7 +48,8 @@ export const createWorkflow = createAsyncThunk(
   'workflow/create',
   async ({ data, notify, handleAfterCreated }, thunkAPI) => {
     try {
-      const res = await workflowServices.createWorkflow(data);
+      // const res = await workflowServices.createWorkflow(data);
+      const res = await workflowServices.createWorkflow(data, data.company_id);
 
       const existingWorkflows = [...thunkAPI.getState().workflow?.allWorkflows];
       existingWorkflows.push(res.data);
