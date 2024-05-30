@@ -1,29 +1,34 @@
 NewTemplate:
 - URL: education/templates/
-- GET (get one template):
+- GET (get templates):
     - query_params:
         - workspace_id
         - template_id
 - POST (create a new template):
     - query_params:
         - type
+        - workspace_id
+        - database
     
     - request_body:
-        - workspace_id
-        - company_id
         - portfolio
         - created_by
         - data_type
+        - template_name
         - collection_id (if type is "approve")
         - metadata_id (if type is "approve")
 
 
-ApprovedTemplates:
-- URL: education/templates/approved/
-- GET (get approved templates):
+TemplateDetail:
+- URL: education/templates/<str:template_id>/detail/
+- GET (retrieves the template object for a specific template):
+    - path_params:
+        - template_id
     - query_params:
         - workspace_id
-
+        - database
+        - document_type
+        
 
 Workflow:
 - URL: education/workflows/
@@ -49,6 +54,7 @@ Workflow:
         - workflow_id
         - workflow_update
 
+
 CollectionData:
 - URL: education/collections/
 - POST (get data from a collection):
@@ -64,12 +70,12 @@ CollectionData:
 NewDocument:
 - URL: education/documents/
 - POST (create a new document):
-    - request_body:
+    - query_params:
+        - database
         - workspace_id
-        - company_id
+    - request_body:
         - created_by
         - data_type
-        - template_id
         - portfolio (optional)
         
 
@@ -80,6 +86,7 @@ Document:
         - company_id
     - query_params:
         - workspace_id
+        - database
         - data_type
         - document_type
         - document_state
@@ -95,6 +102,7 @@ DocumentLink:
         - item_id
     - query_params:
         - workspace_id
+        - database
         - document_type
         - portfolio (optional)
         
@@ -107,6 +115,7 @@ DocumentDetail:
         - item_id
     - query_params:
         - workspace_id
+        - database
         - document_type
         
 
@@ -119,6 +128,7 @@ ItemContent:
     - query_params:
         - item_type
         - workspace_id
+        - database
         
 
 
@@ -127,6 +137,8 @@ FinalizeOrRejectEducation:
 - POST (after access is granted and the user has made changes on a document):
     - path_params:
         - collection_id
+    - query_params:
+        - database
     - request_body:
         - api_key
         - workspace_id
@@ -150,11 +162,13 @@ Folders:
         - data_type
         - company_id
         - workspace_id
+        - database
         
 
 - POST (create a new folder):
     - query_params:
         - workspace_id
+        - database
     - request_body:
         - folder_name
         - created_by
@@ -168,6 +182,7 @@ FolderDetail:
 - GET (retrieve the details of a specific folder):
     - query_params:
         - workspace_id
+        - database
     - path_params:
         - folder_id
         
@@ -178,6 +193,7 @@ DocumentOrTemplateProcessing:
 - POST (processing is determined by action picked by user):
     - query_params:
         - workspace_id
+        - database
     - request_body:
         - api_key
         - company_id
@@ -202,6 +218,7 @@ Process:
         - company_id
     - query_params:
         - workspace_id
+        - database
         - data_type
         - process_state (optional)
         - page (optional)
@@ -215,6 +232,7 @@ ProcessDetail:
         - process_id
     - query_params:
         - workspace_id
+        - database
         - data_type
         
 
@@ -224,6 +242,7 @@ ProcessDetail:
     - query_params:
         - workspace_id
         - data_type
+        - database
     - request_body:
         - workflows
         - step_id
@@ -237,6 +256,7 @@ ProcessLink:
         - process_id
     - query_params:
         - workspace_id
+        - database
         - data_type
     - request_body:
         - user_name
@@ -250,6 +270,7 @@ ProcessVerification:
         - process_id
     - query_params:
         - workspace_id
+        - database
         - data_type
     - request_body:
         - user_type
@@ -274,6 +295,7 @@ TriggerProcess:
         - process_id
     - query_params:
         - workspace_id
+        - database
         - data_type
     - request_body:
         - user_name
@@ -288,6 +310,7 @@ ProcessImport:
         - process_id
     - query_params:
         - workspace_id
+        - database
         - data_type
     - request_body:
         - company_id
@@ -305,6 +328,7 @@ ProcessCopies:
         - process_id
     - query_params:
         - workspace_id
+        - database
     - request_body:
         - created_by
         - portfolio
