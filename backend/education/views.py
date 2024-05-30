@@ -124,7 +124,7 @@ class NewTemplate(APIView):
         except InvalidTokenException as e:
             return CustomResponse(False, str(e), None, status.HTTP_401_UNAUTHORIZED)
 
-        if not validate_id(company_id):
+        if not validate_id(workspace_id):
             return Response("Invalid company details", status.HTTP_400_BAD_REQUEST)
 
         
