@@ -90,7 +90,7 @@ class NewTemplate(APIView):
         
         db_name = get_master_db(workspace_id)
         dc_connect = DatacubeConnection(
-            api_key=api_key, workspace_id=workspace_id, database=db_name
+            api_key=api_key, workspace_id=workspace_id, database=db_name, check=False
         )
         res = dc_connect.get_templates_from_master_db()
         if res["success"]:
