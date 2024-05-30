@@ -1,15 +1,53 @@
 import json
 import re
 from datetime import UTC, datetime
+from uuid import uuid4
 
 import requests
+from rest_framework.exceptions import NotFound
 
 from app.constants import EDITOR_API
 from education.constants import DB_API, DB_API_CRUD
-from education.helpers import generate_unique_collection_name
+from education.helpers import (CustomAPIException,
+                               generate_unique_collection_name)
 
 headers = {"Content-Type": "application/json"}
 
+metadata_collections = {
+    "document_metadata": "workflowai_documents_metadata_collection",
+    "clone_metadata": "workflowai_clones_metadata_collection",
+    "template_metadata": "workflowai_templates_metadata_collection",
+}
+
+normal_collections = {
+    "process": "workflowai_process_collection",
+    "document": "workflowai_document_collection",
+    "clone": "workflowai_clone_collection",
+    "template": "workflowai_template_collection",
+    "qrcode": "workflowai_qrcode_collection",
+    "link": "workflowai_link_collection",
+    "folder": "workflowai_folder_collection",
+}
+
+
+master_collections = {
+    "template": "workflowai_master_template_collection",
+    "workflow": "workflowai_master_workflow_collection",
+    "process": "workflowai_master_process_collection",
+    "document": "workflowai_master_document_collection",
+    "clone": "workflowai_master_clone_collection",
+    "qrcode": "workflowai_master_qrcode_collection",
+    "link": "workflowai_master_link_collection",
+    "folder": "workflowai_master_folder_collection",
+}
+
+class CustomDict(dict):
+    def __init__(self, workspace_id, initial_dict: dict=None):
+        super().__init__()
+        self.workspace_id = workspace_id
+        if initial_dict:
+            for key, value in initial_dict.items():
+                self[key] = f"{self.workspace_id}_{value}"
 
 def post_to_data_service(url: str, data: dict):
     """posts data to an API endpoint
@@ -25,77 +63,145 @@ def post_to_data_service(url: str, data: dict):
     return json.loads(response.text)
 
 
-def get_db(workspace_id):
-    return f"{workspace_id}_DB_0"
+def get_master_db(workspace_id):
+    return f"{workspace_id}_master_db"
+
+def make_db_name(value: str):
+    if not value:
+        return
+
+    value = value.replace(" ", "_")
+    trailing = uuid4().hex[:4]
+    return f"{value}_db_{trailing}"
 
 
-def create_db(options):
-    """Creates a new database entity
+def check_collections(dc_connect: "DatacubeConnection", needed_collections: list):
+    """
+    Helper method to check for missing collections and create them if necessary.
+    """
+    response_data = dc_connect.datacube_collection_retrieval()
+    if not response_data["success"]:
+        return False, "Database is not yet available, kindly contact the administrator"
+
+    ready_collections = response_data["data"][0] if response_data["data"] else []
+    missing_collections = [coll for coll in needed_collections if coll not in ready_collections]
+
+    for coll in missing_collections:
+        res = dc_connect.add_collection_to_database(coll)
+        if not res["success"]:
+            return False, f"unable to create collection {coll}"
+    return True, "Collections are ready"
+
+
+def create_db(*, api_key, workspace_id, database, **kwargs):
+    """Will hopefully create a new database entity later on.
+        For now just checks and creates necessary collections in the given database
 
     Args:
-        options (_type_): _description_
+        api_key: api key
+        workspace_id: workspace_id
+        database: the new database created for the new template
+        kwargs (_dict_): other keyword arguments to create db
     """
+    # TODO refactor later
+    url = "https://datacube.uxlivinglab.online/db_api/collections/"
+    payload = {"api_key": api_key, "db_name": database, "payment": False}
+    response = requests.get(url, json=payload)
+    res = json.loads(response.content)
+    if res["success"]:
+        dc_connect = DatacubeConnection(api_key, workspace_id, database, check=False)
+        needed_collections = list(CustomDict(workspace_id, normal_collections | metadata_collections).values())
+        success, message = check_collections(dc_connect, needed_collections)
+        if not success:
+            raise CustomAPIException(message, 501)
+        
+        # TODO check if there is already a template in this database
+
+        return database
+
+    raise NotFound(f"{database} not found")
 
 
 class DatacubeConnection:
 
-    def __init__(self, api_key: str, workspace_id: str, database: str = None) -> None:
+    def __init__(
+        self, api_key: str, workspace_id: str, database: str = None, check=True, workflow=False
+    ) -> None:
         """
         api_key (str): the API key
         workspace_id (str): workspace_id
         database (str): database name
+        check (str): determines if the db should be checked for in the master template collection
+        workflow (bool): determines if class is being instantiated for workflows
         """
         self.api_key = api_key
         self.workspace_id = workspace_id
-        self.database = database
         self.collection_names = self.normal_collection_names | self.metadata_collections
+        self.master_template_collection = self.master_collections["template"]
+        self.workflow_db = f"{workspace_id}_workflowai_workflow_db"
+        self.workflow_collection = f"{self.workspace_id}_workflowai_workflow_collection"
+        # Since this is instantiated for workflows
+        # no need for a db since we know workflow db
+        if workflow:
+            self.database = self.workflow_db
+            self.master_template_data = None
+        
+        elif check:
+            self.master_template_data = self.check_db(database)
+            self.database = database
+        
+        else:
+            self.database = database
 
     @property
     def metadata_collections(self):
-        return {
-            "document_metadata": f"{self.workspace_id}_documents_metadata_collection_0",
-            "clone_metadata": f"{self.workspace_id}_clones_metadata_collection_0",
-            "template_metadata": f"{self.workspace_id}_templates_metadata_collection_0",
-        }
+        return CustomDict(self.workspace_id, metadata_collections)
 
     @property
     def normal_collection_names(self):
-        return {
-            "workflow": f"{self.workspace_id}_workflow_collection_0",
-            "process": f"{self.workspace_id}_process_collection",
-            "document": f"{self.workspace_id}_document_collection_0",
-            "clone": f"{self.workspace_id}_clone_collection_0",
-            "template": f"{self.workspace_id}_template_collection_0",
-            # NOTE confirm qrcode collection
-            "qrcode": f"{self.workspace_id}_document_collection_0",
-            # NOTE confirm links collection
-            "link": f"{self.workspace_id}_document_collection_0",
-            "folder": f"{self.workspace_id}_folder_collection_0",
-        }
+        return CustomDict(self.workspace_id, normal_collections)
+
+    @property
+    def master_collections(self):
+        return CustomDict(self.workspace_id, master_collections)
+
+
+    @property
+    def master_db(self):
+        return get_master_db(self.workspace_id)
+    
+
+    def check_db(self, database):
+        filters = {"database": database}
+        db_data = self.get_templates_from_master_db(filters=filters, single=True)["data"]
+
+        if not db_data:
+            raise NotFound(f"{database} not found")
+
+        return db_data[0]
 
     def add_collection_to_database(self, collections: str, num_of_collections=1, **kwargs):
         """adds collection(s) to a database
 
         Args:
             collections (str): comma separated list of collection names to be created
-            num_of_collections (int): number of collcctions to be added
+            num_of_collections (int): number of collections to be added
         """
         url = f"{DB_API}/add_collection/"
         database: str = kwargs.get("database", self.database)
         payload = json.dumps(
             {
                 "api_key": self.api_key,
-                "db_name": database.lower(),
+                "db_name": database,
                 "coll_names": collections,
                 "num_collections": num_of_collections,
             }
         )
-
         response = post_to_data_service(url=url, data=payload)
         return response
 
     def get_data_from_collection(
-        self, collection: str, filters: dict = {}, limit=5, offset=0, **kwargs
+        self, collection: str, filters: dict = {}, limit=5, offset=0, database=None, **kwargs
     ):
         """_summary_
 
@@ -106,7 +212,8 @@ class DatacubeConnection:
             offset (int, optional): page number . Defaults to 0.
         """
         url = f"{DB_API}/get_data/"
-        database: str = kwargs.get("database", self.database)
+        if database is None:
+            database = self.database
 
         payload = {
             "api_key": self.api_key,
@@ -126,13 +233,6 @@ class DatacubeConnection:
         self, collection: str, data: dict, operation: str, query: dict = None, **kwargs
     ):
         database = kwargs.get("database", self.database)
-        data.update(
-            {
-                "records": [
-                    {"record": "1", "type": "overall"},
-                ]
-            }
-        )
         payload_dict = {
             "api_key": self.api_key,
             "db_name": database.lower(),
@@ -141,26 +241,30 @@ class DatacubeConnection:
             "payment": False,
         }
         if operation.lower() == "insert":
+            # all insertions need to have database attached except workflow
+            # since workflow has it's own db
+            if not kwargs.get("workflow"):
+                data["database"] = self.database
             payload_dict["data"] = data
             payload = payload_dict
+            payload.update({"records": [{"record": "1", "type": "overall"}]})
+
+            # add the db for reference
+            response = requests.post(DB_API_CRUD, json=payload)
 
         elif operation.lower() == "update":
             payload_dict["update_data"] = data
+            data.pop("template_id", None)
             payload_dict["query"] = query
             payload = payload_dict
             response = requests.put(DB_API_CRUD, json=payload)
-            return response
 
         elif operation.lower() == "delete":
             payload_dict["query"] = query
             payload = payload_dict
             response = requests.delete(DB_API_CRUD, json=payload)
-            return
 
-        # print(payload)
-        response = requests.post(DB_API_CRUD, json=payload)
         res = json.loads(response.text)
-        # print(res)
         return res
 
     def datacube_collection_retrieval(self, **kwargs):
@@ -188,15 +292,15 @@ class DatacubeConnection:
         )
 
     def save_to_workflow_collection(self, data: dict, **kwargs):
-        collection = self.collection_names["workflow"]
+        collection = self.workflow_collection
         return self.post_data_to_collection(
-            collection=collection, data=data, operation="insert", **kwargs
+            collection=collection, data=data, operation="insert", database=self.workflow_db, workflow=True, **kwargs
         )
-
+        
     def update_workflow_collection(self, workflow_id: str, data: dict, **kwargs):
         query = {"_id": workflow_id}
-        collection = self.collection_names["workflow"]
-        return self.post_data_to_collection(collection, data, "update", query, **kwargs)
+        collection = self.workflow_collection
+        return self.post_data_to_collection(collection, data, "update", query, database=self.workflow_db, workflow=True, **kwargs)
 
     def get_workflows_from_collection(self, filters=None, single=False, **kwargs):
         """
@@ -211,16 +315,16 @@ class DatacubeConnection:
         Returns:
             The selected workflow(s) from the collection.
         """
-        collection = self.collection_names["workflow"]
+        collection = self.workflow_collection
         limit = None if single is None else 1 if single else None
 
         if filters is None:
             filters = {}
 
         if limit is not None:
-            return self.get_data_from_collection(collection, filters, limit=limit, **kwargs)
+            return self.get_data_from_collection(collection, filters, limit=limit, database=self.workflow_db, workflow=True, **kwargs)
         else:
-            return self.get_data_from_collection(collection, filters, **kwargs)
+            return self.get_data_from_collection(collection, filters, database=self.workflow_db, workflow=True, **kwargs)
 
     def save_to_clone_collection(self, data: dict, **kwargs):
         if kwargs.get("metadata") == True:
@@ -233,7 +337,27 @@ class DatacubeConnection:
         )
 
     def save_to_clone_metadata_collection(self, *args, **kwargs):
-        return self.save_to_clone_collection(*args, metadata=True, **kwargs)
+        res = self.save_to_clone_collection(*args, metadata=True, **kwargs)
+        if res["success"]:
+            data = kwargs.get("data", args[0])
+            self.save_clone_to_master_db(data=data, response=res)
+        return res 
+
+    def save_clone_to_master_db(self, data: dict, response:dict, **kwargs):
+        database = get_master_db(self.workspace_id)
+        master_data = {
+            "document_name": data["document_name"],
+            "clone_id": data["collection_id"],
+            "clone_metadata_id": response["data"]["inserted_id"],
+            "database": self.database,
+        }
+        master_res = self.post_data_to_collection(
+            self.master_collections["clone"], master_data, "insert", database=database, **kwargs
+        )
+        if not master_res["success"]:
+            pass
+
+        return master_res
 
     def update_clone_collection(self, clone_id: str, data: dict, query=None, **kwargs):
         if query is None:
@@ -290,7 +414,24 @@ class DatacubeConnection:
 
     def save_to_qrcode_collection(self, data: dict, **kwargs):
         collection = self.collection_names["qrcode"]
-        return self.post_data_to_collection(collection, data, "insert", **kwargs)
+        res = self.post_data_to_collection(collection, data, "insert", **kwargs)
+        if res["success"]:
+            master_data = {
+                "link": data["link"],
+                "qrcode_id": res["inserted_id"],
+            }
+            master_res = self.post_data_to_collection(
+                self.master_collections["qrcode"],
+                master_data,
+                "insert",
+                database=self.master_db,
+                **kwargs,
+            )
+            
+            if not master_res["success"]:
+                pass
+
+        return res
 
     def get_qrcodes_from_collection(self, filters: dict, single=False, **kwargs):
         """
@@ -317,12 +458,26 @@ class DatacubeConnection:
             return self.get_data_from_collection(collection, filters, **kwargs)
 
     def save_to_process_collection(self, data: dict, **kwargs):
-        if kwargs.get("metadata") == True:
-            collection = self.collection_names["process_metadata"]
-        else:
-            collection = self.collection_names["process"]
+        collection = self.collection_names["process"]
+        res = self.post_data_to_collection(collection, data, "insert", **kwargs)
+        if res["success"]:
+            master_data = {
+                "process_title": data["process_title"],
+                "process_id": res["inserted_id"],
+            }
+            master_res = self.post_data_to_collection(
+                self.master_collections["process"],
+                master_data,
+                "insert",
+                database=self.master_db,
+                **kwargs,
+            )
+            
+            if not master_res["success"]:
+                pass
 
-        return self.post_data_to_collection(collection, data, "insert", **kwargs)
+        return res
+
 
     def update_process_collection(self, process_id: str, data: dict, query=None, **kwargs):
         if query is None:
@@ -368,7 +523,28 @@ class DatacubeConnection:
         \n This method is a wrapper for `save_to_document_collection` that ensures document
         is saved to the metadata collection.
         """
-        return self.save_to_document_collection(*args, metadata=True, **kwargs)
+        res = self.save_to_document_collection(*args, metadata=True, **kwargs)
+        if res["success"]:
+            data = args[0]
+            self.save_document_to_master_db(data=data, response=res)
+
+        return res 
+
+    def save_document_to_master_db(self, data: dict, response: dict, **kwargs):
+        database = get_master_db(self.workspace_id)
+        master_data = {
+            "document_name": data["document_name"],
+            "document_id": data["collection_id"],
+            "document_metadata_id": response["data"]["inserted_id"],
+            "database": self.database,
+        }
+        master_res = self.post_data_to_collection(
+            self.master_collections["document"], master_data, "insert", database=database, **kwargs
+        )
+        if not master_res["success"]:
+            pass
+
+        return master_res
 
     def update_document_collection(self, document_id: str, data: dict, query=None, **kwargs):
         if query is None:
@@ -421,6 +597,11 @@ class DatacubeConnection:
         is retrieved for the documents.
         """
         return self.get_documents_from_collection(*args, metadata=True, **kwargs)
+    
+    def get_documents_from_master_db(self, **kwargs):
+        database = self.master_db
+        collection = self.master_collections["document"]
+        return self.get_data_from_collection(collection, database=database, **kwargs)
 
     def save_to_template_collection(self, data: dict, **kwargs):
         if kwargs.get("metadata") == True:
@@ -436,14 +617,43 @@ class DatacubeConnection:
         \n This method is a wrapper for `save_to_template_collection` that ensures template
         is saved to the metadata collection.
         """
-        return self.save_to_template_collection(*args, metadata=True, **kwargs)
+        res = self.save_to_template_collection(*args, metadata=True, **kwargs)
+        # on metadata insertion success we save to master collection
+        if res["success"]:
+            data = args[0]
+            self.save_template_to_master_db(data=data, response=res)
+
+        return res
+
+    def save_template_to_master_db(self, data: dict, response: dict, **kwargs):
+        database = get_master_db(self.workspace_id)
+        master_db_data = {
+            "template_name": data["template_name"],
+            "template_id": data["collection_id"],
+            "template_metadata_id": response["data"].get("inserted_id"),
+            "database": self.database,
+            "approval": False
+        }
+        master_res = self.post_data_to_collection(
+            self.master_template_collection, master_db_data, "insert", database=database, **kwargs
+        )
+
+        if not master_res["success"]:
+            # FIXME what happens here
+            pass
+
+        return master_res
 
     def update_template_collection(self, template_id: str, data: dict, query=None, **kwargs):
         if query is None:
             query = {"_id": template_id}
 
-        if kwargs.get("metadata") == True:
+        if kwargs.get("master") == True:
+            collection = self.master_template_collection
+
+        elif kwargs.get("metadata") == True:
             collection = self.collection_names["template_metadata"]
+
         else:
             collection = self.collection_names["template"]
 
@@ -454,6 +664,40 @@ class DatacubeConnection:
             *args, template_id=metadata_id, data=data, metadata=True, **kwargs
         )
 
+    def update_master_template_collection(self, template_id: str, data: dict, *args, **kwargs):
+        query = {"template_id": template_id}
+        database = get_master_db(self.workspace_id)
+        return self.update_template_collection(
+            *args,
+            template_id=template_id,
+            data=data,
+            query=query,
+            master=True,
+            database=database,
+            **kwargs,
+        )
+
+    def get_templates_from_master_db(self, filters=None, single=False, **kwargs):
+        """
+        Using thi method always returns templates from the `master db`
+        regardless of which db was used to init.
+        """
+        database = get_master_db(self.workspace_id)
+        limit = None if single is None else 1 if single else None
+
+        if filters is None:
+            filters = {}
+
+        if limit is not None:
+            return self.get_data_from_collection(
+                self.master_template_collection, filters, limit=limit, database=database, **kwargs
+            )
+        else:
+            return self.get_data_from_collection(
+                self.master_template_collection, filters, database=database, **kwargs
+            )
+
+    # FIXME we have everything we need to get the template data so no need to pass anything
     def get_templates_from_collection(self, filters: dict, single=False, **kwargs):
         """
         Retrieves templates from the template collection.
@@ -482,6 +726,7 @@ class DatacubeConnection:
         else:
             return self.get_data_from_collection(collection, filters, **kwargs)
 
+    # FIXME create custom query for metadata since only one metadata per template metadata collection
     def get_templates_metadata_from_collection(self, *args, **kwargs):
         """
         Retrieves template metadata from the template collection
@@ -492,7 +737,23 @@ class DatacubeConnection:
 
     def save_to_links_collection(self, data: dict, **kwargs):
         collection = self.collection_names["link"]
-        return self.post_data_to_collection(collection, data, "insert", **kwargs)
+        res = self.post_data_to_collection(collection, data, "insert", **kwargs)
+        if res["success"]:
+            master_data = {
+                "link_id": res["inserted_id"],
+            }
+            master_res = self.post_data_to_collection(
+                self.master_collections["link"],
+                master_data,
+                "insert",
+                database=self.master_db,
+                **kwargs,
+            )
+            
+            if not master_res["success"]:
+                pass
+
+        return res
 
     def get_links_from_collection(self, filters: dict, single=False, **kwargs):
         """
@@ -521,7 +782,24 @@ class DatacubeConnection:
 
     def save_to_folder_collection(self, data: dict, **kwargs):
         collection = self.collection_names["folder"]
-        return self.post_data_to_collection(collection, data, "insert", **kwargs)
+        res = self.post_data_to_collection(collection, data, "insert", **kwargs)
+        if res["success"]:
+            master_data = {
+                "folder_name": data["folder_name"],
+                "folder_id": res["inserted_id"],
+            }
+            master_res = self.post_data_to_collection(
+                self.master_collections["folder"],
+                master_data,
+                "insert",
+                database=self.master_db,
+                **kwargs,
+            )
+            
+            if not master_res["success"]:
+                pass
+
+        return res
 
     def get_folders_from_collection(self, filters: dict, single=False, **kwargs):
         """

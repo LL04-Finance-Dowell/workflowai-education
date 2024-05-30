@@ -1,9 +1,3 @@
-DatabaseServices:
-- URL: education/database/
-- GET (check the status of the needed database):
-    - query_params:
-        - workspace_id
-
 NewTemplate:
 - URL: education/templates/
 - GET (get one template):

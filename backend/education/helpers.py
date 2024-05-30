@@ -1,9 +1,11 @@
 # helper functions
 import json
+from datetime import UTC, datetime
+
 import bson
 import requests
 from rest_framework.response import Response
-from datetime import datetime, UTC
+from rest_framework.exceptions import APIException
 
 from app import processing
 from app.constants import MASTERLINK_URL, PUBLIC_LOGIN_API
@@ -12,6 +14,15 @@ from app.models import ProcessReminder
 
 class InvalidTokenException(Exception):
     pass
+
+
+class CustomAPIException(APIException):
+    def __init__(self, detail=None, status_code=None):
+        if detail is not None:
+            self.detail = detail
+        if status_code is not None:
+            self.status_code = status_code
+
 
 
 def CustomResponse(success=True, message=None, response=None, status_code=None):
@@ -113,6 +124,7 @@ def check_progress(process, *args, **kwargs):
     percentage_progress = round((accessed / steps_count * 100), 2)
     return percentage_progress
 
+
 def register_finalized(link_id):
     response = requests.put(
         f"{MASTERLINK_URL}?link_id={link_id}",
@@ -152,7 +164,7 @@ def check_last_finalizer(user, user_type, process) -> bool:
                     return True
     else:
         return False
-    
+
 
 def dowell_email_sender(name, email, subject, email_content):
     email_url = "https://100085.pythonanywhere.com/api/uxlivinglab/email/"
@@ -170,9 +182,7 @@ def dowell_email_sender(name, email, subject, email_content):
 
 def remove_finalized_reminder(user, process_id):
     try:
-        reminder = ProcessReminder.objects.get(
-            step_finalizer=user, process_id=process_id
-        )
+        reminder = ProcessReminder.objects.get(step_finalizer=user, process_id=process_id)
         reminder.delete()
         return True
     except Exception as e:
@@ -188,7 +198,7 @@ def update_signed(signers_list: list, member: str, status: bool) -> list:
         return signers_list
     else:
         return [{member: status}]
-    
+
 
 def check_all_accessed(dic):
     return all([item.get("accessed") for item in dic])
