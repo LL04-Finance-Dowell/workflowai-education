@@ -418,7 +418,7 @@ class DatacubeConnection:
         if res["success"]:
             master_data = {
                 "link": data["link"],
-                "qrcode_id": res["inserted_id"],
+                "qrcode_id": res["data"]["inserted_id"],
             }
             master_res = self.post_data_to_collection(
                 self.master_collections["qrcode"],
@@ -463,7 +463,7 @@ class DatacubeConnection:
         if res["success"]:
             master_data = {
                 "process_title": data["process_title"],
-                "process_id": res["inserted_id"],
+                "process_id": res["data"]["inserted_id"],
             }
             master_res = self.post_data_to_collection(
                 self.master_collections["process"],
@@ -740,7 +740,7 @@ class DatacubeConnection:
         res = self.post_data_to_collection(collection, data, "insert", **kwargs)
         if res["success"]:
             master_data = {
-                "link_id": res["inserted_id"],
+                "link_id": res["data"]["inserted_id"],
             }
             master_res = self.post_data_to_collection(
                 self.master_collections["link"],
@@ -786,7 +786,7 @@ class DatacubeConnection:
         if res["success"]:
             master_data = {
                 "folder_name": data["folder_name"],
-                "folder_id": res["inserted_id"],
+                "folder_id": res["data"]["inserted_id"],
             }
             master_res = self.post_data_to_collection(
                 self.master_collections["folder"],
