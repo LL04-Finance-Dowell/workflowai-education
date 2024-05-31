@@ -123,6 +123,10 @@ class NewTemplate(APIView):
             api_key = authorization_check(request.headers.get("Authorization"))
         except InvalidTokenException as e:
             return CustomResponse(False, str(e), None, status.HTTP_401_UNAUTHORIZED)
+
+        if not validate_id(workspace_id):
+            return Response("Invalid company details", status.HTTP_400_BAD_REQUEST)
+
         
         if portfolio:
 
@@ -1069,7 +1073,7 @@ class Folders(APIView):
 
         dc_connect = DatacubeConnection(api_key=api_key, workspace_id=workspace_id, database=database)
 
-        if not all[folder_name, created_by, company_id, data_type]:
+        if not all(folder_name, created_by, company_id, data_type):
             return CustomResponse(False, "Invalid Request!", None, status.HTTP_400_BAD_REQUEST)
 
         data = []
