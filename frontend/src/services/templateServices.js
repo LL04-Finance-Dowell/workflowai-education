@@ -12,7 +12,7 @@ import {
 export class TemplateServices {
   createTemplate = (data, companyId) => {
     return httpTemplate.post(
-      `/?workspace_id=${companyId}&database=miketestdatabase_0&item_type=template`,
+      `/?workspace_id=${companyId}&database=miketestdatabase2&item_type=template`,
       // `/?workspace_id=${companyId}&database=miketestdatabase_1&item_type=template`,
       data,
       {
@@ -64,7 +64,7 @@ export class TemplateServices {
     //   `/metadata/${companyId}/organisations/?data_type=${dataType}&item_type=template`
     // );
     return httpApiUrlnewV2.get(
-      `/?workspace_id=${companyId}&template_id=6658cb934c151f7b5bb32aaf`,
+      `/?workspace_id=${companyId}&template_id=665a019bb4418ff731b3f741`,
       {
         headers: {
           Authorization: "Bearer 1b834e07-c68b-4bf6-96dd-ab7cdc62f07f",

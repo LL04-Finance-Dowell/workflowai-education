@@ -66,7 +66,14 @@ const FoldersModal = () => {
     const folderServices = new FolderServices();
     try {
       setIsCreating(true);
-      const resss = await folderServices.createFolderV2(data);
+      const resss = await folderServices.createFolderV2(
+        data,
+        userDetail?.portfolio_info?.length > 1
+          ? userDetail?.portfolio_info.find(
+              (portfolio) => portfolio.product === productName
+            )?.org_id
+          : userDetail?.portfolio_info[0].org_id
+      );
       console.log("Folder ress " + resss);
       const res = await folderServices.getAllFolders(
         userCompanyId,

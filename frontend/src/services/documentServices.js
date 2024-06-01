@@ -12,7 +12,7 @@ export class DocumentServices {
   createDocument = (data, workspace_id) => {
     // return httpDocument.post("documents/", data);
     return httpDocument.post(
-      `/?workspace_id=${workspace_id}&database=miketestdatabase_0`,
+      `/?workspace_id=${workspace_id}&database=miketestdatabase2`,
       data,
       {
         headers: {
