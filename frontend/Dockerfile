@@ -1,13 +1,14 @@
 FROM node:18-alpine
 
-WORKDIR /app/frontend/
+WORKDIR /usr/src/app
 
-COPY package*.json /app/frontend/
+COPY package*.json /usr/src/app
 
-RUN npm install \
-    && ls -al node_modules/react-scripts \
-    && npm cache clean --force
+RUN npm install --force
 
-COPY . /app/frontend/
+# Set environment to development
+ENV NODE_ENV=development
+
+COPY . /usr/src/app
 
 CMD ["npm", "start"]

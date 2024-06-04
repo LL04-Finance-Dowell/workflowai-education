@@ -22,6 +22,8 @@ RUN pip install --upgrade pip &&  pip install gunicorn && pip install --no-cache
 # copy project
 COPY . .
 
+RUN python manage.py makemigrations && python manage.py migrate 
+
 # Expose the port on which the Django app will run
 EXPOSE 8001
 
