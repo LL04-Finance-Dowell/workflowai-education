@@ -271,7 +271,7 @@ class DataCubeHandleProcess:
         )["data"]
 
         # NOTE confirm this flow
-        if process:
+        if not process:
             return
 
         process_type = process[0].get("process_type")
