@@ -339,7 +339,12 @@ class DatacubeConnection:
     def save_to_clone_metadata_collection(self, *args, **kwargs):
         res = self.save_to_clone_collection(*args, metadata=True, **kwargs)
         if res["success"]:
-            data = kwargs.get("data", args[0])
+            data = kwargs.get("data")
+            if not data:
+                try:
+                    data = args[0]
+                except:
+                    return res
             self.save_clone_to_master_db(data=data, response=res)
         return res 
 
@@ -525,7 +530,12 @@ class DatacubeConnection:
         """
         res = self.save_to_document_collection(*args, metadata=True, **kwargs)
         if res["success"]:
-            data = args[0]
+            data = kwargs.get("data")
+            if not data:
+                try:
+                    data = args[0]
+                except:
+                    return res
             self.save_document_to_master_db(data=data, response=res)
 
         return res 
@@ -620,7 +630,12 @@ class DatacubeConnection:
         res = self.save_to_template_collection(*args, metadata=True, **kwargs)
         # on metadata insertion success we save to master collection
         if res["success"]:
-            data = args[0]
+            data = kwargs.get("data")
+            if not data:
+                try:
+                    data = args[0]
+                except:
+                    return res
             self.save_template_to_master_db(data=data, response=res)
 
         return res
