@@ -788,24 +788,6 @@ class DatacubeConnection:
     def save_to_links_collection(self, data: dict, **kwargs):
         collection = self.collection_names["link"]
         res = self.post_data_to_collection(collection, data, "insert", **kwargs)
-<<<<<<< Updated upstream
-        if res["success"]:
-            master_data = {
-                "link_id": res["inserted_id"],
-            }
-            master_res = self.post_data_to_collection(
-                self.master_collections["link"],
-                master_data,
-                "insert",
-                database=self.master_db,
-                **kwargs,
-            )
-            
-            if not master_res["success"]:
-                pass
-
-=======
->>>>>>> Stashed changes
         return res
 
     def get_links_from_collection(self, filters: dict, single=False, **kwargs):
