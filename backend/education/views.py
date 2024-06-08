@@ -1076,7 +1076,7 @@ class Folders(APIView):
 
         dc_connect = DatacubeConnection(api_key=api_key, workspace_id=workspace_id, database=database)
 
-        if not all(folder_name, created_by, company_id, data_type):
+        if not all([folder_name, created_by, company_id, data_type]):
             return CustomResponse(False, "Invalid Request!", None, status.HTTP_400_BAD_REQUEST)
 
         data = []
