@@ -223,6 +223,7 @@ class DataCubeHandleProcess:
             link = f"{PRODUCTION_VERIFICATION_LINK}/{hash}/"
         else:
             link = f"{VERIFICATION_LINK}/{hash}/"
+        
         params = process_data["params"]
         process_id = process_data["_id"]
         item_id = process_data["parent_item_id"]
@@ -341,27 +342,6 @@ class DataCubeHandleProcess:
             clones.extend(public_clone_ids)
         return clones
 
-    def generate_public_qrcode(links, company_id, document_name):
-        master_link = None
-        master_qrcode = None
-        payload = json.dumps(
-            {
-                "qrcode_type": "Link",
-                "quantity": 1,
-                "company_id": company_id,
-                "links": links,
-                "document_name": document_name,
-            }
-        )
-        response = requests.post(
-            QRCODE_URL, data=payload, headers={"Content-Type": "application/json"}
-        )
-        if response.status_code == 201:
-            response = json.loads(response.text)
-            master_link = response["qrcodes"][0]["masterlink"]
-            master_qrcode = response["qrcodes"][0]["qrcode_image_url"]
-        return master_link, master_qrcode
-
     def start(self):
         links = []
         public_links = []
@@ -466,9 +446,7 @@ class DataCubeHandleProcess:
                 return
 
             document_name = res[0]["document_name"]
-            m_link, m_code = DataCubeHandleProcess.generate_public_qrcode(
-                public_links, self.process["company_id"], document_name
-            )
+            m_link, m_link_id, m_code = self.dc_connect.generate_public_qrcode(document_name, **self.kwargs)
             links.append({"master_link": m_link})
             qrcodes.append({"master_qrcode": m_code})
 
@@ -482,9 +460,7 @@ class DataCubeHandleProcess:
                 return
 
             document_name = res[0]["document_name"]
-            m_link, m_code = DataCubeHandleProcess.generate_public_qrcode(
-                public_links, self.process["company_id"], document_name
-            )
+            m_link, m_link_id, m_code = self.dc_connect.generate_public_qrcode(document_name, **self.kwargs)
             links.append({"master_link": m_link})
             qrcodes.append({"master_qrcode": m_code})
 
@@ -498,13 +474,11 @@ class DataCubeHandleProcess:
                 return
 
             template_name = res[0]["template_name"]
-            m_link, m_code = DataCubeHandleProcess.generate_public_qrcode(
-                public_links, self.process["company_id"], template_name
-            )
+            m_link, m_link_id, m_code = self.dc_connect.generate_public_qrcode(template_name, **self.kwargs)
             links.append({"master_link": m_link})
             qrcodes.append({"master_qrcode": m_code})
 
-        self.dc_connect.save_to_links_collection(
+        links_res = self.dc_connect.save_to_links_collection(
             data={
                 "links": links,
                 "process_id": process_id,
@@ -512,6 +486,8 @@ class DataCubeHandleProcess:
                 "company_id ": company_id,
             }
         )
+        self.dc_connect.update_master_links_collection(m_link_id, {"link_id": links_res["data"]["inserted_id"]})
+
         hhhres = self.dc_connect.update_process_collection(
             process_id=process_id, data={"process_steps": steps, "processing_state": "processing"}
         )

@@ -1,11 +1,13 @@
 # helper functions
 import json
 from datetime import UTC, datetime
+from urllib.parse import quote_plus, unquote_plus
 
 import bson
 import requests
-from rest_framework.response import Response
+from cryptography.fernet import Fernet
 from rest_framework.exceptions import APIException
+from rest_framework.response import Response
 
 from app import processing
 from app.constants import MASTERLINK_URL, PUBLIC_LOGIN_API
@@ -22,7 +24,6 @@ class CustomAPIException(APIException):
             self.detail = detail
         if status_code is not None:
             self.status_code = status_code
-
 
 
 def CustomResponse(success=True, message=None, response=None, status_code=None):
@@ -346,3 +347,44 @@ def set_reminder(reminder, step, process_id, created_by):
                 create_reminder(process_id, 1440, user, created_by)
     except Exception:
         return
+
+
+def upload_image_to_interserver(img, img_name=None):
+    url = "https://dowellfileuploader.uxlivinglab.online/uploadfiles/upload-qrcode-to-drive/"
+    files = {"file": (img_name, img)}
+    response = requests.post(url, files=files)
+
+    try:
+        json_data = response.json()
+        file_url = json_data.get("file_url")
+        return file_url
+    except json.JSONDecodeError as e:
+        # Handle JSON decoding error
+        print("Error decoding JSON response:", e)
+    except KeyError as e:
+        # Handle missing "file_url" key error
+        print("Error accessing 'file_url' key:", e)
+
+
+def encrypt_credentials(api_key, workspace_id):
+    credentials = f"{api_key}:{workspace_id}"
+    try:
+        with open("secret.key", "rb") as key_file:
+            key = key_file.read()
+
+        cipher_suite = Fernet(key)
+        token = cipher_suite.encrypt(credentials.encode())
+        return quote_plus(token)
+    except:
+        return None
+
+
+def decrypt_credentials(token):
+    try:
+        with open("secret.key", "rb") as key_file:
+            key = key_file.read()
+        cipher_suite = Fernet(key)
+        credentials = cipher_suite.decrypt(unquote_plus(token)).decode()
+        return credentials.split(":")
+    except:
+        raise CustomAPIException("Unable to validate token", 422)

@@ -1,15 +1,23 @@
+import io
 import json
 import re
 from datetime import UTC, datetime
-from uuid import uuid4
+from time import time
+from uuid import uuid1, uuid4
 
+from django.urls import reverse
+import qrcode
 import requests
 from rest_framework.exceptions import NotFound
 
 from app.constants import EDITOR_API
 from education.constants import DB_API, DB_API_CRUD
-from education.helpers import (CustomAPIException,
-                               generate_unique_collection_name)
+from education.helpers import (
+    CustomAPIException,
+    encrypt_credentials,
+    generate_unique_collection_name,
+    upload_image_to_interserver,
+)
 
 headers = {"Content-Type": "application/json"}
 
@@ -41,13 +49,15 @@ master_collections = {
     "folder": "workflowai_master_folder_collection",
 }
 
+
 class CustomDict(dict):
-    def __init__(self, workspace_id, initial_dict: dict=None):
+    def __init__(self, workspace_id, initial_dict: dict = None):
         super().__init__()
         self.workspace_id = workspace_id
         if initial_dict:
             for key, value in initial_dict.items():
                 self[key] = f"{self.workspace_id}_{value}"
+
 
 def post_to_data_service(url: str, data: dict):
     """posts data to an API endpoint
@@ -65,6 +75,7 @@ def post_to_data_service(url: str, data: dict):
 
 def get_master_db(workspace_id):
     return f"{workspace_id}_master_db"
+
 
 def make_db_name(value: str):
     if not value:
@@ -110,11 +121,13 @@ def create_db(*, api_key, workspace_id, database, **kwargs):
     res = json.loads(response.content)
     if res["success"]:
         dc_connect = DatacubeConnection(api_key, workspace_id, database, check=False)
-        needed_collections = list(CustomDict(workspace_id, normal_collections | metadata_collections).values())
+        needed_collections = list(
+            CustomDict(workspace_id, normal_collections | metadata_collections).values()
+        )
         success, message = check_collections(dc_connect, needed_collections)
         if not success:
             raise CustomAPIException(message, 501)
-        
+
         # TODO check if there is already a template in this database
 
         return database
@@ -145,11 +158,11 @@ class DatacubeConnection:
         if workflow:
             self.database = self.workflow_db
             self.master_template_data = None
-        
+
         elif check:
             self.master_template_data = self.check_db(database)
             self.database = database
-        
+
         else:
             self.database = database
 
@@ -165,11 +178,9 @@ class DatacubeConnection:
     def master_collections(self):
         return CustomDict(self.workspace_id, master_collections)
 
-
     @property
     def master_db(self):
         return get_master_db(self.workspace_id)
-    
 
     def check_db(self, database):
         filters = {"database": database}
@@ -294,13 +305,20 @@ class DatacubeConnection:
     def save_to_workflow_collection(self, data: dict, **kwargs):
         collection = self.workflow_collection
         return self.post_data_to_collection(
-            collection=collection, data=data, operation="insert", database=self.workflow_db, workflow=True, **kwargs
+            collection=collection,
+            data=data,
+            operation="insert",
+            database=self.workflow_db,
+            workflow=True,
+            **kwargs,
         )
-        
+
     def update_workflow_collection(self, workflow_id: str, data: dict, **kwargs):
         query = {"_id": workflow_id}
         collection = self.workflow_collection
-        return self.post_data_to_collection(collection, data, "update", query, database=self.workflow_db, workflow=True, **kwargs)
+        return self.post_data_to_collection(
+            collection, data, "update", query, database=self.workflow_db, workflow=True, **kwargs
+        )
 
     def get_workflows_from_collection(self, filters=None, single=False, **kwargs):
         """
@@ -322,9 +340,18 @@ class DatacubeConnection:
             filters = {}
 
         if limit is not None:
-            return self.get_data_from_collection(collection, filters, limit=limit, database=self.workflow_db, workflow=True, **kwargs)
+            return self.get_data_from_collection(
+                collection,
+                filters,
+                limit=limit,
+                database=self.workflow_db,
+                workflow=True,
+                **kwargs,
+            )
         else:
-            return self.get_data_from_collection(collection, filters, database=self.workflow_db, workflow=True, **kwargs)
+            return self.get_data_from_collection(
+                collection, filters, database=self.workflow_db, workflow=True, **kwargs
+            )
 
     def save_to_clone_collection(self, data: dict, **kwargs):
         if kwargs.get("metadata") == True:
@@ -341,9 +368,9 @@ class DatacubeConnection:
         if res["success"]:
             data = kwargs.get("data", args[0])
             self.save_clone_to_master_db(data=data, response=res)
-        return res 
+        return res
 
-    def save_clone_to_master_db(self, data: dict, response:dict, **kwargs):
+    def save_clone_to_master_db(self, data: dict, response: dict, **kwargs):
         database = get_master_db(self.workspace_id)
         master_data = {
             "document_name": data["document_name"],
@@ -427,7 +454,7 @@ class DatacubeConnection:
                 database=self.master_db,
                 **kwargs,
             )
-            
+
             if not master_res["success"]:
                 pass
 
@@ -472,12 +499,11 @@ class DatacubeConnection:
                 database=self.master_db,
                 **kwargs,
             )
-            
+
             if not master_res["success"]:
                 pass
 
         return res
-
 
     def update_process_collection(self, process_id: str, data: dict, query=None, **kwargs):
         if query is None:
@@ -528,7 +554,7 @@ class DatacubeConnection:
             data = args[0]
             self.save_document_to_master_db(data=data, response=res)
 
-        return res 
+        return res
 
     def save_document_to_master_db(self, data: dict, response: dict, **kwargs):
         database = get_master_db(self.workspace_id)
@@ -597,7 +623,7 @@ class DatacubeConnection:
         is retrieved for the documents.
         """
         return self.get_documents_from_collection(*args, metadata=True, **kwargs)
-    
+
     def get_documents_from_master_db(self, **kwargs):
         database = self.master_db
         collection = self.master_collections["document"]
@@ -632,7 +658,7 @@ class DatacubeConnection:
             "template_id": data["collection_id"],
             "template_metadata_id": response["data"].get("inserted_id"),
             "database": self.database,
-            "approval": False
+            "approval": False,
         }
         master_res = self.post_data_to_collection(
             self.master_template_collection, master_db_data, "insert", database=database, **kwargs
@@ -735,9 +761,34 @@ class DatacubeConnection:
         """
         return self.get_templates_from_collection(*args, metadata=True, **kwargs)
 
+    def save_to_master_links_collection(self, data: dict, **kwargs):
+        collection = self.master_collections["link"]
+        res = self.post_data_to_collection(collection, data, "insert", **kwargs)
+        return res
+
+    def update_master_links_collection(self, master_link_id: str, data: dict, query: dict = None, **kwargs):
+        collection = self.master_collections["links"]
+        if query is None:
+            query = {"master_link_id": master_link_id}
+        
+        return self.post_data_to_collection(collection, data, "update", query, **kwargs)
+
+    def get_links_from_master_collection(self, filters: dict, single=False, **kwargs):
+        collection = self.master_collections["links"]
+        limit = None if single is None else 1 if single else None
+
+        if filters is None:
+            filters = {}
+
+        if limit is not None:
+            return self.get_data_from_collection(collection, filters, limit=limit, **kwargs)
+        else:
+            return self.get_data_from_collection(collection, filters, **kwargs)
+
     def save_to_links_collection(self, data: dict, **kwargs):
         collection = self.collection_names["link"]
         res = self.post_data_to_collection(collection, data, "insert", **kwargs)
+<<<<<<< Updated upstream
         if res["success"]:
             master_data = {
                 "link_id": res["inserted_id"],
@@ -753,6 +804,8 @@ class DatacubeConnection:
             if not master_res["success"]:
                 pass
 
+=======
+>>>>>>> Stashed changes
         return res
 
     def get_links_from_collection(self, filters: dict, single=False, **kwargs):
@@ -795,7 +848,7 @@ class DatacubeConnection:
                 database=self.master_db,
                 **kwargs,
             )
-            
+
             if not master_res["success"]:
                 pass
 
@@ -1384,3 +1437,40 @@ class DatacubeConnection:
             return self.update_template_metadata_collection(item_id, check_signers(data), **kwargs)
 
         return
+
+    def validate_enough_users(self, num: int) -> list:
+        return []
+
+    def generate_public_qrcode(self, document_name, **kwargs):
+        request = kwargs.get("request")
+        token = encrypt_credentials(api_key=self.api_key, workspace_id=self.workspace_id)
+        if not token:
+            raise CustomAPIException("Error creating master link", 503)
+        
+        master_link_id = str(uuid1().int >> 64)
+        master_link = request.build_absolute_uri(
+            reverse("master_link"), kwargs={"link_id": master_link_id, "token": token}
+        )
+        qr_code = qrcode.QRCode(
+            version=1, error_correction=qrcode.constants.ERROR_CORRECT_Q, box_size=10, border=4
+        )
+        qr_code.add_data(master_link)
+        qr_code.make(fit=True)
+        img_qr = qr_code.make_image(fill_color="#000000", back_color="white").convert("RGB")
+        bytes_io = io.BytesIO()
+        img_qr.save(bytes_io, format="PNG")
+        img_qr_bytes = bytes_io.getvalue()
+        timestamp = int(time())
+        filename = f"qrcode_{timestamp}.jpg"
+        qr_code_url = upload_image_to_interserver(img_qr_bytes, filename)
+        data = {
+            "master_link_id": master_link_id,
+            "master_link": master_link,
+            "database": self.database,
+            "document_name": document_name,
+        }
+        res = self.save_to_master_links_collection(data=data)
+        if res["success"]:
+            return master_link, master_link_id, qr_code_url
+
+        raise CustomAPIException("Error creating master link", 503)

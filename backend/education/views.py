@@ -2,9 +2,11 @@ import ast
 import json
 import re
 
+from django.shortcuts import redirect
 import requests
 from django.core.cache import cache
 from rest_framework import status
+from django.urls import reverse
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -23,6 +25,7 @@ from education.helpers import (
     check_all_accessed,
     check_last_finalizer,
     check_progress,
+    decrypt_credentials,
     dowell_email_sender,
     get_prev_and_next_users,
     paginate,
@@ -1295,7 +1298,7 @@ class DocumentOrTemplateProcessing(APIView):
                 status.HTTP_501_NOT_IMPLEMENTED,
             )
         if data:
-            verification_links = DataCubeHandleProcess(data, dc_connect=dc_connect).start()
+            verification_links = DataCubeHandleProcess(data, dc_connect=dc_connect, request=request).start()
             return Response(verification_links, status.HTTP_200_OK)
         return Response()
 
@@ -1527,7 +1530,7 @@ class ProcessLink(APIView):
 
 
 class ProcessVerification(APIView):
-    def post(self, request, process_id):
+    def post(self, request, token):
         """verification of a process step access and checks that duplicate document based on a step."""
 
         workspace_id = request.query_params.get("workspace_id")
@@ -1543,19 +1546,16 @@ class ProcessVerification(APIView):
         except InvalidTokenException as e:
             return CustomResponse(False, str(e), None, status.HTTP_401_UNAUTHORIZED)
 
-        if not validate_id(process_id):
-            return Response("Something went wrong!", status.HTTP_400_BAD_REQUEST)
-
         dc_connect = DatacubeConnection(
             api_key=api_key, workspace_id=workspace_id, database=database
         )
 
-        user_type = request.data["user_type"]
-        auth_user = request.data["auth_username"]
-        auth_role = request.data["auth_role"]
-        auth_portfolio = request.data["auth_portfolio"]
-        token = request.data["token"]
-        org_name = request.data["org_name"]
+        user_type = request.query_params["user_type"]
+        auth_user = request.query_params["username"]
+        auth_role = request.query_params["auth_role"]
+        auth_portfolio = request.query_params["portfolio"]
+        # token = request.query_params["token"]
+        org_name = request.query_params["org"]
         collection_id = None
         # only one link as opposed to links in views_v2
         # NOTE compare
@@ -1603,7 +1603,7 @@ class ProcessVerification(APIView):
         )
         user_email = request.data.get("user_email") if request.data.get("user_email") else ""
         process["org_name"] = org_name
-        handler = DataCubeHandleProcess(process, dc_connect=dc_connect)
+        handler = DataCubeHandleProcess(process, dc_connect=dc_connect, request=request)
         location = handler.verify_location(
             auth_role,
             {
@@ -1699,7 +1699,7 @@ class TriggerProcess(APIView):
                     status.HTTP_200_OK,
                 )
         if action == "process_draft" and state != "processing":
-            verification_links = DataCubeHandleProcess(process, dc_connect=dc_connect).start()
+            verification_links = DataCubeHandleProcess(process, dc_connect=dc_connect, request=request).start()
             if verification_links:
                 return Response(verification_links, status.HTTP_200_OK)
             else:
@@ -1896,3 +1896,24 @@ class ProcessCopies(APIView):
         if process_id is None:
             return Response(status.HTTP_500_INTERNAL_SERVER_ERROR)
         return Response("success created a process clone", status.HTTP_201_CREATED)
+
+
+class MasterLinks(APIView):
+    def get(self, request, link_id, token):
+        api_key, workspace_id = decrypt_credentials(token)
+        db_name = get_master_db(workspace_id)
+        dc_connect = DatacubeConnection(
+            api_key=api_key, workspace_id=workspace_id, database=db_name, check=False
+        )
+        master_link = dc_connect.get_links_from_master_collection({"master_link_id": link_id}, single=True)["data"]
+        if not master_link:
+            return CustomResponse(False, "invalid link", None, 400)
+        
+        database = master_link["database"]
+        dc_connect.database = database
+        links = dc_connect.get_links_from_collection({"_id": master_link["link_id"]})
+        
+        # TODO redirect to somewhere from here
+
+        return Response(links, status.HTTP_200_OK)
+        
