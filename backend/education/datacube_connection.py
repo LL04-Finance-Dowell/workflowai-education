@@ -366,11 +366,16 @@ class DatacubeConnection:
     def save_to_clone_metadata_collection(self, *args, **kwargs):
         res = self.save_to_clone_collection(*args, metadata=True, **kwargs)
         if res["success"]:
-            data = kwargs.get("data", args[0])
+            data = kwargs.get("data")
+            if not data:
+                try:
+                    data = args[0]
+                except:
+                    return res
             self.save_clone_to_master_db(data=data, response=res)
-        return res
+        return res 
 
-    def save_clone_to_master_db(self, data: dict, response: dict, **kwargs):
+    def save_clone_to_master_db(self, data: dict, response:dict, **kwargs):
         database = get_master_db(self.workspace_id)
         master_data = {
             "document_name": data["document_name"],
@@ -445,7 +450,7 @@ class DatacubeConnection:
         if res["success"]:
             master_data = {
                 "link": data["link"],
-                "qrcode_id": res["inserted_id"],
+                "qrcode_id": res["data"]["inserted_id"],
             }
             master_res = self.post_data_to_collection(
                 self.master_collections["qrcode"],
@@ -454,7 +459,7 @@ class DatacubeConnection:
                 database=self.master_db,
                 **kwargs,
             )
-
+            
             if not master_res["success"]:
                 pass
 
@@ -490,7 +495,7 @@ class DatacubeConnection:
         if res["success"]:
             master_data = {
                 "process_title": data["process_title"],
-                "process_id": res["inserted_id"],
+                "process_id": res["data"]["inserted_id"],
             }
             master_res = self.post_data_to_collection(
                 self.master_collections["process"],
@@ -499,11 +504,12 @@ class DatacubeConnection:
                 database=self.master_db,
                 **kwargs,
             )
-
+            
             if not master_res["success"]:
                 pass
 
         return res
+
 
     def update_process_collection(self, process_id: str, data: dict, query=None, **kwargs):
         if query is None:
@@ -551,10 +557,15 @@ class DatacubeConnection:
         """
         res = self.save_to_document_collection(*args, metadata=True, **kwargs)
         if res["success"]:
-            data = args[0]
+            data = kwargs.get("data")
+            if not data:
+                try:
+                    data = args[0]
+                except:
+                    return res
             self.save_document_to_master_db(data=data, response=res)
 
-        return res
+        return res 
 
     def save_document_to_master_db(self, data: dict, response: dict, **kwargs):
         database = get_master_db(self.workspace_id)
@@ -623,7 +634,7 @@ class DatacubeConnection:
         is retrieved for the documents.
         """
         return self.get_documents_from_collection(*args, metadata=True, **kwargs)
-
+    
     def get_documents_from_master_db(self, **kwargs):
         database = self.master_db
         collection = self.master_collections["document"]
@@ -646,7 +657,12 @@ class DatacubeConnection:
         res = self.save_to_template_collection(*args, metadata=True, **kwargs)
         # on metadata insertion success we save to master collection
         if res["success"]:
-            data = args[0]
+            data = kwargs.get("data")
+            if not data:
+                try:
+                    data = args[0]
+                except:
+                    return res
             self.save_template_to_master_db(data=data, response=res)
 
         return res
@@ -821,7 +837,7 @@ class DatacubeConnection:
         if res["success"]:
             master_data = {
                 "folder_name": data["folder_name"],
-                "folder_id": res["inserted_id"],
+                "folder_id": res["data"]["inserted_id"],
             }
             master_res = self.post_data_to_collection(
                 self.master_collections["folder"],
@@ -830,7 +846,7 @@ class DatacubeConnection:
                 database=self.master_db,
                 **kwargs,
             )
-
+            
             if not master_res["success"]:
                 pass
 
