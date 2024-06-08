@@ -1898,7 +1898,7 @@ class ProcessCopies(APIView):
         return Response("success created a process clone", status.HTTP_201_CREATED)
 
 
-class MasterLinks(APIView):
+class MasterLink(APIView):
     def get(self, request, link_id, token):
         api_key, workspace_id = decrypt_credentials(token)
         db_name = get_master_db(workspace_id)
@@ -1909,6 +1909,7 @@ class MasterLinks(APIView):
         if not master_link:
             return CustomResponse(False, "invalid link", None, 400)
         
+        master_link = master_link[0]
         database = master_link["database"]
         dc_connect.database = database
         links = dc_connect.get_links_from_collection({"_id": master_link["link_id"]})

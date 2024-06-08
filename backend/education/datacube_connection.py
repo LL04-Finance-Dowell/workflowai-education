@@ -5,9 +5,9 @@ from datetime import UTC, datetime
 from time import time
 from uuid import uuid1, uuid4
 
-from django.urls import reverse
 import qrcode
 import requests
+from django.urls import reverse
 from rest_framework.exceptions import NotFound
 
 from app.constants import EDITOR_API
@@ -373,9 +373,9 @@ class DatacubeConnection:
                 except:
                     return res
             self.save_clone_to_master_db(data=data, response=res)
-        return res 
+        return res
 
-    def save_clone_to_master_db(self, data: dict, response:dict, **kwargs):
+    def save_clone_to_master_db(self, data: dict, response: dict, **kwargs):
         database = get_master_db(self.workspace_id)
         master_data = {
             "document_name": data["document_name"],
@@ -459,7 +459,7 @@ class DatacubeConnection:
                 database=self.master_db,
                 **kwargs,
             )
-            
+
             if not master_res["success"]:
                 pass
 
@@ -504,12 +504,11 @@ class DatacubeConnection:
                 database=self.master_db,
                 **kwargs,
             )
-            
+
             if not master_res["success"]:
                 pass
 
         return res
-
 
     def update_process_collection(self, process_id: str, data: dict, query=None, **kwargs):
         if query is None:
@@ -565,7 +564,7 @@ class DatacubeConnection:
                     return res
             self.save_document_to_master_db(data=data, response=res)
 
-        return res 
+        return res
 
     def save_document_to_master_db(self, data: dict, response: dict, **kwargs):
         database = get_master_db(self.workspace_id)
@@ -634,7 +633,7 @@ class DatacubeConnection:
         is retrieved for the documents.
         """
         return self.get_documents_from_collection(*args, metadata=True, **kwargs)
-    
+
     def get_documents_from_master_db(self, **kwargs):
         database = self.master_db
         collection = self.master_collections["document"]
@@ -779,27 +778,29 @@ class DatacubeConnection:
 
     def save_to_master_links_collection(self, data: dict, **kwargs):
         collection = self.master_collections["link"]
-        res = self.post_data_to_collection(collection, data, "insert", **kwargs)
+        res = self.post_data_to_collection(collection, data, "insert", database=self.master_db, **kwargs)
         return res
 
-    def update_master_links_collection(self, master_link_id: str, data: dict, query: dict = None, **kwargs):
-        collection = self.master_collections["links"]
+    def update_master_links_collection(
+        self, master_link_id: str, data: dict, query: dict = None, **kwargs
+    ):
+        collection = self.master_collections["link"]
         if query is None:
             query = {"master_link_id": master_link_id}
-        
-        return self.post_data_to_collection(collection, data, "update", query, **kwargs)
+
+        return self.post_data_to_collection(collection, data, "update", query, database=self.master_db, **kwargs)
 
     def get_links_from_master_collection(self, filters: dict, single=False, **kwargs):
-        collection = self.master_collections["links"]
+        collection = self.master_collections["link"]
         limit = None if single is None else 1 if single else None
 
         if filters is None:
             filters = {}
 
         if limit is not None:
-            return self.get_data_from_collection(collection, filters, limit=limit, **kwargs)
+            return self.get_data_from_collection(collection, filters, limit=limit, database=self.master_db, **kwargs)
         else:
-            return self.get_data_from_collection(collection, filters, **kwargs)
+            return self.get_data_from_collection(collection, filters, database=self.master_db, **kwargs)
 
     def save_to_links_collection(self, data: dict, **kwargs):
         collection = self.collection_names["link"]
@@ -846,7 +847,7 @@ class DatacubeConnection:
                 database=self.master_db,
                 **kwargs,
             )
-            
+
             if not master_res["success"]:
                 pass
 
@@ -1444,22 +1445,22 @@ class DatacubeConnection:
         token = encrypt_credentials(api_key=self.api_key, workspace_id=self.workspace_id)
         if not token:
             raise CustomAPIException("Error creating master link", 503)
-        
+
         master_link_id = str(uuid1().int >> 64)
         master_link = request.build_absolute_uri(
-            reverse("master_link"), kwargs={"link_id": master_link_id, "token": token}
+            reverse("master_link", kwargs={"link_id": master_link_id, "token": token})
         )
         qr_code = qrcode.QRCode(
             version=1, error_correction=qrcode.constants.ERROR_CORRECT_Q, box_size=10, border=4
         )
         qr_code.add_data(master_link)
         qr_code.make(fit=True)
-        img_qr = qr_code.make_image(fill_color="#000000", back_color="white").convert("RGB")
+        img_qr = qr_code.make_image(fill_color="#000000", back_color="white")
         bytes_io = io.BytesIO()
-        img_qr.save(bytes_io, format="PNG")
+        img_qr.save(bytes_io)
         img_qr_bytes = bytes_io.getvalue()
         timestamp = int(time())
-        filename = f"qrcode_{timestamp}.jpg"
+        filename = f"qrcode_{timestamp}.png"
         qr_code_url = upload_image_to_interserver(img_qr_bytes, filename)
         data = {
             "master_link_id": master_link_id,
