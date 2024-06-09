@@ -24,7 +24,7 @@ from education.helpers import (CustomResponse, InvalidTokenException,
                                check_last_finalizer, check_progress,
                                decrypt_credentials, dowell_email_sender,
                                get_prev_and_next_users, paginate,
-                               register_finalized, remove_finalized_reminder,
+                                remove_finalized_reminder,
                                remove_members_from_steps, update_signed,
                                validate_id)
 from education.serializers import *
@@ -1906,9 +1906,8 @@ class MasterLink(APIView):
         master_link = master_link[0]
         database = master_link["database"]
         dc_connect.database = database
-        link = dc_connect.get_links_from_collection({"master_link_id": link_id})["data"]
-        
-        # TODO redirect to somewhere from here
-
-        return Response(link, status.HTTP_200_OK)
+        link = dc_connect.get_links_from_collection({"master_link_id": link_id, "is_finalized": False}, single=True)["data"]
+        if link:
+            return redirect(link[0]["link"])
+        return CustomResponse(False, "Link not found or is finalized", None, 404)
         
