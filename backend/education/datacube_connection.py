@@ -1440,12 +1440,11 @@ class DatacubeConnection:
     def validate_enough_users(self, num: int) -> list:
         return []
 
-    def generate_public_qrcode(self, document_name, **kwargs):
+    def generate_public_qrcode(self, links, document_name, clone_ids, **kwargs):
         request = kwargs.get("request")
         token = encrypt_credentials(api_key=self.api_key, workspace_id=self.workspace_id)
         if not token:
             raise CustomAPIException("Error creating master link", 503)
-
         master_link_id = str(uuid1().int >> 64)
         master_link = request.build_absolute_uri(
             reverse("master_link", kwargs={"link_id": master_link_id, "token": token})
@@ -1461,15 +1460,34 @@ class DatacubeConnection:
         img_qr_bytes = bytes_io.getvalue()
         timestamp = int(time())
         filename = f"qrcode_{timestamp}.png"
-        qr_code_url = upload_image_to_interserver(img_qr_bytes, filename)
-        data = {
+        master_data = {
             "master_link_id": master_link_id,
             "master_link": master_link,
             "database": self.database,
             "document_name": document_name,
         }
-        res = self.save_to_master_links_collection(data=data)
-        if res["success"]:
-            return master_link, master_link_id, qr_code_url
+        master_res = self.save_to_master_links_collection(data=master_data)
+        if master_res["success"]:
+            qr_code_url = upload_image_to_interserver(img_qr_bytes, filename)
+            for i in links:
+                link_data = {
+                    "process_id": i["process_id"],
+                    "item_id": i["item_id"],
+                    "master_link_id": master_link_id,
+                    "clone_ids": clone_ids,
+                    "company_id ": self.workspace_id,
+                    "link": i["link"],
+                    "auth_role": i["auth_role"],
+                    "user_name": i["user_name"],
+                    "auth_portfolio": i["auth_portfolio"],
+                    "unique_hash": i["unique_hash"],
+                    "item_type": i["item_type"],
+                    "is_opened": False,
+                    "is_finalized": False,
+                }
+
+                self.save_to_links_collection(link_data)
+
+            return master_link, qr_code_url
 
         raise CustomAPIException("Error creating master link", 503)

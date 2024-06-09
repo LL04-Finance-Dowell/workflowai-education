@@ -1912,9 +1912,9 @@ class MasterLink(APIView):
         master_link = master_link[0]
         database = master_link["database"]
         dc_connect.database = database
-        links = dc_connect.get_links_from_collection({"_id": master_link["link_id"]})
+        link = dc_connect.get_links_from_collection({"master_link_id": link_id})["data"]
         
         # TODO redirect to somewhere from here
 
-        return Response(links, status.HTTP_200_OK)
+        return Response(link, status.HTTP_200_OK)
         

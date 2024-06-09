@@ -247,6 +247,8 @@ class DataCubeHandleProcess:
             "auth_portfolio": portfolio,
             "unique_hash": hash,
             "item_type": item_type,
+            "is_opened": False,
+            "is_finalized": False,
         }
         dc_connect.save_to_qrcode_collection(data=data)
         # --------- Not used so I will scrap soon - Edwin ------
@@ -254,7 +256,7 @@ class DataCubeHandleProcess:
         #     auth_name, item_id, portfolio, company_id, utp_link, org_name
         # )
         # utp_code = HandleProcess.generate_qrcode(utp_link)
-        return utp_link
+        return data
         # return utp_link
 
     def get_editor_link(payload):
@@ -346,6 +348,7 @@ class DataCubeHandleProcess:
         links = []
         public_links = []
         qrcodes = []
+        links_data = []
         process_id = self.process["_id"]
         company_id = self.process["company_id"]
         steps = self.process["process_steps"]
@@ -356,7 +359,7 @@ class DataCubeHandleProcess:
         link_string = "link"
         for step in steps:
             for member in step.get("stepPublicMembers", []):
-                link = DataCubeHandleProcess.user_team_public_data(
+                l_data = DataCubeHandleProcess.user_team_public_data(
                     self.process,
                     member["member"],
                     step.get("stepRole"),
@@ -364,12 +367,14 @@ class DataCubeHandleProcess:
                     "public",
                     **self.kwargs,
                 )
+                links_data.append(l_data)
+                link = l_data["link"]
                 links.append({member["member"]: link})
                 public_links.append({link_string: link})
                 # qrcodes.append({member["member"]: qrcode})
 
             for member in step.get("stepTeamMembers", []):
-                link = DataCubeHandleProcess.user_team_public_data(
+                l_data = DataCubeHandleProcess.user_team_public_data(
                     self.process,
                     member["member"],
                     step.get("stepRole"),
@@ -377,10 +382,12 @@ class DataCubeHandleProcess:
                     "team",
                     **self.kwargs,
                 )
+                links_data.append(l_data)
+                link = l_data["link"]
                 links.append({member["member"]: link})
                 # qrcodes.append({member["member"]: qrcode})
             for member in step.get("stepUserMembers", []):
-                link = DataCubeHandleProcess.user_team_public_data(
+                l_data = DataCubeHandleProcess.user_team_public_data(
                     self.process,
                     member["member"],
                     step.get("stepRole"),
@@ -388,12 +395,14 @@ class DataCubeHandleProcess:
                     "user",
                     **self.kwargs,
                 )
+                links_data.append(l_data)
+                link = l_data["link"]
                 links.append({member["member"]: link})
                 # qrcodes.append({member["member"]: qrcode})
 
             for step in step.get("stepGroupMembers", []):
                 for member in step.get("public", []):
-                    link = DataCubeHandleProcess.user_team_public_data(
+                    l_data = DataCubeHandleProcess.user_team_public_data(
                         self.process,
                         member["member"],
                         step.get("stepRole"),
@@ -401,12 +410,14 @@ class DataCubeHandleProcess:
                         "public",
                         **self.kwargs,
                     )
+                    links_data.append(l_data)
+                    link = l_data["link"]
                     links.append({member["member"]: link})
                     public_links.append({link_string: link})
                     # qrcodes.append({member["member"]: qrcode})
 
                 for member in step.get("team_members", []):
-                    link = DataCubeHandleProcess.user_team_public_data(
+                    l_data = DataCubeHandleProcess.user_team_public_data(
                         self.process,
                         member["member"],
                         step.get("stepRole"),
@@ -414,12 +425,14 @@ class DataCubeHandleProcess:
                         "team",
                         **self.kwargs,
                     )
+                    links_data.append(l_data)
+                    link = l_data["link"]
                     links.append({member["member"]: link})
                     public_links.append({link_string: link})
                     # qrcodes.append({member["member"]: qrcode})
 
                 for member in step.get("user_members", []):
-                    link = DataCubeHandleProcess.user_team_public_data(
+                    l_data = DataCubeHandleProcess.user_team_public_data(
                         self.process,
                         member["member"],
                         step.get("stepRole"),
@@ -427,6 +440,8 @@ class DataCubeHandleProcess:
                         "user",
                         **self.kwargs,
                     )
+                    links_data.append(l_data)
+                    link = l_data["link"]
                     links.append({member["member"]: link})
                     public_links.append({link_string: link})
                     # qrcodes.append({member["member"]: qrcode})
@@ -446,7 +461,7 @@ class DataCubeHandleProcess:
                 return
 
             document_name = res[0]["document_name"]
-            m_link, m_link_id, m_code = self.dc_connect.generate_public_qrcode(document_name, **self.kwargs)
+            m_link, m_code = self.dc_connect.generate_public_qrcode(links_data, document_name, clone_ids, **self.kwargs)
             links.append({"master_link": m_link})
             qrcodes.append({"master_qrcode": m_code})
 
@@ -460,7 +475,7 @@ class DataCubeHandleProcess:
                 return
 
             document_name = res[0]["document_name"]
-            m_link, m_link_id, m_code = self.dc_connect.generate_public_qrcode(document_name, **self.kwargs)
+            m_link, m_code = self.dc_connect.generate_public_qrcode(links_data, document_name, clone_ids, **self.kwargs)
             links.append({"master_link": m_link})
             qrcodes.append({"master_qrcode": m_code})
 
@@ -474,19 +489,9 @@ class DataCubeHandleProcess:
                 return
 
             template_name = res[0]["template_name"]
-            m_link, m_link_id, m_code = self.dc_connect.generate_public_qrcode(template_name, **self.kwargs)
+            m_link, m_code = self.dc_connect.generate_public_qrcode(links_data, template_name, clone_ids, **self.kwargs)
             links.append({"master_link": m_link})
             qrcodes.append({"master_qrcode": m_code})
-
-        links_res = self.dc_connect.save_to_links_collection(
-            data={
-                "links": links,
-                "process_id": process_id,
-                "clone_ids": clone_ids,
-                "company_id ": company_id,
-            }
-        )
-        self.dc_connect.update_master_links_collection(m_link_id, {"link_id": links_res["data"]["inserted_id"]})
 
         hhhres = self.dc_connect.update_process_collection(
             process_id=process_id, data={"process_steps": steps, "processing_state": "processing"}
