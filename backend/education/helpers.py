@@ -2,6 +2,7 @@
 import json
 from datetime import UTC, datetime
 from urllib.parse import quote_plus, unquote_plus
+from urllib.parse import parse_qs, urlparse
 
 import bson
 import requests
@@ -124,15 +125,6 @@ def check_progress(process, *args, **kwargs):
 
     percentage_progress = round((accessed / steps_count * 100), 2)
     return percentage_progress
-
-
-def register_finalized(link_id):
-    response = requests.put(
-        f"{MASTERLINK_URL}?link_id={link_id}",
-        data=json.dumps({"is_finalized": True}),
-        headers={"Content-Type": "application/json"},
-    )
-    return
 
 
 def check_last_finalizer(user, user_type, process) -> bool:
@@ -388,3 +380,16 @@ def decrypt_credentials(token):
         return credentials.split(":")
     except:
         raise CustomAPIException("Unable to validate token", 422)
+
+
+def get_link(user, role, links):
+    for link in links:
+        if link.get(user):
+            # auth_role = f"auth_role={role}"
+            auth_role = role
+            parsed_url = urlparse(link[user])
+            query_params = parse_qs(parsed_url.fragment)
+            if query_params["username"] == [user] and query_params["auth_role"] == [
+                auth_role
+            ]:
+                return link[user]

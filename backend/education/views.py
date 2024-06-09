@@ -2,39 +2,31 @@ import ast
 import json
 import re
 
-from django.shortcuts import redirect
 import requests
 from django.core.cache import cache
-from rest_framework import status
+from django.shortcuts import redirect
 from django.urls import reverse
+from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from app.constants import EDITOR_API, PROCESS_COMPLETION_MAIL
+from education.helpers import get_link
 from education.checks import is_finalized
-from education.datacube_connection import DatacubeConnection, check_collections, create_db, get_master_db
-from education.datacube_processing import (
-    DataCubeBackground,
-    DataCubeHandleProcess,
-    DataCubeProcess,
-)
-from education.helpers import (
-    CustomResponse,
-    InvalidTokenException,
-    authorization_check,
-    check_all_accessed,
-    check_last_finalizer,
-    check_progress,
-    decrypt_credentials,
-    dowell_email_sender,
-    get_prev_and_next_users,
-    paginate,
-    register_finalized,
-    remove_finalized_reminder,
-    remove_members_from_steps,
-    update_signed,
-    validate_id,
-)
+from education.datacube_connection import (DatacubeConnection,
+                                           check_collections, create_db,
+                                           get_master_db)
+from education.datacube_processing import (DataCubeBackground,
+                                           DataCubeHandleProcess,
+                                           DataCubeProcess)
+from education.helpers import (CustomResponse, InvalidTokenException,
+                               authorization_check, check_all_accessed,
+                               check_last_finalizer, check_progress,
+                               decrypt_credentials, dowell_email_sender,
+                               get_prev_and_next_users, paginate,
+                               register_finalized, remove_finalized_reminder,
+                               remove_members_from_steps, update_signed,
+                               validate_id)
 from education.serializers import *
 from education.serializers import CreateCollectionSerializer
 
@@ -858,7 +850,7 @@ class FinalizeOrReject(APIView):
                     )
                     if user_type == "public":
                         link_id = request_data.get("link_id")
-                        register_finalized(link_id)
+                        dc_connect.register_finalized(link_id)
                     if item_type == "document" or item_type == "clone":
                         background.document_processing()
                         item = dc_connect.get_clones_from_collection(
@@ -1496,13 +1488,13 @@ class ProcessLink(APIView):
         )
 
         # only one link as opposed to links in views_v2
-        # link_object = dc_connect.get_links_from_collection(
-        link_object = dc_connect.get_documents_from_collection(
+        links_info = dc_connect.get_links_from_collection(
             filters={"process_id": process_id}, single=True
         )["data"]
 
-        if not link_object:
+        if not links_info:
             return Response("Verification link unavailable", status.HTTP_400_BAD_REQUEST)
+        
         user = request.data["user_name"]
         process = dc_connect.get_processes_from_collection(
             filters={
@@ -1518,16 +1510,18 @@ class ProcessLink(APIView):
         process_steps = process[0].get("process_steps")
         for step in process_steps:
             step_clone_map = step.get("stepDocumentCloneMap")
-            # NOTE what do we do with this?
             step_role = step.get("stepRole")
             state = check_all_accessed(step_clone_map)
             if state:
                 pass
             else:
-                link = link_object[0]["link"]
-                return Response(link, status.HTTP_200_OK)
-        return Response("user is not part of this process", status.HTTP_401_UNAUTHORIZED)
-
+                link = get_link(user, step_role, links_info)
+                if link:
+                    return Response(link, status.HTTP_200_OK)
+        
+        return Response(
+            "user is not part of this process", status.HTTP_401_UNAUTHORIZED
+        )
 
 class ProcessVerification(APIView):
     def post(self, request, token):

@@ -804,8 +804,13 @@ class DatacubeConnection:
 
     def save_to_links_collection(self, data: dict, **kwargs):
         collection = self.collection_names["link"]
-        res = self.post_data_to_collection(collection, data, "insert", **kwargs)
-        return res
+        return self.post_data_to_collection(collection, data, "insert", **kwargs)
+
+    def update_links_collection(self, link_id: str, data: dict, query=None, **kwargs):
+        if query is None:
+            query = {"_id": link_id}
+        collection = self.collection_names["link"]
+        return self.post_data_to_collection(collection, data, "update", query, **kwargs)
 
     def get_links_from_collection(self, filters: dict, single=False, **kwargs):
         """
@@ -1491,3 +1496,8 @@ class DatacubeConnection:
             return master_link, qr_code_url
 
         raise CustomAPIException("Error creating master link", 503)
+
+
+    def register_finalized(self, link_id):
+        data = {"is_finalized": True}
+        return self.update_links_collection(link_id, data)
