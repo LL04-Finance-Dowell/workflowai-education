@@ -1915,6 +1915,10 @@ class ListPublicIds(APIView):
         workspace_id = request.query_params.get("workspace_id")
         type = request.query_params.get("type")
         num = request.query_params.get("num", 10)
+        try:
+            num = int(num)
+        except ValueError:
+            return CustomResponse(False, "num must be an integer", None, status.HTTP_401_UNAUTHORIZED)
 
         try:
             api_key = authorization_check(request.headers.get("Authorization"))
@@ -1941,6 +1945,11 @@ class AddPublicIds(APIView):
     def post(self, request):
         workspace_id = request.query_params.get("workspace_id")
         num = request.query_params.get("num", 10)
+        try:
+            num = int(num)
+        except ValueError:
+            return CustomResponse(False, "num must be an integer", None, status.HTTP_401_UNAUTHORIZED)
+        
         try:
             api_key = authorization_check(request.headers.get("Authorization"))
 
