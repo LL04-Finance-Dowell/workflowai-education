@@ -5,23 +5,16 @@ from threading import Thread
 
 import qrcode
 import requests
-from app.constants import (
-    EDITOR_API,
-    NOTIFICATION_API,
-    PRODUCTION_VERIFICATION_LINK,
-    QRCODE_URL,
-    VERIFICATION_LINK,
-)
 from django.conf import settings
 
-from education.checks import (
-    display_right,
-    location_right,
-    register_single_user_access,
-    time_limit_right,
-)
+from app.constants import (EDITOR_API, NOTIFICATION_API,
+                           PRODUCTION_VERIFICATION_LINK, QRCODE_URL,
+                           VERIFICATION_LINK)
+from education.checks import (display_right, location_right,
+                              register_single_user_access, time_limit_right)
 from education.datacube_connection import DatacubeConnection
-from education.helpers import register_public_login, set_reminder
+from education.helpers import (CustomAPIException, register_public_login,
+                               set_reminder)
 
 
 class DataCubeProcess:
@@ -251,6 +244,7 @@ class DataCubeHandleProcess:
             "is_finalized": False,
         }
         dc_connect.save_to_qrcode_collection(data=data)
+        res = dc_connect.update_public_id_collection(auth_name, {"used": True})
         # --------- Not used so I will scrap soon - Edwin ------
         # HandleProcess.notify(
         #     auth_name, item_id, portfolio, company_id, utp_link, org_name
@@ -344,6 +338,22 @@ class DataCubeHandleProcess:
             clones.extend(public_clone_ids)
         return clones
 
+    def is_valid_public_ids(self, ids):
+        """will attempt to fetch all the public ids
+        from the db as unused and if one is unsuccessful will terminate and 
+        return False and the missing id 
+        """
+
+        for id in ids:
+            if not id:
+                continue
+
+            res = self.dc_connect.get_unused_public_ids(num=1, filters={"used": False, "public_id": id})["data"]
+            if not res:
+                return False, id
+        
+        return True, None
+
     def start(self):
         links = []
         public_links = []
@@ -357,6 +367,13 @@ class DataCubeHandleProcess:
         m_code = None
         m_link = None
         link_string = "link"
+        # this line of code is extracting the values associated with the key "member" from a nested list 
+        # of dictionaries (stepPublicMembers) within a list (steps), and storing them in the public_ids list.
+        public_ids = [member["member"] for step in steps for member in step.get("stepPublicMembers", [])]
+        is_valid, id = self.is_valid_public_ids(public_ids)
+        if not is_valid:
+            raise CustomAPIException(f"{id} has either been used or does not exist", 400)
+        
         for step in steps:
             for member in step.get("stepPublicMembers", []):
                 l_data = DataCubeHandleProcess.user_team_public_data(

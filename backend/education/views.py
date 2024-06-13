@@ -1,6 +1,7 @@
 import ast
 import json
 import re
+import secrets
 
 import requests
 from django.core.cache import cache
@@ -41,9 +42,6 @@ class HomeView(APIView):
 
 
 class DatabaseServices(APIView):
-    def check_collections(self, dc_connect: DatacubeConnection, needed_collections: list):
-        return check_collections(dc_connect, needed_collections)
-
     def get(self, request):
         """
         Check the existence of the needed database and its collections.
@@ -60,14 +58,14 @@ class DatabaseServices(APIView):
 
         # Check and create master collections if necessary
         needed_collections = list(dc_connect.master_collections.values())
-        success, message = self.check_collections(dc_connect, needed_collections)
+        success, message = check_collections(dc_connect, needed_collections)
         if not success:
             return CustomResponse(False, message, None, status.HTTP_501_NOT_IMPLEMENTED)
 
         # Switch to workflow database and check collections
         dc_connect.database = dc_connect.workflow_db
         needed_collections = [dc_connect.workflow_collection]
-        success, message = self.check_collections(dc_connect, needed_collections)
+        success, message = check_collections(dc_connect, needed_collections)
         if not success:
             return CustomResponse(False, message, None, status.HTTP_501_NOT_IMPLEMENTED)
 
@@ -1910,4 +1908,58 @@ class MasterLink(APIView):
         if link:
             return redirect(link[0]["link"])
         return CustomResponse(False, "Link not found or is finalized", None, 404)
+        
+
+class ListPublicIds(APIView):
+    def get(self, request):
+        workspace_id = request.query_params.get("workspace_id")
+        type = request.query_params.get("type")
+        num = request.query_params.get("num", 10)
+
+        try:
+            api_key = authorization_check(request.headers.get("Authorization"))
+
+        except InvalidTokenException as e:
+            return CustomResponse(False, str(e), None, status.HTTP_401_UNAUTHORIZED)
+
+        dc_connect = DatacubeConnection(
+            api_key=api_key, workspace_id=workspace_id, database=get_master_db(workspace_id), check=False
+        )
+       
+        if type not in ["used", "unused"]:
+            return CustomResponse(False, "type must be one of ['used', 'unused']", None, status.HTTP_400_BAD_REQUEST)
+
+        if type.lower() == "used":
+            public_ids = dc_connect.get_used_public_ids(num)
+        else:
+            public_ids = dc_connect.get_unused_public_ids(num)
+
+        return Response(public_ids, status.HTTP_200_OK)
+
+
+class AddPublicIds(APIView):
+    def post(self, request):
+        workspace_id = request.query_params.get("workspace_id")
+        num = request.query_params.get("num", 10)
+        try:
+            api_key = authorization_check(request.headers.get("Authorization"))
+
+        except InvalidTokenException as e:
+            return CustomResponse(False, str(e), None, status.HTTP_401_UNAUTHORIZED)
+
+        dc_connect = DatacubeConnection(
+            api_key=api_key, workspace_id=workspace_id, database=get_master_db(workspace_id), check=False
+        )
+
+        public_ids = request.data.get("public_ids")
+        if not public_ids:
+            public_ids = []
+            for _ in range(num):
+                public_ids.append(secrets.token_urlsafe(12))
+        
+        for id in public_ids:
+            dc_connect.save_to_public_id_collection({"public_id": id, "used": False})
+
+        return Response(public_ids, status.HTTP_201_CREATED)
+
         

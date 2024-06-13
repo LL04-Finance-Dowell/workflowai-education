@@ -47,6 +47,7 @@ master_collections = {
     "qrcode": "workflowai_master_qrcode_collection",
     "link": "workflowai_master_link_collection",
     "folder": "workflowai_master_folder_collection",
+    "public_id": "workflowai_master_public_id_collection",
 }
 
 
@@ -881,6 +882,55 @@ class DatacubeConnection:
             return self.get_data_from_collection(collection, filters, limit=limit, **kwargs)
         else:
             return self.get_data_from_collection(collection, filters, **kwargs)
+        
+
+    def get_used_public_ids(self, num: int,  filters: dict=None, **kwargs):
+        """
+        Retrieves used public ids from the public id collection.
+
+        Args:
+            filters (dict): _description.
+            num (int): number of public ids to return
+            **kwargs: Additional keyword arguments to be passed to the `get_data_from_collection` method.
+
+        Returns:
+            The selected public id(s) from the collection.
+        """
+        collection = self.master_collections["public_id"]
+
+        if filters is None:
+            filters = {"used": True}
+
+        return self.get_data_from_collection(collection, filters, limit=num, database=self.master_db, **kwargs)
+    
+    def get_unused_public_ids(self, num: int, filters: dict=None, **kwargs):
+        """
+        Retrieves unused public ids from the public id collection.
+
+        Args:
+            filters (dict): _description.
+            num (int): number of public ids to return
+            **kwargs: Additional keyword arguments to be passed to the `get_data_from_collection` method.
+
+        Returns:
+            The selected public id(s) from the collection.
+        """
+        collection = self.master_collections["public_id"]
+
+        if filters is None:
+            filters = {"used": False}
+
+        return self.get_data_from_collection(collection, filters, limit=num, database=self.master_db, **kwargs)
+    
+
+    def save_to_public_id_collection(self, data: dict, **kwargs):
+        collection = self.master_collections["public_id"]
+        return self.post_data_to_collection(collection, data, "insert", database=self.master_db, **kwargs)
+    
+    def update_public_id_collection(self, public_id: str, data: dict, **kwargs):
+        collection = self.master_collections["public_id"]
+        query = {"public_id": public_id}
+        return self.post_data_to_collection(collection, data, "update", query, database=self.master_db, **kwargs)
 
     def authorize(self, document_id, viewers, process_id, item_type, **kwargs):
         payload = None
