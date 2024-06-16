@@ -47,7 +47,6 @@ master_collections = {
     "qrcode": "workflowai_master_qrcode_collection",
     "link": "workflowai_master_link_collection",
     "folder": "workflowai_master_folder_collection",
-    "public_id": "workflowai_master_public_id_collection",
 }
 
 
@@ -139,7 +138,13 @@ def create_db(*, api_key, workspace_id, database, **kwargs):
 class DatacubeConnection:
 
     def __init__(
-        self, api_key: str, workspace_id: str, database: str = None, check=True, workflow=False
+        self,
+        api_key: str,
+        workspace_id: str,
+        database: str = None,
+        check=True,
+        workflow=False,
+        public_id=False,
     ) -> None:
         """
         api_key (str): the API key
@@ -147,6 +152,10 @@ class DatacubeConnection:
         database (str): database name
         check (str): determines if the db should be checked for in the master template collection
         workflow (bool): determines if class is being instantiated for workflows
+        public_id (bool): determines if class is being instantiated for public ids
+
+        Note that if check false then either workflow or public_id should be true
+        or there will be no database attribute set
         """
         self.api_key = api_key
         self.workspace_id = workspace_id
@@ -154,15 +163,26 @@ class DatacubeConnection:
         self.master_template_collection = self.master_collections["template"]
         self.workflow_db = f"{workspace_id}_workflowai_workflow_db"
         self.workflow_collection = f"{self.workspace_id}_workflowai_workflow_collection"
-        # Since this is instantiated for workflows
-        # no need for a db since we know workflow db
+        self.public_id_db = f"{workspace_id}_workflowai_public_id_db"
+        self.public_id_collection = f"{self.workspace_id}_workflowai_public_id_collection"
+        self.master_template_data = None
+        # Since this is instantiated for workflows and public_ids
+        # no need for a db since we know workflow db and public_id db
         if workflow:
             self.database = self.workflow_db
-            self.master_template_data = None
+
+        elif public_id:
+            self.database = self.public_id_db
 
         elif check:
             self.master_template_data = self.check_db(database)
             self.database = database
+
+        elif not database:
+            raise Exception(
+                "if check false then either workflow or public_id should be true \
+                or there will be no database attribute set"
+            )
 
         else:
             self.database = database
@@ -779,7 +799,9 @@ class DatacubeConnection:
 
     def save_to_master_links_collection(self, data: dict, **kwargs):
         collection = self.master_collections["link"]
-        res = self.post_data_to_collection(collection, data, "insert", database=self.master_db, **kwargs)
+        res = self.post_data_to_collection(
+            collection, data, "insert", database=self.master_db, **kwargs
+        )
         return res
 
     def update_master_links_collection(
@@ -789,7 +811,9 @@ class DatacubeConnection:
         if query is None:
             query = {"master_link_id": master_link_id}
 
-        return self.post_data_to_collection(collection, data, "update", query, database=self.master_db, **kwargs)
+        return self.post_data_to_collection(
+            collection, data, "update", query, database=self.master_db, **kwargs
+        )
 
     def get_links_from_master_collection(self, filters: dict, single=False, **kwargs):
         collection = self.master_collections["link"]
@@ -799,9 +823,13 @@ class DatacubeConnection:
             filters = {}
 
         if limit is not None:
-            return self.get_data_from_collection(collection, filters, limit=limit, database=self.master_db, **kwargs)
+            return self.get_data_from_collection(
+                collection, filters, limit=limit, database=self.master_db, **kwargs
+            )
         else:
-            return self.get_data_from_collection(collection, filters, database=self.master_db, **kwargs)
+            return self.get_data_from_collection(
+                collection, filters, database=self.master_db, **kwargs
+            )
 
     def save_to_links_collection(self, data: dict, **kwargs):
         collection = self.collection_names["link"]
@@ -882,9 +910,8 @@ class DatacubeConnection:
             return self.get_data_from_collection(collection, filters, limit=limit, **kwargs)
         else:
             return self.get_data_from_collection(collection, filters, **kwargs)
-        
 
-    def get_used_public_ids(self, num: int,  filters: dict=None, **kwargs):
+    def get_used_public_ids(self, num: int, filters: dict = None, **kwargs):
         """
         Retrieves used public ids from the public id collection.
 
@@ -896,14 +923,16 @@ class DatacubeConnection:
         Returns:
             The selected public id(s) from the collection.
         """
-        collection = self.master_collections["public_id"]
+        collection = self.public_id_collection
 
         if filters is None:
             filters = {"used": True}
 
-        return self.get_data_from_collection(collection, filters, limit=num, database=self.master_db, **kwargs)
-    
-    def get_unused_public_ids(self, num: int, filters: dict=None, **kwargs):
+        return self.get_data_from_collection(
+            collection, filters, limit=num, database=self.master_db, **kwargs
+        )
+
+    def get_unused_public_ids(self, num: int, filters: dict = None, **kwargs):
         """
         Retrieves unused public ids from the public id collection.
 
@@ -915,22 +944,27 @@ class DatacubeConnection:
         Returns:
             The selected public id(s) from the collection.
         """
-        collection = self.master_collections["public_id"]
+        collection = self.public_id_collection
 
         if filters is None:
             filters = {"used": False}
 
-        return self.get_data_from_collection(collection, filters, limit=num, database=self.master_db, **kwargs)
-    
+        return self.get_data_from_collection(
+            collection, filters, limit=num, database=self.master_db, **kwargs
+        )
 
     def save_to_public_id_collection(self, data: dict, **kwargs):
-        collection = self.master_collections["public_id"]
-        return self.post_data_to_collection(collection, data, "insert", database=self.master_db, **kwargs)
-    
+        collection = self.public_id_collection
+        return self.post_data_to_collection(
+            collection, data, "insert", database=self.master_db, **kwargs
+        )
+
     def update_public_id_collection(self, public_id: str, data: dict, **kwargs):
-        collection = self.master_collections["public_id"]
+        collection = self.public_id_collection
         query = {"public_id": public_id}
-        return self.post_data_to_collection(collection, data, "update", query, database=self.master_db, **kwargs)
+        return self.post_data_to_collection(
+            collection, data, "update", query, database=self.master_db, **kwargs
+        )
 
     def authorize(self, document_id, viewers, process_id, item_type, **kwargs):
         payload = None
@@ -1546,7 +1580,6 @@ class DatacubeConnection:
             return master_link, qr_code_url
 
         raise CustomAPIException("Error creating master link", 503)
-
 
     def register_finalized(self, link_id):
         data = {"is_finalized": True}

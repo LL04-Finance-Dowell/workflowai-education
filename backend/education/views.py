@@ -56,7 +56,8 @@ class DatabaseServices(APIView):
         data_database = get_master_db(workspace_id)
         dc_connect = DatacubeConnection(api_key=api_key, workspace_id=workspace_id, database=data_database, check=False)
 
-        # Check and create master collections if necessary
+        # Check databases and create missing collections where necessary
+        # Check master collections if necessary
         needed_collections = list(dc_connect.master_collections.values())
         success, message = check_collections(dc_connect, needed_collections)
         if not success:
@@ -65,6 +66,13 @@ class DatabaseServices(APIView):
         # Switch to workflow database and check collections
         dc_connect.database = dc_connect.workflow_db
         needed_collections = [dc_connect.workflow_collection]
+        success, message = check_collections(dc_connect, needed_collections)
+        if not success:
+            return CustomResponse(False, message, None, status.HTTP_501_NOT_IMPLEMENTED)
+        
+        # Switch to public_id database and check collections
+        dc_connect.database = dc_connect.public_id_db
+        needed_collections = [dc_connect.public_id_collection]
         success, message = check_collections(dc_connect, needed_collections)
         if not success:
             return CustomResponse(False, message, None, status.HTTP_501_NOT_IMPLEMENTED)
@@ -1927,7 +1935,7 @@ class ListPublicIds(APIView):
             return CustomResponse(False, str(e), None, status.HTTP_401_UNAUTHORIZED)
 
         dc_connect = DatacubeConnection(
-            api_key=api_key, workspace_id=workspace_id, database=get_master_db(workspace_id), check=False
+            api_key=api_key, workspace_id=workspace_id, public_id=True
         )
        
         if type not in ["used", "unused"]:
@@ -1957,7 +1965,7 @@ class AddPublicIds(APIView):
             return CustomResponse(False, str(e), None, status.HTTP_401_UNAUTHORIZED)
 
         dc_connect = DatacubeConnection(
-            api_key=api_key, workspace_id=workspace_id, database=get_master_db(workspace_id), check=False
+            api_key=api_key, workspace_id=workspace_id, public_id=True
         )
 
         public_ids = request.data.get("public_ids")
