@@ -47,6 +47,8 @@ master_collections = {
     "qrcode": "workflowai_master_qrcode_collection",
     "link": "workflowai_master_link_collection",
     "folder": "workflowai_master_folder_collection",
+    "master_link": "workflowai_master_link_collection",
+    "public_id": "workflowai_master_public_id_collection"
 }
 
 
@@ -162,9 +164,8 @@ class DatacubeConnection:
         self.collection_names = self.normal_collection_names | self.metadata_collections
         self.master_template_collection = self.master_collections["template"]
         self.workflow_db = f"{workspace_id}_workflowai_workflow_db"
-        self.workflow_collection = f"{self.workspace_id}_workflowai_workflow_collection"
         self.public_id_db = f"{workspace_id}_workflowai_public_id_db"
-        self.public_id_collection = f"{self.workspace_id}_workflowai_public_id_collection"
+        self.master_links_db = f"{workspace_id}_workflowai_master_links_db"
         self.master_template_data = None
         # Since this is instantiated for workflows and public_ids
         # no need for a db since we know workflow db and public_id db
@@ -324,7 +325,7 @@ class DatacubeConnection:
         )
 
     def save_to_workflow_collection(self, data: dict, **kwargs):
-        collection = self.workflow_collection
+        collection = self.master_collections["workflow"]
         return self.post_data_to_collection(
             collection=collection,
             data=data,
@@ -336,7 +337,7 @@ class DatacubeConnection:
 
     def update_workflow_collection(self, workflow_id: str, data: dict, **kwargs):
         query = {"_id": workflow_id}
-        collection = self.workflow_collection
+        collection = self.master_collections["workflow"]
         return self.post_data_to_collection(
             collection, data, "update", query, database=self.workflow_db, workflow=True, **kwargs
         )
@@ -354,7 +355,7 @@ class DatacubeConnection:
         Returns:
             The selected workflow(s) from the collection.
         """
-        collection = self.workflow_collection
+        collection = self.master_collections["workflow"]
         limit = None if single is None else 1 if single else None
 
         if filters is None:
@@ -385,7 +386,7 @@ class DatacubeConnection:
         )
 
     def save_to_clone_metadata_collection(self, *args, **kwargs):
-        res = self.save_to_clone_collection(*args, metadata=True, **kwargs)
+        return self.save_to_clone_collection(*args, metadata=True, **kwargs)
         if res["success"]:
             data = kwargs.get("data")
             if not data:
@@ -467,24 +468,7 @@ class DatacubeConnection:
 
     def save_to_qrcode_collection(self, data: dict, **kwargs):
         collection = self.collection_names["qrcode"]
-        res = self.post_data_to_collection(collection, data, "insert", **kwargs)
-        if res["success"]:
-            master_data = {
-                "link": data["link"],
-                "qrcode_id": res["data"]["inserted_id"],
-            }
-            master_res = self.post_data_to_collection(
-                self.master_collections["qrcode"],
-                master_data,
-                "insert",
-                database=self.master_db,
-                **kwargs,
-            )
-
-            if not master_res["success"]:
-                pass
-
-        return res
+        return self.post_data_to_collection(collection, data, "insert", **kwargs)
 
     def get_qrcodes_from_collection(self, filters: dict, single=False, **kwargs):
         """
@@ -512,7 +496,7 @@ class DatacubeConnection:
 
     def save_to_process_collection(self, data: dict, **kwargs):
         collection = self.collection_names["process"]
-        res = self.post_data_to_collection(collection, data, "insert", **kwargs)
+        return self.post_data_to_collection(collection, data, "insert", **kwargs)
         if res["success"]:
             master_data = {
                 "process_title": data["process_title"],
@@ -575,7 +559,7 @@ class DatacubeConnection:
         \n This method is a wrapper for `save_to_document_collection` that ensures document
         is saved to the metadata collection.
         """
-        res = self.save_to_document_collection(*args, metadata=True, **kwargs)
+        return self.save_to_document_collection(*args, metadata=True, **kwargs)
         if res["success"]:
             data = kwargs.get("data")
             if not data:
@@ -800,7 +784,7 @@ class DatacubeConnection:
     def save_to_master_links_collection(self, data: dict, **kwargs):
         collection = self.master_collections["link"]
         res = self.post_data_to_collection(
-            collection, data, "insert", database=self.master_db, **kwargs
+            collection, data, "insert", database=self.master_links_db, **kwargs
         )
         return res
 
@@ -812,7 +796,7 @@ class DatacubeConnection:
             query = {"master_link_id": master_link_id}
 
         return self.post_data_to_collection(
-            collection, data, "update", query, database=self.master_db, **kwargs
+            collection, data, "update", query, database=self.master_links_db, **kwargs
         )
 
     def get_links_from_master_collection(self, filters: dict, single=False, **kwargs):
@@ -824,11 +808,11 @@ class DatacubeConnection:
 
         if limit is not None:
             return self.get_data_from_collection(
-                collection, filters, limit=limit, database=self.master_db, **kwargs
+                collection, filters, limit=limit, database=self.master_links_db, **kwargs
             )
         else:
             return self.get_data_from_collection(
-                collection, filters, database=self.master_db, **kwargs
+                collection, filters, database=self.master_links_db, **kwargs
             )
 
     def save_to_links_collection(self, data: dict, **kwargs):
@@ -868,7 +852,7 @@ class DatacubeConnection:
 
     def save_to_folder_collection(self, data: dict, **kwargs):
         collection = self.collection_names["folder"]
-        res = self.post_data_to_collection(collection, data, "insert", **kwargs)
+        return self.post_data_to_collection(collection, data, "insert", **kwargs)
         if res["success"]:
             master_data = {
                 "folder_name": data["folder_name"],
@@ -923,13 +907,13 @@ class DatacubeConnection:
         Returns:
             The selected public id(s) from the collection.
         """
-        collection = self.public_id_collection
+        collection = self.master_collections["public_id"]
 
         if filters is None:
             filters = {"used": True}
 
         return self.get_data_from_collection(
-            collection, filters, limit=num, database=self.master_db, **kwargs
+            collection, filters, limit=num, database=self.public_id_db, **kwargs
         )
 
     def get_unused_public_ids(self, num: int, filters: dict = None, **kwargs):
@@ -944,26 +928,26 @@ class DatacubeConnection:
         Returns:
             The selected public id(s) from the collection.
         """
-        collection = self.public_id_collection
+        collection = self.master_collections["public_id"]
 
         if filters is None:
             filters = {"used": False}
 
         return self.get_data_from_collection(
-            collection, filters, limit=num, database=self.master_db, **kwargs
+            collection, filters, limit=num, database=self.public_id_db, **kwargs
         )
 
     def save_to_public_id_collection(self, data: dict, **kwargs):
-        collection = self.public_id_collection
+        collection = self.master_collections["public_id"]
         return self.post_data_to_collection(
-            collection, data, "insert", database=self.master_db, **kwargs
+            collection, data, "insert", database=self.public_id_db, **kwargs
         )
 
     def update_public_id_collection(self, public_id: str, data: dict, **kwargs):
-        collection = self.public_id_collection
+        collection = self.master_collections["public_id"]
         query = {"public_id": public_id}
         return self.post_data_to_collection(
-            collection, data, "update", query, database=self.master_db, **kwargs
+            collection, data, "update", query, database=self.public_id_db, **kwargs
         )
 
     def authorize(self, document_id, viewers, process_id, item_type, **kwargs):

@@ -65,14 +65,21 @@ class DatabaseServices(APIView):
 
         # Switch to workflow database and check collections
         dc_connect.database = dc_connect.workflow_db
-        needed_collections = [dc_connect.workflow_collection]
+        needed_collections = [dc_connect.master_collections["workflow"]]
+        success, message = check_collections(dc_connect, needed_collections)
+        if not success:
+            return CustomResponse(False, message, None, status.HTTP_501_NOT_IMPLEMENTED)
+        
+        # Switch to master_links database and check collections
+        dc_connect.database = dc_connect.master_links_db
+        needed_collections = [dc_connect.master_collections["master_link"]]
         success, message = check_collections(dc_connect, needed_collections)
         if not success:
             return CustomResponse(False, message, None, status.HTTP_501_NOT_IMPLEMENTED)
         
         # Switch to public_id database and check collections
         dc_connect.database = dc_connect.public_id_db
-        needed_collections = [dc_connect.public_id_collection]
+        needed_collections = [dc_connect.master_collections["public_id"]]
         success, message = check_collections(dc_connect, needed_collections)
         if not success:
             return CustomResponse(False, message, None, status.HTTP_501_NOT_IMPLEMENTED)
