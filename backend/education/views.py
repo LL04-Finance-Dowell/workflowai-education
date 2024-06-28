@@ -1638,6 +1638,8 @@ class ProcessVerification(APIView):
             auth_role,
             auth_user,
             user_type,
+            process["parent_item_id"],
+            process["_id"],
             collection_id,
             prev_viewers,
             next_viewers,

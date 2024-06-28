@@ -314,13 +314,15 @@ class DataCubeHandleProcess:
             else:
                 for u in public:
                     if process_type == "document":
-                        public_clone_ids.append(
-                            {
-                                u["member"]: dc_connect.cloning_document(
-                                    parent_item_id, [u], parent_item_id, process_id
-                                )
-                            }
-                        )
+                        # NOTE instead of creating the clones I will just pass for now
+                        pass
+                        # public_clone_ids.append(
+                        #     {
+                        #         u["member"]: dc_connect.cloning_document(
+                        #             parent_item_id, [u], parent_item_id, process_id
+                        #         )
+                        #     }
+                        # )
                     elif process_type == "internal":
                         pub_users.append(u)
                         public_clone_ids.append({u["member"]: parent_item_id})
@@ -462,7 +464,8 @@ class DataCubeHandleProcess:
                     links.append({member["member"]: link})
                     public_links.append({link_string: link})
                     # qrcodes.append({member["member"]: qrcode})
-
+        
+        # parent_item_id is the _id of the document of the process
         clone_ids = DataCubeHandleProcess.prepare_document_for_step_one_users(
             steps[0], self.process["parent_item_id"], process_id, **self.kwargs
         )
@@ -581,6 +584,8 @@ class DataCubeHandleProcess:
         auth_role,
         user_name,
         user_type,
+        parent_item_id,
+        process_id,
         collection_id=None,
         prev_viewers=None,
         next_viewers=None,
@@ -619,26 +624,43 @@ class DataCubeHandleProcess:
                 document = "CloneReports"
                 field = "document_name"
                 team_member_id = "1212001"
-                # NOTE comfirm
+                # NOTE since the parent_item_id i.e the document _id is accepted as an arg,
+                # attempt to get a clone with the auth_user (public_user/id) and if none exits create it and the metadata.
+                # if the clone is found proceed as usual.
+                # I can't query with a list of dictionaries based on auth_viewers so at the risk of data duplication I will attach the public_id when cloning so I can query on that
                 document_object = self.dc_connect.get_clones_from_collection(
-                    filters={"_id": clone_id}, single=True
+                    filters={"parent_id": parent_item_id, "public_id": user_name}, single=True
                 )["data"]
-                # NOTE confirm
                 if not document_object:
-                    return
+                    # NOTE maybe the link has not been accessed
+                    # we fetch the document and if not found there is a mistake and we return immediately
+                    document_to_clone = self.dc_connect.get_documents_from_collection(filters={"_id": parent_item_id}, single=True)["data"] # fetch the document to clone
+                    if not document_to_clone:
+                        return
+                    document_to_clone = document_to_clone[0]
+                    # now we create the clone and the metadata using the cloning_document method
+                    inserted_id = self.dc_connect.cloning_document(parent_item_id, [user_name], parent_item_id, process_id, public_id=user_name) # create the clone and fetch???
+                    # Now the clone and it's metadata is fetched
+                    document_object = self.dc_connect.get_clones_from_collection(filters={"_id": inserted_id}, single=True)["data"]
+                    metadata = self.dc_connect.get_clones_metadata_from_collection(
+                        filters={"collection_id": inserted_id}, single=True
+                    )["data"]
+                else:
+                    # since the clone was found the metadata should also exist
+                    metadata = self.dc_connect.get_clones_metadata_from_collection(
+                        filters={"collection_id": clone_id}, single=True
+                    )["data"]
+                    # NOTE if not found there is something wrong return immediately
+                    if not metadata:
+                        return
 
-                metadata = self.dc_connect.get_clones_metadata_from_collection(
-                    filters={"collection_id": clone_id}, single=True
-                )["data"]
-                # NOTE confirm
-                if not metadata:
-                    return
-
+                # now we have the document and metadata as usual
                 document_object = document_object[0]
                 metadata = metadata[0]
                 item_flag = document_object["document_state"]
                 document_name = document_object["document_name"]
                 metadata_id = metadata.get("_id")
+            
             elif item_type == "template":
                 collection = "TemplateReports"
                 document = "templatereports"

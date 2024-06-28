@@ -1098,7 +1098,7 @@ class DatacubeConnection:
             print(e)
             return
 
-    def cloning_document(self, document_id, auth_viewers, parent_id, process_id, **kwargs):
+    def cloning_document(self, document_id, auth_viewers, parent_id, process_id, *, public_id=None, **kwargs):
         try:
             viewers = []
             for m in auth_viewers:
@@ -1140,6 +1140,7 @@ class DatacubeConnection:
                     "folders": "untitled",
                     "message": "",
                     "signed_by": signed,
+                    "public_id": public_id
                 },
                 **kwargs,
             )
