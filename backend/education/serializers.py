@@ -19,7 +19,7 @@ class CreateCollectionSerializer(serializers.Serializer):
 class SinglePublicIdSerializer(serializers.ModelSerializer):
     class Meta:
         model = PublicId
-        fields = ["id", "public_id", "used", "database"]
+        fields = ["id", "public_id", "used", "workspace_id"]
 
     def to_representation(self, instance):
         instance = super().to_representation(instance)
@@ -27,7 +27,7 @@ class SinglePublicIdSerializer(serializers.ModelSerializer):
             "_id": instance["id"],
             "public_id": instance["public_id"],
             "used": instance["used"],
-            "database": instance["database"],
+            "database": f"{instance['workspace_id']}_workflowai_public_id_db",
         }
         return data
 

@@ -42,4 +42,5 @@ RUN chmod +x /usr/src/app/entrypoint.sh
 ENTRYPOINT ["/usr/src/app/entrypoint.sh"]
 
 # Define the command to run the Django app using Gunicorn in production mode
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "wf_ai_core.wsgi:application", "--log-level", "debug"]
+# CMD ["gunicorn", "--bind", "0.0.0.0:8000", "wf_ai_core.wsgi:application", "--log-level", "debug"]
+CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]

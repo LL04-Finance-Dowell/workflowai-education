@@ -941,7 +941,7 @@ class DatacubeConnection:
 
         ids = PublicId.dc_objects.bulk_create(to_save, ignore_conflicts=True)
         # NOTE confirm if needed
-        if ids.count() != len(data):
+        if len(ids) != len(data):
             difference = len(data) - ids.count()
             to_save = []
             for _ in range(difference):
@@ -1581,7 +1581,7 @@ class DatacubeConnection:
                 self.save_to_links_collection(link_data)
 
             return master_link, qr_code_url
-
+        print(master_res)
         raise CustomAPIException("Error creating master link", 503)
 
     def register_finalized(self, link_id):

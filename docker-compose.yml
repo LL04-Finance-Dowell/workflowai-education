@@ -46,7 +46,7 @@ services:
       context: ./backend
     container_name: workflow-backend
     ports:
-      - "9002:8000"
+      - "8000:8000"
     restart: always
     volumes:
       - ./backend:/usr/src/app
