@@ -1978,13 +1978,15 @@ class AddPublicIds(APIView):
         )
 
         public_ids = request.data.get("public_ids")
-        if not public_ids:
+        if not public_ids or not isinstance(public_ids, list):
             public_ids = []
             for _ in range(num):
                 public_ids.append(secrets.token_urlsafe(12))
         
-        for id in public_ids:
-            dc_connect.save_to_public_id_collection({"public_id": id, "used": False})
+        # for id in public_ids:
+        #     dc_connect.save_to_public_id_collection({"public_id": id, "used": False})
+        
+        dc_connect.save_to_public_id_collection(public_ids)
 
         return Response(public_ids, status.HTTP_201_CREATED)
 

@@ -1,6 +1,7 @@
 import io
 import json
 import re
+import secrets
 from datetime import UTC, datetime
 from time import time
 from uuid import uuid1, uuid4
@@ -18,6 +19,8 @@ from education.helpers import (
     generate_unique_collection_name,
     upload_image_to_interserver,
 )
+from education.models import PublicId
+from education.serializers import PublicIdSerializer
 
 headers = {"Content-Type": "application/json"}
 
@@ -48,7 +51,7 @@ master_collections = {
     "link": "workflowai_master_link_collection",
     "folder": "workflowai_master_folder_collection",
     "master_link": "workflowai_master_link_collection",
-    "public_id": "workflowai_master_public_id_collection"
+    "public_id": "workflowai_master_public_id_collection",
 }
 
 
@@ -907,14 +910,11 @@ class DatacubeConnection:
         Returns:
             The selected public id(s) from the collection.
         """
-        collection = self.master_collections["public_id"]
-
         if filters is None:
             filters = {"used": True}
 
-        return self.get_data_from_collection(
-            collection, filters, limit=num, database=self.public_id_db, **kwargs
-        )
+        public_ids = PublicId.dc_objects.filter(workspace_id=self.workspace_id, **filters)[:num]
+        return PublicIdSerializer(public_ids).data
 
     def get_unused_public_ids(self, num: int, filters: dict = None, **kwargs):
         """
@@ -928,27 +928,43 @@ class DatacubeConnection:
         Returns:
             The selected public id(s) from the collection.
         """
-        collection = self.master_collections["public_id"]
-
         if filters is None:
             filters = {"used": False}
 
-        return self.get_data_from_collection(
-            collection, filters, limit=num, database=self.public_id_db, **kwargs
-        )
+        public_ids = PublicId.dc_objects.filter(workspace_id=self.workspace_id, **filters)[:num]
+        return PublicIdSerializer(public_ids).data
 
-    def save_to_public_id_collection(self, data: dict, **kwargs):
-        collection = self.master_collections["public_id"]
-        return self.post_data_to_collection(
-            collection, data, "insert", database=self.public_id_db, **kwargs
-        )
+    def save_to_public_id_collection(self, data: list, **kwargs):
+        to_save = []
+        for item in data:
+            to_save.append(PublicId(workspace_id=self.workspace_id, public_id=item))
+
+        ids = PublicId.dc_objects.bulk_create(to_save, ignore_conflicts=True)
+        # NOTE confirm if needed
+        if ids.count() != len(data):
+            difference = len(data) - ids.count()
+            to_save = []
+            for _ in range(difference):
+                to_save.append(
+                    PublicId(workspace_id=self.workspace_id, public_id=secrets.token_urlsafe(12))
+                )
+            ids2 = PublicId.objects.bulk_create(to_save)
+            ids += ids2
+        
+        return PublicIdSerializer(ids).data
 
     def update_public_id_collection(self, public_id: str, data: dict, **kwargs):
-        collection = self.master_collections["public_id"]
-        query = {"public_id": public_id}
-        return self.post_data_to_collection(
-            collection, data, "update", query, database=self.public_id_db, **kwargs
-        )
+        try:
+            instance = PublicId.dc_objects.get(workspace_id=self.workspace_id, public_id=public_id)
+        except PublicId.DoesNotExist:
+            return {"success": False, "message": "Public ID not found", "data": []}
+        
+        for key, value in data.items():
+            if hasattr(instance, key):
+                setattr(instance, key, value)
+        
+        instance.save()
+        return PublicIdSerializer([instance]).data
 
     def authorize(self, document_id, viewers, process_id, item_type, **kwargs):
         payload = None
@@ -1098,7 +1114,9 @@ class DatacubeConnection:
             print(e)
             return
 
-    def cloning_document(self, document_id, auth_viewers, parent_id, process_id, *, public_id=None, **kwargs):
+    def cloning_document(
+        self, document_id, auth_viewers, parent_id, process_id, *, public_id=None, **kwargs
+    ):
         try:
             viewers = []
             for m in auth_viewers:
@@ -1140,7 +1158,7 @@ class DatacubeConnection:
                     "folders": "untitled",
                     "message": "",
                     "signed_by": signed,
-                    "public_id": public_id
+                    "public_id": public_id,
                 },
                 **kwargs,
             )

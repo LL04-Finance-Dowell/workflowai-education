@@ -48,12 +48,30 @@ services:
     ports:
       - "9002:8000"
     restart: always
-    command: python3 manage.py runserver 0.0.0.0:8000
     volumes:
       - ./backend:/usr/src/app
+    networks:
+      - workflow-editor-net
+    depends_on:
+      - workflow-db
+
+  workflow-db:
+    image: postgres:16-alpine3.20
+    container_name: workflow-db
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: workflow
+    volumes:
+      - workflow-db-data:/var/lib/postgresql/data
     networks:
       - workflow-editor-net
 
 networks:
   workflow-editor-net:
+    external: true
+
+volumes:
+  workflow-db-data:
     external: true
