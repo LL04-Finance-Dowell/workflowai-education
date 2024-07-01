@@ -1,0 +1,193 @@
+{
+    "new_template": {
+        "editor_link": "https://ll04-finance-dowell.github.io/100058-DowellEditor-V2/?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwcm9kdWN0X25hbWUiOiJ3b3JrZmxvd2FpIiwiZGV0YWlscyI6eyJfaWQiOiI2NjRhN2QxYWMwNGM3YmJmZTdmMzZmYWEiLCJmaWVsZCI6InRlbXBsYXRlX25hbWUiLCJhY3Rpb24iOiJ0ZW1wbGF0ZSIsIm1ldGFkYXRhX2lkIjoiNjY0YTdkMWVmNjQ3NmMyMDEyNzc1NDZlIiwiY2x1c3RlciI6IkRvY3VtZW50cyIsImRhdGFiYXNlIjoiNjM4NWMwZjE4ZWNhMGZiNjUyYzk0NTU4X0RCXzAiLCJjb2xsZWN0aW9uIjoiNjM4NWMwZjE4ZWNhMGZiNjUyYzk0NTU4X3RlbXBsYXRlX2NvbGxlY3Rpb25fMCIsImRvY3VtZW50IjoidGVtcGxhdGVyZXBvcnRzIiwidGVhbV9tZW1iZXJfSUQiOiIyMjY4OTA0NDQzMyIsImZ1bmN0aW9uX0lEIjoiQUJDREUiLCJjb21tYW5kIjoidXBkYXRlIiwibmFtZSI6IlVudGl0bGVkIFRlbXBsYXRlIiwiZmxhZyI6ImVkaXRpbmciLCJ1cGRhdGVfZmllbGQiOnsidGVtcGxhdGVfbmFtZSI6IlVudGl0bGVkIFRlbXBsYXRlIiwiY29udGVudCI6IiIsInBhZ2UiOiIifX19.CyPFibJgVbKSsHr2UmIdsYuUUGgvxdVv0BufSSM4PEY",
+        "_id": "664a7d1ac04c7bbfe7f36faa"
+    },
+    "new_workflow": {
+        "_id": "664aeaa3c6f92cd84d5e490c",
+        "workflows": {
+            "workflow_title": "Refactor Test workflow",
+            "steps": [
+                {
+                    "stepCloneCount": 1,
+                    "stepTaskType": "assign_task",
+                    "stepRights": "add_edit",
+                    "stepProcessingOrder": "no_order",
+                    "stepTaskLimitation": "portfolios_assigned_on_or_before_step_start_date_and_time",
+                    "stepActivityType": "team_task",
+                    "stepDisplay": "in_all_steps",
+                    "stepName": "Manager",
+                    "stepRole": "Manager",
+                    "stepPublicMembers": [
+                        {
+                            "member": "alex",
+                            "portfolio": "TestOrgOwner"
+                        }
+                    ],
+                    "stepTeamMembers": [],
+                    "stepUserMembers": [],
+                    "stepDocumentCloneMap": [],
+                    "stepNumber": 1,
+                    "stepDocumentMap": [
+                        "t1"
+                    ],
+                    "permitInternalWorkflow": false,
+                    "skipStep": false,
+                    "stepLocation": "any"
+                },
+                {
+                    "stepCloneCount": 2,
+                    "stepTaskType": "assign_task",
+                    "stepRights": "add_edit",
+                    "stepProcessingOrder": "no_order",
+                    "stepTaskLimitation": "portfolios_assigned_on_or_before_step_start_date_and_time",
+                    "stepActivityType": "team_task",
+                    "stepDisplay": "in_all_steps",
+                    "stepName": "Customer",
+                    "stepRole": "Customer",
+                    "stepPublicMembers": [],
+                    "stepTeamMembers": [
+                        {
+                            "member": "PublicMem",
+                            "portfolio": "No_portf"
+                        }
+                    ],
+                    "stepUserMembers": [],
+                    "stepDocumentCloneMap": [],
+                    "stepNumber": 2,
+                    "stepDocumentMap": [
+                        "t2"
+                    ],
+                    "permitInternalWorkflow": true,
+                    "workflows": [
+                        {
+                            "workflows": {
+                                "workflow_title": "Test-CTA-Process Demo",
+                                "steps": [
+                                    {
+                                        "stepCloneCount": 1,
+                                        "stepTaskType": "assign_task",
+                                        "stepRights": "add_edit",
+                                        "stepProcessingOrder": "no_order",
+                                        "stepTaskLimitation": "portfolios_assigned_on_or_before_step_start_date_and_time",
+                                        "stepActivityType": "team_task",
+                                        "stepDisplay": "in_all_steps",
+                                        "stepName": "Manager",
+                                        "stepRole": "Manager",
+                                        "stepPublicMembers": [
+                                            {
+                                                "member": "alex",
+                                                "portfolio": "TestOrgOwner"
+                                            }
+                                        ],
+                                        "stepTeamMembers": [],
+                                        "stepUserMembers": [],
+                                        "stepDocumentCloneMap": [],
+                                        "stepNumber": 1,
+                                        "stepDocumentMap": [
+                                            "t1"
+                                        ],
+                                        "permitInternalWorkflow": false,
+                                        "skipStep": false,
+                                        "stepLocation": "any"
+                                    },
+                                    {
+                                        "stepCloneCount": 2,
+                                        "stepTaskType": "assign_task",
+                                        "stepRights": "add_edit",
+                                        "stepProcessingOrder": "no_order",
+                                        "stepTaskLimitation": "portfolios_assigned_on_or_before_step_start_date_and_time",
+                                        "stepActivityType": "team_task",
+                                        "stepDisplay": "in_all_steps",
+                                        "stepName": "Customer",
+                                        "stepRole": "Customer",
+                                        "stepPublicMembers": [],
+                                        "stepTeamMembers": [
+                                            {
+                                                "member": "ayoolaa_",
+                                                "portfolio": "ThePro"
+                                            }
+                                        ],
+                                        "stepUserMembers": [],
+                                        "stepDocumentCloneMap": [],
+                                        "stepNumber": 2,
+                                        "stepDocumentMap": [
+                                            "t2"
+                                        ],
+                                        "permitInternalWorkflow": false,
+                                        "skipStep": false,
+                                        "stepLocation": "any"
+                                    }
+                                ]
+                            }
+                        }
+                    ],
+                    "skipStep": false,
+                    "stepLocation": "any"
+                },
+                {
+                    "stepCloneCount": 3,
+                    "stepTaskType": "assign_task",
+                    "stepRights": "add_edit",
+                    "stepProcessingOrder": "no_order",
+                    "stepTaskLimitation": "portfolios_assigned_on_or_before_step_start_date_and_time",
+                    "stepActivityType": "team_task",
+                    "stepDisplay": "in_all_steps",
+                    "stepName": "Customer",
+                    "stepRole": "Customer",
+                    "stepPublicMembers": [],
+                    "stepTeamMembers": [
+                        {
+                            "member": "alex",
+                            "portfolio": "TestOrgOwner"
+                        }
+                    ],
+                    "stepUserMembers": [],
+                    "stepDocumentCloneMap": [],
+                    "stepNumber": 2,
+                    "stepDocumentMap": [
+                        "t2"
+                    ],
+                    "permitInternalWorkflow": false,
+                    "skipStep": false,
+                    "stepLocation": "any"
+                }
+            ]
+        },
+        "created_by": "alex",
+        "company_id": "6385c0f18eca0fb652c94558",
+        "workflow_type": "original",
+        "data_type": "Real_Data"
+    },
+    "new_document": {
+        "success": true,
+        "message": {
+            "_id": "664b21af15d238d48d76f38c",
+            "doc_status": "document created"
+        }
+    },
+    "document_link": "https://ll04-finance-dowell.github.io/100058-DowellEditor-V2/?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwcm9kdWN0X25hbWUiOiJXb3JrZmxvdyBBSSIsImRldGFpbHMiOnsiY2x1c3RlciI6IkRvY3VtZW50cyIsImRhdGFiYXNlIjoiRG9jdW1lbnRhdGlvbiIsImNvbGxlY3Rpb24iOiJEb2N1bWVudFJlcG9ydHMiLCJkb2N1bWVudCI6ImRvY3VtZW50cmVwb3J0cyIsInRlYW1fbWVtYmVyX0lEIjoiMTE2ODkwNDQ0MzMiLCJmdW5jdGlvbl9JRCI6IkFCQ0RFIiwiX2lkIjoiNjY0YjIxYWYxNWQyMzhkNDhkNzZmMzhjIiwiZmllbGQiOiJkb2N1bWVudF9uYW1lIiwidHlwZSI6ImRvY3VtZW50IiwiYWN0aW9uIjoiZG9jdW1lbnQiLCJmbGFnIjoiZWRpdGluZyIsIm5hbWUiOiIiLCJ1c2VybmFtZSI6IiIsInBvcnRmb2xpbyI6IiIsImVtYWlsIjoiIiwidGltZSI6IjIwMjQtMDUtMjAgMTA6MjA6MDAuMTY0Njc0KzAwOjAwIiwiY29tbWFuZCI6InVwZGF0ZSIsInVwZGF0ZV9maWVsZCI6eyJkb2N1bWVudF9uYW1lIjoiIiwiY29udGVudCI6IiIsInBhZ2UiOiIiLCJlZGl0ZWRfYnkiOiIiLCJwb3J0Zm9saW8iOiIiLCJlZGl0ZWRfb24iOiIyMDI0LTA1LTIwIDEwOjIwOjAwLjE2NDY3NCswMDowMCJ9fX0.lcIpcdDP1g6BUNZGfm6At_1QEr_V7JauZ5_P4Zb4Z_8",
+    "new_process": {
+        "process_id": "664b67b2c6f92cd84d5e4914",
+        "links": [
+            {
+                "alex": "http://localhost:8000/api/v3/education/verify/56071f9f8b9a4fa7bf6be837e8448d8f/?org=manish_test_error_login&product=Workflow+AI&username=alex&auth_role=Manager&user_type=public&portfolio=TestOrgOwner"
+            },
+            {
+                "PublicMem": "http://localhost:8000/api/v3/education/verify/cf6354a49bd54fed88f532d6e55e329e/?org=manish_test_error_login&product=Workflow+AI&username=PublicMem&auth_role=Customer&user_type=team&portfolio=No_portf"
+            },
+            {
+                "alex": "http://localhost:8000/api/v3/education/verify/8d72aeda3b99443cbc45a0101488822d/?org=manish_test_error_login&product=Workflow+AI&username=alex&auth_role=Customer&user_type=team&portfolio=TestOrgOwner"
+            },
+            {
+                "master_link": "https://www.qrcodereviews.uxlivinglab.online/api/v3/masterlink/?api_key=6883004663557984751"
+            }
+        ],
+        "master_link": "https://www.qrcodereviews.uxlivinglab.online/api/v3/masterlink/?api_key=6883004663557984751",
+        "master_code": "http://dowellfileuploader.uxlivinglab.online/qrCodes/qrcode_1716217949.jpg"
+    },
+    "process_link": "http://localhost:8000/api/v3/education/verify/56071f9f8b9a4fa7bf6be837e8448d8f/?org=manish_test_error_login&product=Workflow+AI&username=alex&auth_role=Manager&user_type=public&portfolio=TestOrgOwner",
+    "token": "56071f9f8b9a4fa7bf6be837e8448d8f",
+    "verify_link": "https://ll04-finance-dowell.github.io/100058-DowellEditor-V2/?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwcm9kdWN0X25hbWUiOiJXb3JrZmxvdyBBSSIsImRldGFpbHMiOnsiZmllbGQiOiJkb2N1bWVudF9uYW1lIiwiY2x1c3RlciI6IkRvY3VtZW50cyIsImRhdGFiYXNlIjoiRG9jdW1lbnRhdGlvbiIsImNvbGxlY3Rpb24iOiJDbG9uZVJlcG9ydHMiLCJkb2N1bWVudCI6IkNsb25lUmVwb3J0cyIsInRlYW1fbWVtYmVyX0lEIjoiMTIxMjAwMSIsImZ1bmN0aW9uX0lEIjoiQUJDREUiLCJjb21tYW5kIjoidXBkYXRlIiwiZmxhZyI6InNpZ25pbmciLCJfaWQiOiI2NjRiNjgxZjQwMjE3YWM4N2MxMmRkMWEiLCJhY3Rpb24iOiJkb2N1bWVudCIsImF1dGhvcml6ZWQiOiJhbGV4IiwidXNlcl9lbWFpbCI6IiIsInVzZXJfdHlwZSI6InB1YmxpYyIsImRvY3VtZW50X21hcCI6WyJ0MSJdLCJkb2N1bWVudF9yaWdodCI6ImFkZF9lZGl0IiwiZG9jdW1lbnRfZmxhZyI6InByb2Nlc3NpbmciLCJyb2xlIjoiTWFuYWdlciIsInByZXZpb3VzX3ZpZXdlcnMiOm51bGwsIm5leHRfdmlld2VycyI6WyJQdWJsaWNNZW0iXSwibWV0YWRhdGFfaWQiOiI2NjRiNjgzYTk0YjBhNGM3NzVkMGVhYjYiLCJwcm9jZXNzX2lkIjoiNjY0YjY3YjJjNmY5MmNkODRkNWU0OTE0IiwidXBkYXRlX2ZpZWxkIjp7ImRvY3VtZW50X25hbWUiOiJVbnRpdGxlZCBEb2N1bWVudF9hbGV4IiwiY29udGVudCI6IiIsInBhZ2UiOiIifX19.sNS7_p1CJTIo5kyu7vjDNNk6OoERa5CQmw6AWvDeG2Q",
+    
+}

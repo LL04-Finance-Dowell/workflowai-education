@@ -1,13 +1,56 @@
 version: '3.8'
 
 services:
+  zookeeper:
+    image: 'zookeeper'
+    ports:
+      - '2181:2181'
+    restart: always
+    networks:
+      - workflow-editor-net
+  
+  kafka:
+    image: 'confluentinc/cp-kafka'
+    ports:
+      - '9092:9092'
+    restart: always
+    environment:
+      KAFKA_ZOOKEEPER_CONNECT: "${ZOOKEEPER_HOST}:2181"
+      KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://${KAFKA_HOST}:9092"
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    depends_on:
+      - zookeeper
+    networks:
+      - workflow-editor-net
+  
+  nodejs-editor-backend:
+    build:
+      context: ./nodejs-editor-backend
+    container_name: nodejs-editor-backend
+    ports:
+      - '9000:9000'
+    restart: always
+    environment:
+      KAFKA_HOST: ${KAFKA_HOST}
+      PORT: ${PORT}
+      IP: ${IP}
+      API_KEY: ${API_KEY}
+      DATABASE: ${DATABASE}
+      COLLECTION: ${COLLECTION}
+    volumes:
+      - ./nodejs-editor-backend:/usr/src/app
+      - /usr/src/app/node_modules
+    networks:
+      - workflow-editor-net
+    depends_on:
+      - kafka
 
   editor-backend:
     build:
       context: ./editor-backend
     container_name: editor-backend
     ports:
-      - "9000:8000"
+      - "9001:8000"
     restart: always
     command: python3 manage.py runserver 0.0.0.0:8000
     volumes:
@@ -46,14 +89,32 @@ services:
       context: ./backend
     container_name: workflow-backend
     ports:
-      - "9002:8000"
+      - "8000:8000"
     restart: always
-    command: python3 manage.py runserver 0.0.0.0:8000
     volumes:
       - ./backend:/usr/src/app
+    networks:
+      - workflow-editor-net
+    depends_on:
+      - workflow-db
+
+  workflow-db:
+    image: postgres:16-alpine3.20
+    container_name: workflow-db
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: workflow
+    volumes:
+      - workflow-db-data:/var/lib/postgresql/data
     networks:
       - workflow-editor-net
 
 networks:
   workflow-editor-net:
+    external: true
+
+volumes:
+  workflow-db-data:
     external: true
