@@ -240,7 +240,7 @@ class DataCubeHandleProcess:
             "auth_portfolio": portfolio,
             "unique_hash": hash,
             "item_type": item_type,
-            # "is_opened": False, # since we don't check if the link has been opened only finalized
+            "is_opened": False,
             "is_finalized": False,
         }
         dc_connect.save_to_qrcode_collection(data=data)

@@ -1921,9 +1921,11 @@ class MasterLink(APIView):
         master_link = master_link[0]
         database = master_link["database"]
         dc_connect.database = database
-        link = dc_connect.get_links_from_collection({"master_link_id": link_id, "is_finalized": False}, single=True)["data"]
+        link = dc_connect.get_links_from_collection({"master_link_id": link_id, "is_finalized": False, "is_opened": False}, single=True)["data"]
         if link:
-            return redirect(link[0]["link"])
+            link = link[0]
+            dc_connect.update_links_collection(link["_id"], {"is_opened": True})
+            return redirect(link["link"])
         return CustomResponse(False, "Link not found or is finalized", None, 404)
         
 
