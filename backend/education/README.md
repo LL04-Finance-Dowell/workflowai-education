@@ -334,3 +334,29 @@ ProcessCopies:
         - portfolio
         
 
+MasterLink:
+- URL: education/master-link/<str:link_id>/<str:token>/
+- GET (the master link):
+    - path_params:
+        - link_id
+        - token
+
+
+ListPublicIds:
+- URL: education/public-ids/list/
+- GET (get public id):
+    - query_params:
+        - workspace_id
+        - type (used or unused)
+        - num (number of ids to get. Default is 10)
+
+
+AddPublicIds
+- URL: education/public-ids/
+- POST (create public ids):
+    - query_params:
+        - workspace_id
+        - num (number of ids to create. Default is 10)
+    - request_body:
+        - public_ids (Optional. Will generate if none is given)
+    
