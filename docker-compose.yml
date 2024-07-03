@@ -23,10 +23,10 @@ services:
     networks:
       - workflow-editor-net
   
-  nodejs-editor-backend:
+  backend-editor:
     build:
-      context: ./nodejs-editor-backend
-    container_name: nodejs-editor-backend
+      context: ./backend-editor
+    container_name: backend-editor
     ports:
       - '9000:9000'
     restart: always
@@ -38,7 +38,7 @@ services:
       DATABASE: ${DATABASE}
       COLLECTION: ${COLLECTION}
     volumes:
-      - ./nodejs-editor-backend:/usr/src/app
+      - ./backend-editor:/usr/src/app
       - /usr/src/app/node_modules
     networks:
       - workflow-editor-net
