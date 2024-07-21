@@ -1,9 +1,11 @@
 from datetime import datetime
 import json
-
+from editor.datacube_connection import DatacubeConnection
 import requests
 
 
+class InvalidTokenException(Exception):
+    pass
 
 def targeted_population(database, collection, fields, period):
     url = "https://100032.pythonanywhere.com/api/targeted_population/"
@@ -248,7 +250,7 @@ def single_query_template_metadata_collection(options):
     return template
 
 
-def access_editor(item_id, item_type):
+def access_editor(item_id, item_type, dc_connect: DatacubeConnection):
     EDITOR_API = "https://100058.pythonanywhere.com/api/generate-editor-link/"
 
     team_member_id = (
@@ -268,14 +270,30 @@ def access_editor(item_id, item_type):
         field = "template_name"
         
     if item_type == "document":
-        item_name = single_query_document_collection({"_id": item_id})
-        meta_data = single_query_document_metadata_collection(
-            {"collection_id": item_id}
-        )        
+        item_name = dc_connect.get_documents_from_collection({"_id": item_id}, single=True)["data"]
+        if not item_name:
+            item_name = {}
+        else:
+            item_name = item_name[0]
+
+        meta_data = dc_connect.get_documents_metadata_from_collection({"collection_id": item_id}, single=True)["data"]
+        if not meta_data:
+            meta_data = {}
+        else:
+            meta_data = meta_data[0]
+        
     elif item_type == "template":
-        item_name = single_query_template_collection({"_id": item_id})
-        meta_data = single_query_template_metadata_collection({"collection_id": item_id})
-  
+        item_name = dc_connect.get_templates_from_collection({"_id": item_id}, single=True)["data"]
+        if not item_name:
+            item_name = {}
+        else:
+            item_name = item_name[0]
+
+        meta_data = dc_connect.get_templates_metadata_from_collection({"collection_id": item_id}, single=True)["data"]
+        if not meta_data:
+            meta_data = {}
+        else:
+            meta_data = meta_data[0]
 
     name = item_name.get(field, "")
     metadata_id = meta_data.get("_id")
@@ -314,11 +332,22 @@ def access_editor(item_id, item_type):
         print(e)
         return
     
-def check_item_version(*, action:str, field:dict, update_field:dict)->bool:
+def check_item_version(*, action:str, field:dict, update_field:dict, dc_connect: DatacubeConnection)->bool:
+    filters = {"_id":field["_id"]}
     if action == "document":
-        item = single_query_document_collection({"_id":field["_id"]})
+        item = dc_connect.get_documents_from_collection(filters=filters, single=True)["data"]
+        if not item:
+            item = {}
+        else:
+            item = item[0]
+
     elif action == "template":
-        item = single_query_template_collection({"_id":field["_id"]})
+        item = dc_connect.get_templates_from_collection(filters=filters, single=True)["data"]
+        if not item:
+            item = {}
+        else:
+            item = item[0]
+
     version = update_field.get("version")
     if version:
         existing_version = item.get("version")
@@ -330,3 +359,22 @@ def check_item_version(*, action:str, field:dict, update_field:dict)->bool:
             return True
     else:
         return False
+    
+
+def authorization_check(api_key):
+    """
+    Checks the validity of the API key.
+
+    :param api_key: The API key to be validated.
+    :return: The extracted token if the API key is valid.
+    :raises InvalidTokenException: If the API key is missing, invalid, or has an incorrect format.
+    """
+    if not api_key or not api_key.startswith("Bearer "):
+
+        raise InvalidTokenException("Bearer token is missing or invalid")
+    try:
+        _, token = api_key.split(" ")
+    except ValueError:
+        raise InvalidTokenException("Invalid Authorization header format")
+
+    return token

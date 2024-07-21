@@ -6,8 +6,11 @@ from django.views.decorators.csrf import csrf_exempt
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
+
+from editor.utils import InvalidTokenException, authorization_check
 from .pdf import generate_pdf
 from django.conf import settings
+from editor.datacube_connection import DatacubeConnection
 
 from editor.utils import (
     targeted_population,
@@ -72,30 +75,20 @@ class GetAllDataByCollection(APIView):
 @method_decorator(csrf_exempt, name="dispatch")
 class GetAllDataFromCollection(APIView):
     def post(self, request):
-        cluster = request.data.get("cluster")
+        workspace_id = request.data.get("workspace_id")
         database = request.data.get("database")
         collection = request.data.get("collection")
-        document = request.data.get("document")
-        team_member_ID = request.data.get("team_member_ID")
-        function_ID = request.data.get("function_ID")
         document_id = request.data.get("document_id", None)
 
-        field = {"_id": document_id}
+        try:
+            api_key = authorization_check(request.headers.get("Authorization"))
 
-        update_field = {"status": "success"}
+        except InvalidTokenException as e:
+            return Response(e, status.HTTP_401_UNAUTHORIZED)
 
-        DATABASE = [
-            cluster,
-            database,
-            collection,
-            document,
-            team_member_ID,
-            function_ID,
-        ]
-
-        response_object = json.loads(
-            dowellconnection(*DATABASE, "find", field, update_field)
-        )
+        filters = {"_id": document_id, "status": "success"} # NOTE: what is document_id? 
+        dc_connect = DatacubeConnection(api_key=api_key, workspace_id=workspace_id, database=database)
+        response_object = dc_connect.get_data_from_collection(collection, filters)
 
         try:
             if len(response_object["data"]):
@@ -121,8 +114,17 @@ class GenerateEditorLink(APIView):
 class SaveIntoCollection(APIView):
     def post(self, request):
         if request.method == "POST":
+            try:
+                api_key = authorization_check(request.headers.get("Authorization"))
+
+            except InvalidTokenException as e:
+                return Response(e, status.HTTP_401_UNAUTHORIZED)
+
+            workspace_id = request.data.get("workspace_id")
+            database = request.data.get("database")
+            dc_connect = DatacubeConnection(api_key=api_key, workspace_id=workspace_id, database=database)
+
             cluster = json.loads(request.body)["cluster"]
-            database = json.loads(request.body)["database"]
             collection = json.loads(request.body)["collection"]
             document = json.loads(request.body)["document"]
             team_member_ID = json.loads(request.body)["team_member_ID"]
@@ -132,33 +134,28 @@ class SaveIntoCollection(APIView):
             update_field = json.loads(request.body)["update_field"]
             action = json.loads(request.body)["action"]
             metadata_id = json.loads(request.body)["metadata_id"]
-            response = dowellconnection(
-                cluster,
-                database,
-                collection,
-                document,
-                team_member_ID,
-                function_ID,
-                command,
-                field,
-                update_field,
-            )
+            
+            # NOTE:  why is this here and did I replicate it well?
+            # response = dowellconnection(
+            #     cluster,
+            #     database,
+            #     collection,
+            #     document,
+            #     team_member_ID,
+            #     function_ID,
+            #     command,
+            #     field,
+            #     update_field,
+            # )
+
+            response = dc_connect.post_data_to_collection(collection, update_field, query=field)
             if action == "template":
-                field = {"_id": metadata_id}
                 update_field = {"template_name": update_field["template_name"]}
-                json.loads(
-                    dowellconnection(
-                        *TEMPLATE_METADATA_LIST, "update", field, update_field
-                    )
-                )
+                dc_connect.update_template_metadata_collection(metadata_id, update_field)
+
             if action == "document":
-                field = {"_id": metadata_id}
                 update_field = {"document_name": update_field["document_name"]}
-                json.loads(
-                    dowellconnection(
-                        *DOCUMENT_METADATA_LIST, "update", field, update_field
-                    )
-                )
+                dc_connect.update_document_metadata_collection(metadata_id, update_field)
             return Response(response, status=status.HTTP_200_OK)
         return Response({"info": "Sorry!"}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -166,6 +163,16 @@ class SaveIntoCollection(APIView):
 class SaveIntoCollectionWithVersion(APIView):
     def post(self, request):
         if request.method == "POST":
+            try:
+                api_key = authorization_check(request.headers.get("Authorization"))
+
+            except InvalidTokenException as e:
+                return Response(e, status.HTTP_401_UNAUTHORIZED)
+
+            workspace_id = request.data.get("workspace_id")
+            database = request.data.get("database")
+            dc_connect = DatacubeConnection(api_key=api_key, workspace_id=workspace_id, database=database)
+
             cluster = json.loads(request.body)["cluster"]
             database = json.loads(request.body)["database"]
             collection = json.loads(request.body)["collection"]
@@ -178,38 +185,35 @@ class SaveIntoCollectionWithVersion(APIView):
             action = json.loads(request.body)["action"]
             metadata_id = json.loads(request.body)["metadata_id"]
 
-            if not check_item_version(action=action, field=field, update_field=update_field):
+            if not check_item_version(action=action, field=field, update_field=update_field, dc_connect=dc_connect):
                 return Response({"info": "version mismatch or version not provided, please try again",},
                         status=status.HTTP_406_NOT_ACCEPTABLE
                     )
-                
-            response = dowellconnection(
-                cluster,
-                database,
-                collection,
-                document,
-                team_member_ID,
-                function_ID,
-                command,
-                field,
-                update_field,
-            )
+
+            # NOTE:  also why is this here and did I replicate it well?
+            # response = dowellconnection(
+            #     cluster,
+            #     database,
+            #     collection,
+            #     document,
+            #     team_member_ID,
+            #     function_ID,
+            #     command,
+            #     field,
+            #     update_field,
+            # )
+            response = dc_connect.post_data_to_collection(collection, update_field, query=field)
+
             if action == "template":
                 field = {"_id": metadata_id}
                 update_field = {"template_name": update_field["template_name"]}
-                json.loads(
-                    dowellconnection(
-                        *TEMPLATE_METADATA_LIST, "update", field, update_field
-                    )
-                )
+                dc_connect.update_template_metadata_collection(metadata_id, update_field)
+                
             if action == "document":
                 field = {"_id": metadata_id}
                 update_field = {"document_name": update_field["document_name"], "version":update_field["version"]}
-                json.loads(
-                    dowellconnection(
-                        *DOCUMENT_METADATA_LIST, "update", field, update_field
-                    )
-                )
+                dc_connect.update_document_metadata_collection(metadata_id, update_field)
+            
             return Response(response, status=status.HTTP_200_OK)
         return Response({"info": "Sorry!"}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -217,6 +221,15 @@ class SaveIntoCollectionWithVersion(APIView):
 @method_decorator(csrf_exempt, name="dispatch")
 class GeneratePDFLink(APIView):
     def post(self, request):
+        try:
+            api_key = authorization_check(request.headers.get("Authorization"))
+        except InvalidTokenException as e:
+            return Response(e, status.HTTP_401_UNAUTHORIZED)
+        
+        workspace_id = request.data.get("workspace_id")
+        database = request.data.get("database")
+        dc_connect = DatacubeConnection(api_key=api_key, workspace_id=workspace_id, database=database)
+        
         item_id = request.data.get("item_id")
         item_type = request.data.get("item_type")
 
@@ -224,14 +237,17 @@ class GeneratePDFLink(APIView):
             return Response("invalid request", status=status.HTTP_400_BAD_REQUEST)
         
         if item_type == "document":
-            item = single_query_document_collection({"_id": item_id})
+            item = dc_connect.get_documents_from_collection({"_id": item_id}, single=True)["data"]
             if not item:
                 return Response("document does not exist",status=status.HTTP_400_BAD_REQUEST)
+            item = item[0]
             
         elif item_type == "template":
-            item = single_query_template_collection({"_id": item_id})
+            item = dc_connect.get_templates_from_collection({"_id": item_id}, single=True)["data"]
             if not item:
                 return Response("template does not exist",status=status.HTTP_400_BAD_REQUEST)
+            item = item[0]
+            
         else:
             return Response("invalid Item type", status=status.HTTP_400_BAD_REQUEST)
         
