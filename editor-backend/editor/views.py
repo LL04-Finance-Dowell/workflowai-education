@@ -68,7 +68,6 @@ class GetAllDataByCollection(APIView):
             status=status.HTTP_400_BAD_REQUEST,
         )
 
-
 @method_decorator(csrf_exempt, name="dispatch")
 class GetAllDataFromCollection(APIView):
     def post(self, request):
@@ -103,7 +102,6 @@ class GetAllDataFromCollection(APIView):
         except:
             return Response([], status=status.HTTP_204_NO_CONTENT)
 
-
 @method_decorator(csrf_exempt, name="dispatch")
 class GenerateEditorLink(APIView):
     def post(self, request):
@@ -115,7 +113,6 @@ class GenerateEditorLink(APIView):
             editor_url = f"https://ll04-finance-dowell.github.io/100058-DowellEditor-V2/?token={encoded_jwt}"
             return Response(editor_url, status=status.HTTP_200_OK)
         return Response({"info": "toodles!!"}, status=status.HTTP_400_BAD_REQUEST)
-
 
 @method_decorator(csrf_exempt, name="dispatch")
 class SaveIntoCollection(APIView):
@@ -132,34 +129,12 @@ class SaveIntoCollection(APIView):
             update_field = json.loads(request.body)["update_field"]
             action = json.loads(request.body)["action"]
             metadata_id = json.loads(request.body)["metadata_id"]
-            response = dowellconnection(
-                cluster,
-                database,
-                collection,
-                document,
-                team_member_ID,
-                function_ID,
-                command,
-                field,
-                update_field,
-            )
-            if action == "template":
-                field = {"_id": metadata_id}
-                update_field = {"template_name": update_field["template_name"]}
-                json.loads(
-                    dowellconnection(
-                        *TEMPLATE_METADATA_LIST, "update", field, update_field
-                    )
-                )
-            if action == "document":
-                field = {"_id": metadata_id}
-                update_field = {"document_name": update_field["document_name"]}
-                json.loads(
-                    dowellconnection(
-                        *DOCUMENT_METADATA_LIST, "update", field, update_field
-                    )
-                )
-            return Response(response, status=status.HTTP_200_OK)
+            data = json.loads(request.body)
+
+            # implementation of kafka---------
+            kafka_producer('auto_save', data)
+            
+            return Response({'success':True, 'message':'message uploaded successfuly'}, status=status.HTTP_200_OK)
         return Response({"info": "Sorry!"}, status=status.HTTP_400_BAD_REQUEST)
 
 @method_decorator(csrf_exempt, name="dispatch")
