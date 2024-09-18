@@ -16,7 +16,7 @@ This repository includes a shell script named `run_docker.sh` to manage Docker c
 ## Script Overview
 
 The `run_docker.sh` script provides commands to manage Docker containers with the following options:
-
+- ** `chmod +x run_docker.sh`**: Ensure the script is runnable.
 - **`up`**: Create the network and volume (if they don’t already exist) and start the Docker containers.
 - **`down`**: Stop the Docker containers. Optionally, remove the containers, networks, and volumes if `delete` is specified.
 
