@@ -1,0 +1,145 @@
+{
+    "payload": {
+        "company_id": "6385c0f18eca0fb652c94558",
+        "created_by": "manish_test_error_login",
+        "creator_portfolio": "TestOrgOwner",
+        "data_type": "Real_Data",
+        "parent_id": "65c46968f9bcbe4a53b31acb",
+        "action": "start_document_processing_content_wise",
+        "process_title": "Test Process",
+        "workflows": [
+            {
+                "workflows": {
+                    "workflow_title": "Abinets onboarding workflow",
+                    "steps": [
+                        {
+                            "stepCloneCount": 1,
+                            "stepTaskType": "request_for_task",
+                            "stepRights": "add_edit",
+                            "stepProcessingOrder": "no_order",
+                            "stepTaskLimitation": "portfolios_assigned_on_or_before_step_start_date_and_time",
+                            "stepActivityType": "individual_task",
+                            "stepDisplay": "before_this_step",
+                            "stepName": "Step-1",
+                            "stepRole": "Team lead",
+                            "stepPublicMembers": [
+                                {
+                                    "member": "ihtpKUCn8cPH",
+                                    "portfolio": "PublicUser"
+                                }
+                            ],
+                            "stepGroupMembers": [],
+                            "stepTeamMembers": [],
+                            "stepUserMembers": [],
+                            "stepDocumentCloneMap": [],
+                            "stepNumber": 1,
+                            "stepDocumentMap": [
+                                {
+                                    "content": "t1",
+                                    "required": false,
+                                    "page": 1
+                                }
+                            ],
+                            "permitInternalWorkflow": false,
+                            "skipStep": false,
+                            "stepLocation": "any"
+                        },
+                        {
+                            "stepCloneCount": 1,
+                            "stepDisplay": "before_this_step",
+                            "stepTaskType": "request_for_task",
+                            "stepRights": "add_edit",
+                            "stepProcessingOrder": "no_order",
+                            "stepTaskLimitation": "portfolios_assigned_on_or_before_step_start_date_and_time",
+                            "stepActivityType": "individual_task",
+                            "stepName": "Step 2",
+                            "stepRole": "Group lead",
+                            "stepPublicMembers": [
+                                {
+                                    "member": "DuO6LzTelfBK",
+                                    "portfolio": "PublicUser"
+                                }
+                            ],
+                            "stepGroupMembers": [],
+                            "stepTeamMembers": [],
+                            "stepUserMembers": [],
+                            "stepDocumentCloneMap": [],
+                            "stepNumber": 2,
+                            "stepDocumentMap": [
+                                {
+                                    "content": "scl1",
+                                    "required": false,
+                                    "page": 1
+                                }
+                            ],
+                            "permitInternalWorkflow": false,
+                            "skipStep": false,
+                            "stepLocation": "any"
+                        },
+                        {
+                            "stepCloneCount": 1,
+                            "stepTaskType": "request_for_task",
+                            "stepRights": "add_edit",
+                            "stepProcessingOrder": "no_order",
+                            "stepTaskLimitation": "portfolios_assigned_on_or_before_step_start_date_and_time",
+                            "stepActivityType": "individual_task",
+                            "stepDisplay": "before_this_step",
+                            "stepName": "Step-3",
+                            "stepRole": "Team member",
+                            "stepPublicMembers": [
+                                {
+                                    "member": "Wu1KAypzUoBm",
+                                    "portfolio": "PublicUser"
+                                }
+                            ],
+                            "stepGroupMembers": [],
+                            "stepTeamMembers": [],
+                            "stepUserMembers": [],
+                            "stepDocumentCloneMap": [],
+                            "stepNumber": 3,
+                            "stepDocumentMap": [
+                                {
+                                    "content": "t1",
+                                    "required": false,
+                                    "page": 1
+                                },
+                                {
+                                    "content": "scl1",
+                                    "required": false,
+                                    "page": 1
+                                }
+                            ],
+                            "permitInternalWorkflow": false,
+                            "skipStep": false,
+                            "stepLocation": "any"
+                        }
+                    ]
+                }
+            }
+        ],
+        "workflows_ids": [
+            "659cf2efda169271ea0174e4"
+        ],
+        "process_type": "document",
+        "org_name": "manish_test_error_login"
+    },
+    "response": {
+        "process_id": "66655877aa377d44dbe49c4f",
+        "links": [
+            {
+                "ihtpKUCn8cPH": "https://ll04-finance-dowell.github.io/workflowai.online/#/verify/7c7a271b4fc94ee39b5fb00f52238604/?org=manish_test_error_login&product=Workflow+AI&username=ihtpKUCn8cPH&auth_role=Team+lead&user_type=public&portfolio=PublicUser"
+            },
+            {
+                "DuO6LzTelfBK": "https://ll04-finance-dowell.github.io/workflowai.online/#/verify/b6308e9ff33d4ea78963fee2a82c9e06/?org=manish_test_error_login&product=Workflow+AI&username=DuO6LzTelfBK&auth_role=Group+lead&user_type=public&portfolio=PublicUser"
+            },
+            {
+                "Wu1KAypzUoBm": "https://ll04-finance-dowell.github.io/workflowai.online/#/verify/86369fd7a18441149416c0a54f854479/?org=manish_test_error_login&product=Workflow+AI&username=Wu1KAypzUoBm&auth_role=Team+member&user_type=public&portfolio=PublicUser"
+            },
+            {
+                "master_link": "https://www.qrcodereviews.uxlivinglab.online/api/v3/masterlink/?api_key=3650620402925900271"
+            }
+        ],
+        "master_link": "https://www.qrcodereviews.uxlivinglab.online/api/v3/masterlink/?api_key=3650620402925900271",
+        "master_code": "http://dowellfileuploader.uxlivinglab.online/qrCodes/qrcode_1717917823.jpg"
+    }
+}

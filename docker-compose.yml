@@ -57,6 +57,8 @@ services:
       - ./editor-backend:/usr/src/app
     networks:
       - workflow-editor-net
+    depends_on:
+      - kafka
 
   editor-frontend:
     build:

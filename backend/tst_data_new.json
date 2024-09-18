@@ -1,0 +1,52 @@
+{
+    "user_0": {
+        "new_template": {
+            "editor_link": "https://ll04-finance-dowell.github.io/100058-DowellEditor-V2/?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwcm9kdWN0X25hbWUiOiJ3b3JrZmxvd2FpIiwiZGV0YWlscyI6eyJfaWQiOiI2NjU0MzExMDNjMjcyOTlhNTI2NTRkNmUiLCJmaWVsZCI6InRlbXBsYXRlX25hbWUiLCJhY3Rpb24iOiJ0ZW1wbGF0ZSIsIm1ldGFkYXRhX2lkIjoiNjY1NDMxMTI4ZGIyMWZmMjQ0ZGZkYjA3IiwiY2x1c3RlciI6IkRvY3VtZW50cyIsImRhdGFiYXNlIjoibmV3X3N0cnVjdHVyZV90ZW1wbGF0ZV8wX2RiX2MxNTUiLCJjb2xsZWN0aW9uIjoiNjM4NWMwZjE4ZWNhMGZiNjUyYzk0NTU4X3dvcmtmbG93YWlfdGVtcGxhdGVfY29sbGVjdGlvbl8wIiwiZG9jdW1lbnQiOiJ0ZW1wbGF0ZXJlcG9ydHMiLCJ0ZWFtX21lbWJlcl9JRCI6IjIyNjg5MDQ0NDMzIiwiZnVuY3Rpb25fSUQiOiJBQkNERSIsImNvbW1hbmQiOiJ1cGRhdGUiLCJuYW1lIjoiVW50aXRsZWQgVGVtcGxhdGUiLCJmbGFnIjoiZWRpdGluZyIsInVwZGF0ZV9maWVsZCI6eyJ0ZW1wbGF0ZV9uYW1lIjoiVW50aXRsZWQgVGVtcGxhdGUiLCJjb250ZW50IjoiIiwicGFnZSI6IiJ9fX0.x55FeawCjE_xitB2L8K5KMkxVXjVB7G_4dQvPx2E5-8",
+            "_id": "665431103c27299a52654d6e"
+        }
+    },
+    "user_1": {
+        "new_template": {
+            "editor_link": "https://ll04-finance-dowell.github.io/100058-DowellEditor-V2/?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwcm9kdWN0X25hbWUiOiJ3b3JrZmxvd2FpIiwiZGV0YWlscyI6eyJfaWQiOiI2NjU0MzA0NWJmNmFiMWMwMDZkZGJhZDAiLCJmaWVsZCI6InRlbXBsYXRlX25hbWUiLCJhY3Rpb24iOiJ0ZW1wbGF0ZSIsIm1ldGFkYXRhX2lkIjoiNjY1NDMwNDc4ZGIyMWZmMjQ0ZGZkYjA2IiwiY2x1c3RlciI6IkRvY3VtZW50cyIsImRhdGFiYXNlIjoibmV3X3N0cnVjdHVyZV90ZW1wbGF0ZV8xX2RiXzNmMWMiLCJjb2xsZWN0aW9uIjoiNjM4NWMwZjE4ZWNhMGZiNjUyYzk0NTU4X3dvcmtmbG93YWlfdGVtcGxhdGVfY29sbGVjdGlvbl8wIiwiZG9jdW1lbnQiOiJ0ZW1wbGF0ZXJlcG9ydHMiLCJ0ZWFtX21lbWJlcl9JRCI6IjIyNjg5MDQ0NDMzIiwiZnVuY3Rpb25fSUQiOiJBQkNERSIsImNvbW1hbmQiOiJ1cGRhdGUiLCJuYW1lIjoiVW50aXRsZWQgVGVtcGxhdGUiLCJmbGFnIjoiZWRpdGluZyIsInVwZGF0ZV9maWVsZCI6eyJ0ZW1wbGF0ZV9uYW1lIjoiVW50aXRsZWQgVGVtcGxhdGUiLCJjb250ZW50IjoiIiwicGFnZSI6IiJ9fX0.MykRd3rnI3FI_HO_CGPgSO93JB3_6X6sbbw_MPt13VU",
+            "_id": "66543045bf6ab1c006ddbad0"
+        }
+    },
+    "user_2": {
+        "new_template": {
+            "editor_link": "https://ll04-finance-dowell.github.io/100058-DowellEditor-V2/?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwcm9kdWN0X25hbWUiOiJ3b3JrZmxvd2FpIiwiZGV0YWlscyI6eyJfaWQiOiI2NjUwYmE0ZTNiMWZkYTJmMDM4NWIzMWMiLCJmaWVsZCI6InRlbXBsYXRlX25hbWUiLCJhY3Rpb24iOiJ0ZW1wbGF0ZSIsIm1ldGFkYXRhX2lkIjoiNjY1MGJhNTI1NzEyMDNkNGExYWY2ZmQyIiwiY2x1c3RlciI6IkRvY3VtZW50cyIsImRhdGFiYXNlIjoibmV3X3N0cnVjdHVyZV90ZW1wbGF0ZV8yX2RiX2Q4YTQiLCJjb2xsZWN0aW9uIjoiNjM4NWMwZjE4ZWNhMGZiNjUyYzk0NTU4X3dvcmtmbG93YWlfdGVtcGxhdGVfY29sbGVjdGlvbl8wIiwiZG9jdW1lbnQiOiJ0ZW1wbGF0ZXJlcG9ydHMiLCJ0ZWFtX21lbWJlcl9JRCI6IjIyNjg5MDQ0NDMzIiwiZnVuY3Rpb25fSUQiOiJBQkNERSIsImNvbW1hbmQiOiJ1cGRhdGUiLCJuYW1lIjoiVW50aXRsZWQgVGVtcGxhdGUiLCJmbGFnIjoiZWRpdGluZyIsInVwZGF0ZV9maWVsZCI6eyJ0ZW1wbGF0ZV9uYW1lIjoiVW50aXRsZWQgVGVtcGxhdGUiLCJjb250ZW50IjoiIiwicGFnZSI6IiJ9fX0.n-3uaPaFUveDwqqPaciFL8kB3hDvAUqMkGYIIybKCEE",
+            "_id": "6650ba4e3b1fda2f0385b31c"
+        }
+    },
+    "qr_code": {
+        "response": "1 QR codes created successfully.",
+        "qrcodes": [
+            {
+                "qrcode_id": "17675533639214698991",
+                "logo_size": 20,
+                "qrcode_color": "#000000",
+                "company_id": "6385c0f18eca0fb652c94558",
+                "created_by": null,
+                "description": null,
+                "is_active": false,
+                "qrcode_type": "Link",
+                "document_name": "Untitled Document",
+                "links": [
+                    {
+                        "response": {
+                            "api_key": "17675579122918363631",
+                            "link_id": "17675580540257571311",
+                            "document_name": "Untitled Document",
+                            "link": "https://ll04-finance-dowell.github.io/workflowai.online/#/verify/db401799f2374cd9a284739da89006e2/?org=manish_test_error_login&product=Workflow+AI&username=alex&auth_role=Manager&user_type=public&portfolio=TestOrgOwner",
+                            "is_opened": false,
+                            "is_finalized": false
+                        }
+                    }
+                ],
+                "masterlink": "https://www.qrcodereviews.uxlivinglab.online/api/v3/masterlink/?api_key=17675579122918363631",
+                "qrcode_image_url": "http://dowellfileuploader.uxlivinglab.online/qrCodes/qrcode_1717771690.jpg",
+                "logo_url": null,
+                "key": "17675579122918363631"
+            }
+        ]
+    }
+}

@@ -30,6 +30,4 @@ venv
 env
 
 __pycache__
-tst_data*
-.vscode
 secret.key
