@@ -1,4 +1,6 @@
 """Third Party Services"""
+DATACUBE_API = "https://www.dowelldatacube.uxlivinglab.online/db_api/"
+
 EDITOR_API = "https://100058.pythonanywhere.com/api/generate-editor-link/"
 NOTIFICATION_API = "https://100092.pythonanywhere.com/api/v1/notifications/products/"
 DOWELLCONNECTION_URL = "https://uxlivinglab.pythonanywhere.com/"

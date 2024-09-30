@@ -6,10 +6,11 @@ from education.datacube_connection import (
     get_document_from_collection,
     get_template_from_collection,
 )
-from app.constants import EDITOR_API
+from app.constants import EDITOR_API,DATACUBE_API
 import json
 from datetime import datetime
 import requests
+
 from rest_framework.response import Response
 import re
 
@@ -227,25 +228,106 @@ def access_editor(
         return
 
 
-# to be used later
-"""collection_names = check_if_name_exists_collection(
-            api_key, collection_name, db_name
-        )
-        if collection_names["success"]:
-            collection_name = f"{collection_names['name']}
-        create_new_collection_for_template = add_collection_to_database(
-                api_key=api_key,
-                database=db_name,
-                collections=collection_name,
-            )
-            print(create_new_collection_for_template)
-        else:
-            return CustomResponse(
-                False,
-                str(collection_names["Message"]),
-                "Create a database",
-                status.HTTP_400_BAD_REQUEST,
-            )
-        ##   create_new_collection_for_template_metadata=
+def send_mail(toname, toemail, subject, job_role, link):
+    """
+    Sends an email invitation for a job role through an API.
 
-        if create_new_collection_for_template["success"]:"""
+    Args:
+        toname (str): The name of the recipient.
+        toemail (str): The email address of the recipient.
+        subject (str): The subject of the email.
+        job_role (str): The job role the recipient is being invited to.
+        link (str): A link with more information about the job.
+
+    Returns:
+        str: A success message if the request is successful, or an error message if it fails.
+    """
+    
+    # API endpoint URL
+    url = "https://100085.pythonanywhere.com/api/hr-invitation/"
+    
+    # Payload to be sent to the API
+    payload = {
+        "toname": toname,
+        "toemail": toemail,
+        "subject": subject,
+        "job_role": job_role,
+        "link": link,
+    }
+    
+    try:
+        # Sending the POST request
+        response = requests.post(url, json=payload)
+        
+        # Raise an exception if the request returned an unsuccessful status code (non 2xx/3xx)
+        response.raise_for_status()
+
+        # Return the response text if the request was successful
+        return response.text
+    
+    except requests.exceptions.HTTPError as http_err:
+        # Handles HTTP-specific errors
+        return f"HTTP error occurred: {http_err} - Status Code: {response.status_code}"
+    
+    except requests.exceptions.ConnectionError as conn_err:
+        # Handles connection-related errors
+        return f"Connection error occurred: {conn_err}"
+
+    except requests.exceptions.Timeout as timeout_err:
+        # Handles request timeout errors
+        return f"Timeout error occurred: {timeout_err}"
+
+    except requests.exceptions.RequestException as req_err:
+        # General exception for all request-related errors
+        return f"An error occurred: {req_err}"
+
+def interview_email(toname, toemail, subject, email_content):
+    """
+    Sends an interview email through an API.
+
+    Args:
+        toname (str): The name of the recipient.
+        toemail (str): The email address of the recipient.
+        subject (str): The subject of the email.
+        email_content (str): The content/body of the email.
+
+    Returns:
+        str: A success message if the request is successful, or an error message if it fails.
+    """
+    
+    # API endpoint URL
+    url = "https://100085.pythonanywhere.com/api/email/"
+    
+    # Payload to be sent to the API
+    payload = {
+        "toname": toname,
+        "toemail": toemail,
+        "subject": subject,
+        "email_content": email_content,
+    }
+
+    try:
+        # Sending the POST request
+        response = requests.post(url, json=payload)
+        
+        # Raise an exception if the request returned an unsuccessful status code (non 2xx/3xx)
+        response.raise_for_status()
+
+        # Return success response text if the request was successful
+        return response.text
+    
+    except requests.exceptions.HTTPError as http_err:
+        # Handles HTTP-specific errors
+        return f"HTTP error occurred: {http_err} - Status Code: {response.status_code}"
+    
+    except requests.exceptions.ConnectionError as conn_err:
+        # Handles connection-related errors
+        return f"Connection error occurred: {conn_err}"
+
+    except requests.exceptions.Timeout as timeout_err:
+        # Handles request timeout errors
+        return f"Timeout error occurred: {timeout_err}"
+
+    except requests.exceptions.RequestException as req_err:
+        # General exception for all request-related errors
+        return f"An error occurred: {req_err}"
